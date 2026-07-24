@@ -128,6 +128,27 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
 .toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:white;padding:10px 20px;border-radius:999px;font-size:13px;z-index:200;display:none;max-width:90%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
 
+.schedule-item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #F1F5F9;cursor:pointer}
+.schedule-item:last-child{border-bottom:none}
+.schedule-time{font-size:13px;font-weight:700;color:#1E3A8A;min-width:100px;flex-shrink:0}
+.schedule-body{flex:1;min-width:0}
+.schedule-title{font-size:13px;font-weight:600}
+.schedule-title.done{text-decoration:line-through;color:#94A3B8}
+.schedule-meta{font-size:11px;color:#64748B;margin-top:2px}
+
+.schedule-date-header{font-size:13px;font-weight:700;color:#1E3A8A;background:#EFF6FF;padding:6px 12px;border-radius:6px;margin:12px 0 8px}
+.schedule-card{display:flex;gap:10px;background:white;border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;align-items:flex-start}
+.schedule-check{width:28px;height:28px;border-radius:999px;border:2px solid #CBD5E1;background:white;color:#10B981;font-size:16px;font-weight:700;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.schedule-check.done{background:#10B981;color:white;border-color:#10B981}
+.schedule-card-body{flex:1;min-width:0;cursor:pointer}
+.schedule-card-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.schedule-type-badge{background:#EFF6FF;color:#1E3A8A;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.schedule-card-title{font-size:14px;font-weight:700;margin-bottom:4px;word-break:break-word}
+.schedule-card-title.done{text-decoration:line-through;color:#94A3B8}
+.schedule-card-meta{font-size:12px;color:#64748B;margin-top:2px}
+.schedule-card-memo{font-size:12px;color:#374151;margin-top:6px;padding:6px 8px;background:#F9FAFB;border-radius:6px;line-height:1.5}
+.schedule-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;border:none;cursor:pointer}
+
 .empty-state{text-align:center;padding:30px 20px;color:#94A3B8;font-size:13px}
 
 .page-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:8px}
@@ -157,12 +178,11 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <p style="color:#64748B;font-size:12px;margin-bottom:12px" id="today-label">2026年7月24日 金曜日</p>
 
   <div class="card">
-    <h2>📅 今日の予定</h2>
-    <div style="font-size:13px;line-height:2">
-      <div>🕑 14:00 販売中確認</div>
-      <div>🕓 16:00 商談フォロー</div>
-      <div>🕕 18:00 契約予定確認</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h2 style="margin:0">📅 今日の予定</h2>
+      <button class="btn btn-orange" style="padding:6px 12px;min-height:auto;font-size:12px" onclick="RC.go('schedule')">＋ 追加</button>
     </div>
+    <div id="home-schedule"></div>
   </div>
 
   <div class="card">
@@ -313,6 +333,64 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <div id="posts-list"></div>
 </div>
 
+<!-- スケジュール一覧 -->
+<div class="page" id="page-schedule">
+  <div class="page-title-row">
+    <h1>📅 予定一覧</h1>
+    <span class="count-label" id="schedule-count"></span>
+  </div>
+  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.newSchedule()">➕ 新規予定を登録</button>
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
+  </div>
+  <div id="schedule-list"></div>
+</div>
+
+<!-- 予定登録・編集 -->
+<div class="page" id="page-new-schedule">
+  <h1 id="schedule-form-title">➕ 新規予定登録</h1>
+  <div class="card">
+    <form id="form-schedule" onsubmit="return RC.saveSchedule(event)">
+      <input type="hidden" name="id" id="sc-id" value="">
+      <div class="form-row"><label>タイトル <span style="color:#EF4444">*</span></label><input name="title" id="sc-title" placeholder="例: 山田様と物件内見" required></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>日付 <span style="color:#EF4444">*</span></label><input type="date" name="date" id="sc-date" required></div>
+        <div class="form-row"><label>種別</label>
+          <select name="type" id="sc-type">
+            <option>内見</option><option>商談</option><option>契約</option><option>電話</option><option>訪問</option><option>会議</option><option>その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>開始時刻</label><input type="time" name="start" id="sc-start"></div>
+        <div class="form-row"><label>終了時刻</label><input type="time" name="end" id="sc-end"></div>
+      </div>
+      <div class="form-row"><label>場所</label><input name="place" id="sc-place" placeholder="例: 港区南青山3-15 現地集合"></div>
+      <div class="form-row"><label>関連顧客</label>
+        <select name="customer_id" id="sc-customer"><option value="">選択なし</option></select>
+      </div>
+      <div class="form-row"><label>関連案件</label>
+        <select name="case_id" id="sc-case"><option value="">選択なし</option></select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>優先度</label>
+          <select name="priority" id="sc-priority"><option>高</option><option selected>中</option><option>低</option></select>
+        </div>
+        <div class="form-row"><label>リマインド</label>
+          <select name="remind" id="sc-remind"><option value="none">なし</option><option value="10">10分前</option><option value="30">30分前</option><option value="60">1時間前</option><option value="1440">1日前</option></select>
+        </div>
+      </div>
+      <div class="form-row"><label>メモ</label><textarea name="memo" id="sc-memo" placeholder="持ち物、確認事項、備考など" style="min-height:80px;resize:vertical"></textarea></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="RC.go('schedule')">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- マイページ -->
 <div class="page" id="page-mypage">
   <div class="profile-hero" id="profile-hero">
@@ -391,6 +469,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
 <nav class="bottom-nav">
   <button class="nav-btn" data-view="home" onclick="RC.go('home')"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" data-view="schedule" onclick="RC.go('schedule')"><span class="nav-icon">📅</span>予定</button>
   <button class="nav-btn" data-view="cases" onclick="RC.go('cases')"><span class="nav-icon">📊</span>案件</button>
   <button class="nav-btn" data-view="customers" onclick="RC.go('customers')"><span class="nav-icon">👥</span>顧客</button>
   <button class="nav-btn" data-view="community" onclick="RC.go('community')"><span class="nav-icon">💬</span>SNS</button>
@@ -425,6 +504,11 @@ RC.defaults = {
     { id: 1, user: '田中 健一', company: '(株)グローバル不動産', avatar: '田', avatarImage: '', text: '港区で新着物件が入りました！3LDK・タワーマンション・眺望◎ ご興味ある方はDMまで。', time: '2時間前', tags: ['#港区','#タワマン'], likes: 24, comments: 5, shares: 2, images: [], liked: false, isSample: true },
     { id: 2, user: '佐藤 美咲', company: '東京ライフ不動産', avatar: '佐', avatarImage: '', text: '本日、成約1件！お客様のご希望にピッタリの物件が見つかりました。感謝です🙏', time: '5時間前', tags: ['#成約','#世田谷'], likes: 42, comments: 8, shares: 3, images: [], liked: false, isSample: true, avatarColor: '#DC2626' },
     { id: 3, user: '山本 大輔', company: 'プレミアム不動産', avatar: '山', avatarImage: '', text: '投資用ワンルーム、都心5区の物件情報をまとめました。利回り5〜7%物件が中心です。', time: '昨日', tags: ['#投資','#ワンルーム'], likes: 68, comments: 12, shares: 15, images: [], liked: false, isSample: true, avatarColor: '#059669' }
+  ],
+  schedules: [
+    { id: 1, title: '販売中物件の在庫確認', date: '2026-07-24', start: '14:00', end: '15:00', type: '会議', place: '本社会議室A', customer_id: '', case_id: '', priority: '中', remind: '10', memo: '週次ミーティング', done: false },
+    { id: 2, title: '山田様 商談フォロー', date: '2026-07-24', start: '16:00', end: '17:00', type: '商談', place: 'カフェ・アオヤマ', customer_id: 1, case_id: 1, priority: '高', remind: '30', memo: '前回の内見の感想確認、次回内見の候補提案', done: false },
+    { id: 3, title: '契約予定確認（鈴木様）', date: '2026-07-24', start: '18:00', end: '18:30', type: '電話', place: '', customer_id: 3, case_id: 3, priority: '高', remind: '10', memo: '契約書送付確認', done: false }
   ]
 };
 
@@ -442,6 +526,7 @@ RC.load = function() {
   if (!RC.data.cases) RC.data.cases = JSON.parse(JSON.stringify(RC.defaults.cases));
   if (!RC.data.customers) RC.data.customers = JSON.parse(JSON.stringify(RC.defaults.customers));
   if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
+  if (!RC.data.schedules) RC.data.schedules = JSON.parse(JSON.stringify(RC.defaults.schedules));
 };
 
 RC.save = function() {
@@ -525,6 +610,258 @@ RC.renderHome = function() {
   var dow = ['日','月','火','水','木','金','土'][today.getDay()];
   var tlbl = document.getElementById('today-label');
   if (tlbl) tlbl.textContent = today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日 '+dow+'曜日';
+  RC.renderHomeSchedule();
+};
+
+RC.todayStr = function() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+};
+
+RC.typeIcon = function(t) {
+  var m = { '内見':'🏠','商談':'💼','契約':'📝','電話':'📞','訪問':'🚗','会議':'👥','その他':'📌' };
+  return m[t] || '📌';
+};
+
+RC.priorityChipClass = function(p) {
+  var m = { '高':'chip-red','中':'chip-orange','低':'chip-gray' };
+  return m[p] || 'chip-gray';
+};
+
+RC.renderHomeSchedule = function() {
+  var el = document.getElementById('home-schedule');
+  if (!el) return;
+  var today = RC.todayStr();
+  var todayList = (RC.data.schedules || []).filter(function(s){ return s.date === today; })
+    .sort(function(a,b){ return (a.start||'99:99').localeCompare(b.start||'99:99'); });
+  if (todayList.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:20px 10px">今日の予定はありません<br><button class="btn btn-orange" style="margin-top:10px;font-size:12px;padding:8px 14px;min-height:auto" onclick="RC.newSchedule()">＋ 予定を追加する</button></div>';
+    return;
+  }
+  el.innerHTML = todayList.map(function(s) {
+    var time = s.start ? s.start + (s.end ? '〜' + s.end : '') : '時間未定';
+    var relCustomer = '';
+    if (s.customer_id) {
+      var c = (RC.data.customers || []).filter(function(x){ return x.id === s.customer_id; })[0];
+      if (c) relCustomer = '👤 ' + RC.esc(c.name);
+    }
+    return '<div class="schedule-item" onclick="RC.editSchedule(' + s.id + ')">' +
+      '<div class="schedule-time">' + RC.typeIcon(s.type) + ' ' + RC.esc(time) + '</div>' +
+      '<div class="schedule-body">' +
+        '<div class="schedule-title' + (s.done ? ' done' : '') + '">' + RC.esc(s.title) + '</div>' +
+        (s.place ? '<div class="schedule-meta">📍 ' + RC.esc(s.place) + '</div>' : '') +
+        (relCustomer ? '<div class="schedule-meta">' + relCustomer + '</div>' : '') +
+      '</div>' +
+      '<span class="chip ' + RC.priorityChipClass(s.priority) + '" style="align-self:flex-start">' + RC.esc(s.priority) + '</span>' +
+    '</div>';
+  }).join('');
+};
+
+RC._scheduleFilter = 'today';
+RC.setScheduleFilter = function(f) {
+  RC._scheduleFilter = f;
+  RC.renderScheduleList();
+};
+
+RC.renderScheduleList = function() {
+  var list = document.getElementById('schedule-list');
+  var count = document.getElementById('schedule-count');
+  if (!list) return;
+  var all = RC.data.schedules || [];
+  var today = RC.todayStr();
+  var todayDate = new Date();
+  var weekLater = new Date(todayDate.getTime() + 7*24*3600*1000);
+  var weekLaterStr = weekLater.getFullYear() + '-' + String(weekLater.getMonth()+1).padStart(2,'0') + '-' + String(weekLater.getDate()).padStart(2,'0');
+  var filtered;
+  if (RC._scheduleFilter === 'today') {
+    filtered = all.filter(function(s){ return s.date === today; });
+  } else if (RC._scheduleFilter === 'week') {
+    filtered = all.filter(function(s){ return s.date >= today && s.date <= weekLaterStr; });
+  } else {
+    filtered = all.slice();
+  }
+  filtered.sort(function(a,b){
+    var da = a.date + ' ' + (a.start || '99:99');
+    var db = b.date + ' ' + (b.start || '99:99');
+    return da.localeCompare(db);
+  });
+  if (count) count.textContent = '(' + filtered.length + '件)';
+  var btns = ['today','week','all'];
+  btns.forEach(function(k){
+    var b = document.getElementById('filter-' + k);
+    if (!b) return;
+    if (k === RC._scheduleFilter) {
+      b.style.background = '#1E3A8A';
+      b.style.color = 'white';
+    } else {
+      b.style.background = '#E5E7EB';
+      b.style.color = '#1F2937';
+    }
+  });
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state">該当する予定がありません</div>';
+    return;
+  }
+  var currentDate = '';
+  var html = '';
+  filtered.forEach(function(s) {
+    if (s.date !== currentDate) {
+      currentDate = s.date;
+      var d = new Date(s.date);
+      var dow = ['日','月','火','水','木','金','土'][d.getDay()];
+      var dateLabel = (d.getMonth()+1) + '月' + d.getDate() + '日（' + dow + '）';
+      if (s.date === today) dateLabel += ' 【今日】';
+      html += '<div class="schedule-date-header">' + dateLabel + '</div>';
+    }
+    var time = s.start ? s.start + (s.end ? '〜' + s.end : '') : '時間未定';
+    var relCustomer = '';
+    if (s.customer_id) {
+      var c = (RC.data.customers || []).filter(function(x){ return x.id === s.customer_id; })[0];
+      if (c) relCustomer = '👤 ' + RC.esc(c.name);
+    }
+    var relCase = '';
+    if (s.case_id) {
+      var cs = (RC.data.cases || []).filter(function(x){ return x.id === s.case_id; })[0];
+      if (cs) relCase = '📊 ' + RC.esc(cs.customer) + ' / ' + RC.esc(cs.type);
+    }
+    html += '<div class="schedule-card">' +
+      '<button class="schedule-check' + (s.done ? ' done' : '') + '" onclick="event.stopPropagation();RC.toggleScheduleDone(' + s.id + ')">' + (s.done ? '✓' : '') + '</button>' +
+      '<div class="schedule-card-body" onclick="RC.editSchedule(' + s.id + ')">' +
+        '<div class="schedule-card-head">' +
+          '<span class="schedule-type-badge">' + RC.typeIcon(s.type) + ' ' + RC.esc(s.type) + '</span>' +
+          '<span class="chip ' + RC.priorityChipClass(s.priority) + '">' + RC.esc(s.priority) + '</span>' +
+        '</div>' +
+        '<div class="schedule-card-title' + (s.done ? ' done' : '') + '">' + RC.esc(s.title) + '</div>' +
+        '<div class="schedule-card-meta">🕒 ' + RC.esc(time) + '</div>' +
+        (s.place ? '<div class="schedule-card-meta">📍 ' + RC.esc(s.place) + '</div>' : '') +
+        (relCustomer ? '<div class="schedule-card-meta">' + relCustomer + '</div>' : '') +
+        (relCase ? '<div class="schedule-card-meta">' + relCase + '</div>' : '') +
+        (s.memo ? '<div class="schedule-card-memo">📝 ' + RC.esc(s.memo) + '</div>' : '') +
+        (s.remind !== 'none' && s.remind ? '<div class="schedule-card-meta" style="color:#FF7A45">🔔 ' + RC.remindLabel(s.remind) + '</div>' : '') +
+      '</div>' +
+      '<button class="schedule-del" onclick="event.stopPropagation();RC.delSchedule(' + s.id + ')">削除</button>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+};
+
+RC.remindLabel = function(v) {
+  var m = { '10':'10分前','30':'30分前','60':'1時間前','1440':'1日前' };
+  return m[v] || '';
+};
+
+RC.newSchedule = function() {
+  RC._editingScheduleId = null;
+  RC.go('new-schedule');
+  setTimeout(function(){
+    var f = document.getElementById('form-schedule');
+    if (f) f.reset();
+    document.getElementById('sc-id').value = '';
+    document.getElementById('sc-title').value = '';
+    document.getElementById('sc-date').value = RC.todayStr();
+    document.getElementById('sc-start').value = '';
+    document.getElementById('sc-end').value = '';
+    document.getElementById('sc-place').value = '';
+    document.getElementById('sc-memo').value = '';
+    document.getElementById('schedule-form-title').textContent = '➕ 新規予定登録';
+    RC.populateScheduleSelects('','');
+  }, 50);
+};
+
+RC.editSchedule = function(id) {
+  var s = null;
+  for (var i = 0; i < RC.data.schedules.length; i++) {
+    if (RC.data.schedules[i].id === id) { s = RC.data.schedules[i]; break; }
+  }
+  if (!s) return;
+  RC._editingScheduleId = id;
+  RC.go('new-schedule');
+  setTimeout(function(){
+    document.getElementById('sc-id').value = s.id;
+    document.getElementById('sc-title').value = s.title || '';
+    document.getElementById('sc-date').value = s.date || '';
+    document.getElementById('sc-type').value = s.type || '内見';
+    document.getElementById('sc-start').value = s.start || '';
+    document.getElementById('sc-end').value = s.end || '';
+    document.getElementById('sc-place').value = s.place || '';
+    document.getElementById('sc-priority').value = s.priority || '中';
+    document.getElementById('sc-remind').value = s.remind || 'none';
+    document.getElementById('sc-memo').value = s.memo || '';
+    document.getElementById('schedule-form-title').textContent = '✏️ 予定を編集';
+    RC.populateScheduleSelects(s.customer_id, s.case_id);
+  }, 50);
+};
+
+RC.populateScheduleSelects = function(selectedCustomerId, selectedCaseId) {
+  var csSel = document.getElementById('sc-customer');
+  var caSel = document.getElementById('sc-case');
+  if (csSel) {
+    csSel.innerHTML = '<option value="">選択なし</option>' + (RC.data.customers || []).map(function(c){
+      return '<option value="' + c.id + '"' + (selectedCustomerId == c.id ? ' selected' : '') + '>' + RC.esc(c.name) + '（' + RC.esc(c.tag) + '）</option>';
+    }).join('');
+  }
+  if (caSel) {
+    caSel.innerHTML = '<option value="">選択なし</option>' + (RC.data.cases || []).map(function(c){
+      return '<option value="' + c.id + '"' + (selectedCaseId == c.id ? ' selected' : '') + '>' + RC.esc(c.customer) + ' / ' + RC.esc(c.type) + '</option>';
+    }).join('');
+  }
+};
+
+RC.saveSchedule = function(ev) {
+  ev.preventDefault();
+  var form = ev.target;
+  var id = form.id.value ? Number(form.id.value) : Date.now();
+  var newSc = {
+    id: id,
+    title: form.title.value.trim(),
+    date: form.date.value,
+    type: form.type.value,
+    start: form.start.value,
+    end: form.end.value,
+    place: form.place.value.trim(),
+    customer_id: form.customer_id.value ? Number(form.customer_id.value) : '',
+    case_id: form.case_id.value ? Number(form.case_id.value) : '',
+    priority: form.priority.value,
+    remind: form.remind.value,
+    memo: form.memo.value.trim(),
+    done: false
+  };
+  if (!newSc.title || !newSc.date) { RC.toast('タイトルと日付は必須です'); return false; }
+  // 既存を更新 or 新規追加
+  var found = false;
+  for (var i = 0; i < RC.data.schedules.length; i++) {
+    if (RC.data.schedules[i].id === newSc.id) {
+      newSc.done = RC.data.schedules[i].done || false;
+      RC.data.schedules[i] = newSc;
+      found = true;
+      break;
+    }
+  }
+  if (!found) RC.data.schedules.push(newSc);
+  RC.save();
+  RC.toast(found ? '✓ 予定を更新しました' : '✓ 予定を登録しました');
+  RC.go('schedule');
+  return false;
+};
+
+RC.delSchedule = function(id) {
+  if (!confirm('この予定を削除しますか？')) return;
+  RC.data.schedules = RC.data.schedules.filter(function(s){ return s.id !== id; });
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ 削除しました');
+};
+
+RC.toggleScheduleDone = function(id) {
+  for (var i = 0; i < RC.data.schedules.length; i++) {
+    if (RC.data.schedules[i].id === id) {
+      RC.data.schedules[i].done = !RC.data.schedules[i].done;
+      break;
+    }
+  }
+  RC.save();
+  RC.renderScheduleList();
+  RC.renderHomeSchedule();
 };
 
 RC.renderCases = function() {
@@ -670,6 +1007,7 @@ RC.renderAll = function() {
     RC.renderCustomers();
     RC.renderPosts();
     RC.renderProfile();
+    RC.renderScheduleList();
   } catch (e) { if (window.console) console.error('render error', e); }
 };
 

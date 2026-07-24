@@ -137,12 +137,22 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .schedule-meta{font-size:11px;color:#64748B;margin-top:2px}
 
 .schedule-date-header{font-size:13px;font-weight:700;color:#1E3A8A;background:#EFF6FF;padding:6px 12px;border-radius:6px;margin:12px 0 8px}
-.schedule-card{display:flex;gap:10px;background:white;border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;align-items:flex-start}
+.schedule-card{display:flex;gap:10px;background:white;border-radius:12px;padding:12px 12px 12px 12px;padding-right:56px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;align-items:flex-start}
 .schedule-check{width:28px;height:28px;border-radius:999px;border:2px solid #CBD5E1;background:white;color:#10B981;font-size:16px;font-weight:700;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .schedule-check.done{background:#10B981;color:white;border-color:#10B981}
 .schedule-card-body{flex:1;min-width:0;cursor:pointer}
-.schedule-card-head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
-.schedule-type-badge{background:#EFF6FF;color:#1E3A8A;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.schedule-card-head{display:flex;justify-content:flex-start;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;padding-right:4px}
+.schedule-type-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.3;white-space:nowrap}
+.schedule-type-badge.t-内見{background:#EFF6FF;color:#1E3A8A}
+.schedule-type-badge.t-商談{background:#FEF3C7;color:#92400E}
+.schedule-type-badge.t-契約{background:#DCFCE7;color:#166534}
+.schedule-type-badge.t-決済{background:#FCE7F3;color:#9D174D}
+.schedule-type-badge.t-打合{background:#E0E7FF;color:#3730A3}
+.schedule-type-badge.t-電話{background:#F1F5F9;color:#0F172A}
+.schedule-type-badge.t-訪問{background:#FFEDD5;color:#9A3412}
+.schedule-type-badge.t-会議{background:#EDE9FE;color:#5B21B6}
+.schedule-type-badge.t-その他{background:#F3F4F6;color:#374151}
+.schedule-del{z-index:2}
 .schedule-card-title{font-size:14px;font-weight:700;margin-bottom:4px;word-break:break-word}
 .schedule-card-title.done{text-decoration:line-through;color:#94A3B8}
 .schedule-card-meta{font-size:12px;color:#64748B;margin-top:2px}
@@ -368,7 +378,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <div class="form-row"><label>日付 <span style="color:#EF4444">*</span></label><input type="date" name="date" id="sc-date" required></div>
         <div class="form-row"><label>種別</label>
           <select name="type" id="sc-type">
-            <option>内見</option><option>商談</option><option>契約</option><option>電話</option><option>訪問</option><option>会議</option><option>その他</option>
+            <option>内見</option><option>商談</option><option>打合</option><option>契約</option><option>決済</option><option>電話</option><option>訪問</option><option>会議</option><option>その他</option>
           </select>
         </div>
       </div>
@@ -648,8 +658,12 @@ RC.todayStr = function() {
 };
 
 RC.typeIcon = function(t) {
-  var m = { '内見':'🏠','商談':'💼','契約':'📝','電話':'📞','訪問':'🚗','会議':'👥','その他':'📌' };
+  var m = { '内見':'🏠','商談':'💼','打合':'🤝','契約':'📝','決済':'💰','電話':'📞','訪問':'🚗','会議':'👥','その他':'📌' };
   return m[t] || '📌';
+};
+RC.typeClass = function(t) {
+  var allowed = { '内見':1,'商談':1,'打合':1,'契約':1,'決済':1,'電話':1,'訪問':1,'会議':1,'その他':1 };
+  return allowed[t] ? ('t-' + t) : 't-その他';
 };
 
 RC.priorityChipClass = function(p) {
@@ -757,8 +771,8 @@ RC.renderScheduleList = function() {
       '<button class="schedule-check' + (s.done ? ' done' : '') + '" onclick="event.stopPropagation();RC.toggleScheduleDone(' + s.id + ')">' + (s.done ? '✓' : '') + '</button>' +
       '<div class="schedule-card-body" onclick="RC.editSchedule(' + s.id + ')">' +
         '<div class="schedule-card-head">' +
-          '<span class="schedule-type-badge">' + RC.typeIcon(s.type) + ' ' + RC.esc(s.type) + '</span>' +
-          '<span class="chip ' + RC.priorityChipClass(s.priority) + '">' + RC.esc(s.priority) + '</span>' +
+          '<span class="schedule-type-badge ' + RC.typeClass(s.type) + '">' + RC.typeIcon(s.type) + ' ' + RC.esc(s.type) + '</span>' +
+          '<span class="chip ' + RC.priorityChipClass(s.priority) + '" style="font-size:10px;padding:2px 8px">' + RC.esc(s.priority) + '</span>' +
         '</div>' +
         '<div class="schedule-card-title' + (s.done ? ' done' : '') + '">' + RC.esc(s.title) + '</div>' +
         '<div class="schedule-card-meta">🕒 ' + RC.esc(time) + '</div>' +

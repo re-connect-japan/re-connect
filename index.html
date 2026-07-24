@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1E3A8A">
+<title>RE-Connect | 不動産業界プラットフォーム</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:#F5F7FA;color:#1F2937;padding-bottom:calc(72px + env(safe-area-inset-bottom));min-height:100vh;line-height:1.5}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+summary{cursor:pointer;list-style:none;outline:none}
+summary::-webkit-details-marker{display:none}
+
+.header{position:sticky;top:0;z-index:40;background:#1E3A8A;color:white;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px}
+.logo-icon{width:32px;height:32px;border-radius:8px;background:#FF7A45;color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
+.header-actions{display:flex;gap:10px;align-items:center}
+.badge-bell{position:relative;color:white;font-size:20px;padding:6px}
+.badge-bell::after{content:"3";position:absolute;top:-4px;right:-6px;background:#EF4444;color:white;font-size:10px;min-width:16px;height:16px;border-radius:999px;padding:0 4px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.header-avatar{width:36px;height:36px;border-radius:999px;background:#FF7A45;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden}
+.header-avatar img{width:100%;height:100%;object-fit:cover}
+
+main{padding:16px;max-width:900px;margin:0 auto}
+.section{scroll-margin-top:60px;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #E5E7EB}
+.section:last-child{border-bottom:none}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:white;border-top:1px solid #E5E7EB;display:flex;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto}
+.nav-btn{flex:1 0 auto;min-width:60px;padding:8px 4px;font-size:10px;color:#64748B;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;justify-content:center;text-align:center}
+.nav-icon{font-size:20px;line-height:1}
+
+.card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.card h2{margin-bottom:10px;font-size:16px;color:#1E3A8A}
+h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.kpi-num{font-size:24px;font-weight:800;color:#1E3A8A}
+.kpi-label{font-size:11px;color:#64748B;margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;min-height:42px;gap:6px;border:none;text-align:center;cursor:pointer}
+.btn-primary{background:#1E3A8A;color:white}
+.btn-secondary{background:#E5E7EB;color:#1F2937}
+.btn-orange{background:#FF7A45;color:white}
+.btn-danger{background:#EF4444;color:white}
+.btn-block{width:100%}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+
+.chip{display:inline-flex;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.chip-info{background:#DBEAFE;color:#1E40AF}
+.chip-success{background:#D1FAE5;color:#065F46}
+.chip-orange{background:#FED7AA;color:#9A3412}
+.chip-gray{background:#E5E7EB;color:#374151}
+.chip-red{background:#FEE2E2;color:#991B1B}
+
+.list-item{background:white;border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative}
+.list-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.list-item strong{font-size:14px}
+.list-item-meta{font-size:12px;color:#64748B}
+.list-item-sub{font-size:11px;color:#9CA3AF;margin-top:4px}
+.list-item-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none}
+
+.post{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.post-header{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.avatar{width:40px;height:40px;border-radius:999px;background:#1E3A8A;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.post-user{flex:1;min-width:0}
+.post-user-name{font-weight:700;font-size:14px}
+.post-user-company{font-size:11px;color:#64748B}
+.post-time{font-size:11px;color:#9CA3AF}
+.post-text{font-size:14px;margin:8px 0;word-break:break-word;white-space:pre-wrap}
+.post-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.post-tag{font-size:11px;color:#1E40AF}
+.post-image-emoji{border-radius:8px;background:linear-gradient(135deg,#1E3A8A20,#FF7A4520);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;font-size:40px;margin:8px 0}
+.post-image{border-radius:8px;overflow:hidden;margin:8px 0;background:#F1F5F9}
+.post-image img{width:100%;height:auto;display:block}
+.post-image-grid{display:grid;gap:4px;margin:8px 0}
+.post-image-grid.g2{grid-template-columns:1fr 1fr}
+.post-image-grid.g3{grid-template-columns:1fr 1fr 1fr}
+.post-image-grid.g4{grid-template-columns:1fr 1fr}
+.post-image-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px}
+.post-actions{display:flex;gap:4px;border-top:1px solid #F1F5F9;padding-top:8px;margin-top:8px}
+.post-action{flex:1;padding:8px;font-size:12px;color:#64748B;border-radius:6px;background:none;border:none;cursor:pointer}
+.post-action.liked{color:#EF4444;font-weight:700}
+.post-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none;z-index:2}
+.post{position:relative}
+
+.timeline-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #F1F5F9;align-items:center}
+.timeline-item:last-child{border-bottom:none}
+.timeline-thumb{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,#1E3A8A20,#FF7A4520);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
+.timeline-thumb img{width:100%;height:100%;object-fit:cover}
+.timeline-body{flex:1;min-width:0}
+.timeline-name{font-size:12px;font-weight:700}
+.timeline-text{font-size:12px;color:#64748B;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+.profile-hero{background:linear-gradient(135deg,#1E3A8A,#FF7A45);color:white;border-radius:12px;padding:24px 16px;text-align:center;margin-bottom:12px;background-size:cover;background-position:center}
+.profile-avatar-big{width:92px;height:92px;border-radius:999px;background:white;color:#1E3A8A;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;margin:0 auto 10px;border:4px solid white;box-shadow:0 6px 16px rgba(0,0,0,0.2);overflow:hidden}
+.profile-avatar-big img{width:100%;height:100%;object-fit:cover}
+.profile-name{font-size:20px;font-weight:700}
+.profile-company{font-size:13px;opacity:0.9;margin-top:4px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);background:white;border-radius:12px;padding:12px;margin-bottom:12px;text-align:center}
+.stat-num{font-size:18px;font-weight:800;color:#1E3A8A}
+.stat-label{font-size:11px;color:#64748B}
+
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;color:#64748B;margin-bottom:4px;font-weight:600}
+.form-row input,.form-row textarea,.form-row select{font-family:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:8px;background:white}
+.form-row input[type=file]{padding:8px;background:#F9FAFB}
+.form-actions{display:flex;gap:8px;margin-top:16px}
+.form-actions .btn{flex:1}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.section-tag{display:inline-block;background:#1E3A8A;color:white;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px}
+
+.edit-toggle{display:block;background:linear-gradient(135deg,#1E3A8A,#FF7A45);color:white;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(30,58,138,0.25)}
+.edit-toggle::after{content:"　▼ タップで開く";font-size:11px;opacity:0.85;font-weight:400}
+details[open] .edit-toggle::after{content:"　▲ タップで閉じる"}
+details.edit-details{margin-top:14px;margin-bottom:14px}
+details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-shadow:none}
+.edit-body{background:white;border-radius:0 0 12px 12px;padding:16px;box-shadow:0 4px 12px rgba(30,58,138,0.1)}
+
+.file-slot{position:relative;display:block}
+.file-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%;height:100%}
+.file-preview{width:100px;height:100px;border-radius:999px;background:#F3F4F6;border:2px dashed #CBD5E1;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:11px;overflow:hidden;text-align:center;padding:6px;background-size:cover;background-position:center}
+.file-preview.bg-preview{width:100%;height:120px;border-radius:8px}
+.file-preview img{width:100%;height:100%;object-fit:cover}
+
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:white;padding:10px 20px;border-radius:999px;font-size:13px;z-index:200;display:none;max-width:90%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+
+.empty-state{text-align:center;padding:30px 20px;color:#94A3B8;font-size:13px}
+
+@media (min-width:768px){.kpi-grid{grid-template-columns:repeat(4,1fr)}.nav-btn{font-size:12px}.nav-icon{font-size:22px}}
+</style>
+</head>
+<body id="top">
+
+<header class="header">
+  <a href="#top" class="logo">
+    <div class="logo-icon">R</div><span>RE-Connect</span>
+  </a>
+  <div class="header-actions">
+    <span class="badge-bell">🔔</span>
+    <a href="#mypage" class="header-avatar" id="header-avatar">田</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ホーム -->
+<section id="home" class="section">
+  <span class="section-tag">🏠 ホーム</span>
+  <h1>ホーム</h1>
+  <p style="color:#64748B;font-size:12px;margin-bottom:12px" id="today-label">2026年7月24日 金曜日</p>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-num" id="kpi-progress">0</div><div class="kpi-label">進行中案件</div></div>
+    <div class="kpi"><div class="kpi-num" id="kpi-closed">0</div><div class="kpi-label">今月成約</div></div>
+    <div class="kpi"><div class="kpi-num" id="kpi-negotiating">0</div><div class="kpi-label">商談・内見</div></div>
+    <div class="kpi"><div class="kpi-num" id="kpi-customers">0</div><div class="kpi-label">見込み客</div></div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ クイックアクション</h2>
+    <div class="btn-grid">
+      <a href="#new-case" class="btn btn-orange">➕ 案件登録</a>
+      <a href="#new-customer" class="btn btn-orange">➕ 顧客登録</a>
+      <a href="#community" class="btn btn-primary">💬 SNS投稿</a>
+      <a href="#mypage" class="btn btn-secondary">👤 マイページ</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📡 業界タイムライン</h2>
+    <div id="home-timeline"></div>
+    <a href="#community" class="btn btn-secondary btn-block" style="margin-top:10px">すべて見る →</a>
+  </div>
+
+  <div class="card">
+    <h2>📅 今日の予定</h2>
+    <div style="font-size:13px;line-height:2">
+      <div>🕑 14:00 販売中確認</div>
+      <div>🕓 16:00 商談フォロー</div>
+      <div>🕕 18:00 契約予定確認</div>
+    </div>
+  </div>
+</section>
+
+<!-- 案件 -->
+<section id="cases" class="section">
+  <span class="section-tag">📊 案件</span>
+  <h1>案件一覧 <span id="cases-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
+  <a href="#new-case" class="btn btn-orange btn-block" style="margin-bottom:12px">➕ 新規案件を登録</a>
+  <div id="cases-list"></div>
+  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
+</section>
+
+<!-- 新規案件登録 -->
+<section id="new-case" class="section">
+  <span class="section-tag">➕ 案件登録</span>
+  <h1>新規案件登録</h1>
+  <div class="card">
+    <form id="form-case" onsubmit="return RC.saveCase(event)">
+      <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>物件種別</label>
+          <select name="type">
+            <option>マンション</option>
+            <option>戸建て</option>
+            <option>土地</option>
+            <option>投資用</option>
+            <option>店舗・事務所</option>
+          </select>
+        </div>
+        <div class="form-row"><label>ステータス</label>
+          <select name="status">
+            <option>見込み</option>
+            <option>商談中</option>
+            <option>内見予定</option>
+            <option>契約予定</option>
+            <option>成約</option>
+            <option>販売中止</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>販売価格</label><input name="price" inputmode="numeric" placeholder="5000（万円）"></div>
+        <div class="form-row"><label>賃料</label><input name="rent" inputmode="numeric" placeholder="15（万円/月）"></div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>管理費</label><input name="mgmt" inputmode="numeric" placeholder="0.8（万円）"></div>
+        <div class="form-row"><label>修繕積立金</label><input name="repair" inputmode="numeric" placeholder="1.2（万円）"></div>
+      </div>
+      <div class="form-row"><label>エリア</label><input name="area" placeholder="例: 東京都港区南青山"></div>
+      <div class="form-row"><label>間取り・広さ</label><input name="layout" placeholder="例: 3LDK / 75㎡"></div>
+      <div class="form-row"><label>築年数</label><input name="age" inputmode="numeric" placeholder="例: 5"></div>
+      <div class="form-row">
+        <label>オーナーチェンジ</label>
+        <select name="owner_change">
+          <option>該当なし</option>
+          <option>該当あり</option>
+        </select>
+      </div>
+      <div class="form-row"><label>メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
+      <div class="form-actions">
+        <a href="#cases" class="btn btn-secondary">キャンセル</a>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
+</section>
+
+<!-- 顧客 -->
+<section id="customers" class="section">
+  <span class="section-tag">👥 顧客</span>
+  <h1>顧客一覧 <span id="customers-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
+  <a href="#new-customer" class="btn btn-orange btn-block" style="margin-bottom:12px">➕ 新規顧客を登録</a>
+  <div id="customers-list"></div>
+  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
+</section>
+
+<!-- 新規顧客登録 -->
+<section id="new-customer" class="section">
+  <span class="section-tag">➕ 顧客登録</span>
+  <h1>新規顧客登録</h1>
+  <div class="card">
+    <form id="form-customer" onsubmit="return RC.saveCustomer(event)">
+      <div class="form-row"><label>お名前 <span style="color:#EF4444">*</span></label><input name="name" placeholder="例: 山田 太郎" required></div>
+      <div class="form-row"><label>フリガナ</label><input name="kana" placeholder="例: ヤマダ タロウ"></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>タグ</label>
+          <select name="tag">
+            <option>購入希望</option>
+            <option>売却希望</option>
+            <option>投資家</option>
+            <option>賃貸希望</option>
+            <option>見込み客</option>
+            <option>成約済</option>
+          </select>
+        </div>
+        <div class="form-row"><label>優先度</label>
+          <select name="priority">
+            <option>高</option>
+            <option>中</option>
+            <option>低</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row"><label>電話番号</label><input name="phone" type="tel" placeholder="090-1234-5678"></div>
+      <div class="form-row"><label>メールアドレス</label><input name="email" type="email" placeholder="example@mail.com"></div>
+      <div class="form-row"><label>住所</label><input name="address" placeholder="東京都港区..."></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>希望エリア</label><input name="want_area" placeholder="例: 港区・渋谷区"></div>
+        <div class="form-row"><label>希望予算</label><input name="want_budget" inputmode="numeric" placeholder="5000（万円）"></div>
+      </div>
+      <div class="form-row"><label>希望条件</label><textarea name="want_cond" placeholder="間取り、駅距離、築年数など" style="min-height:70px;resize:vertical"></textarea></div>
+      <div class="form-row"><label>メモ</label><textarea name="memo" placeholder="対応履歴、備考など" style="min-height:80px;resize:vertical"></textarea></div>
+      <div class="form-actions">
+        <a href="#customers" class="btn btn-secondary">キャンセル</a>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
+</section>
+
+<!-- SNS -->
+<section id="community" class="section">
+  <span class="section-tag">💬 SNS</span>
+  <h1>SNS <span id="posts-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
+
+  <div class="card">
+    <h2>💬 新規投稿</h2>
+    <form id="form-post" onsubmit="return RC.savePost(event)">
+      <div class="form-row">
+        <label>本文</label>
+        <textarea name="text" placeholder="今日の情報を共有..." style="min-height:80px;resize:vertical" required></textarea>
+      </div>
+      <div class="form-row">
+        <label>画像を添付（最大20枚）</label>
+        <input type="file" id="post-images" accept="image/*" multiple onchange="RC.previewPostImages(this)">
+        <div id="post-images-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:4px;margin-top:8px"></div>
+      </div>
+      <div class="form-row">
+        <label>タグ（カンマ区切り）</label>
+        <input name="tags" placeholder="#港区,#タワマン">
+      </div>
+      <div style="display:flex;gap:6px">
+        <button type="reset" class="btn btn-secondary" onclick="RC.clearPostForm()">クリア</button>
+        <button type="submit" class="btn btn-orange" style="flex:1">投稿する</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="posts-list"></div>
+  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
+</section>
+
+<!-- マイページ -->
+<section id="mypage" class="section">
+  <span class="section-tag">👤 マイページ</span>
+  <div class="profile-hero" id="profile-hero">
+    <div class="profile-avatar-big" id="profile-avatar-big">田</div>
+    <div class="profile-name" id="profile-name">田中 健一 ✓</div>
+    <div class="profile-company" id="profile-company">(株)グローバル不動産</div>
+    <div style="margin-top:6px"><span class="chip chip-orange" style="background:rgba(255,255,255,0.25);color:white" id="profile-role">営業部長</span></div>
+    <div style="margin-top:8px;font-size:12px">⭐ 4.8 (127件)</div>
+  </div>
+
+  <div class="profile-stats">
+    <div><div class="stat-num" id="stat-posts">0</div><div class="stat-label">投稿</div></div>
+    <div><div class="stat-num">1,250</div><div class="stat-label">フォロワー</div></div>
+    <div><div class="stat-num">380</div><div class="stat-label">フォロー中</div></div>
+  </div>
+
+  <details class="edit-details">
+    <summary><div class="edit-toggle">✏️ プロフィール編集</div></summary>
+    <div class="edit-body">
+      <form id="form-profile" onsubmit="return RC.saveProfile(event)">
+        <div class="form-row">
+          <label>顔写真</label>
+          <label class="file-slot">
+            <div class="file-preview" id="avatar-preview">タップして<br>写真を選択</div>
+            <input type="file" id="avatar-input" accept="image/*" onchange="RC.previewAvatar(this)">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>背景画像</label>
+          <label class="file-slot">
+            <div class="file-preview bg-preview" id="bg-preview">タップして背景画像を選択</div>
+            <input type="file" id="bg-input" accept="image/*" onchange="RC.previewBg(this)">
+          </label>
+        </div>
+        <div class="form-row"><label>お名前</label><input id="p-name" value="田中 健一"></div>
+        <div class="form-row"><label>会社名</label><input id="p-company" value="(株)グローバル不動産"></div>
+        <div class="form-row"><label>役職</label><input id="p-role" value="営業部長"></div>
+        <div class="form-row"><label>メール</label><input id="p-email" type="email" value="tanaka@global-re.co.jp"></div>
+        <div class="form-row"><label>電話</label><input id="p-phone" value="090-1234-5678"></div>
+        <div class="form-row"><label>エリア</label><input id="p-area" value="東京都港区"></div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="RC.cancelProfile()">キャンセル</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  <div class="card">
+    <h2>基本情報</h2>
+    <div style="font-size:13px;line-height:1.9" id="basic-info">
+      📧 tanaka@global-re.co.jp<br>
+      📞 090-1234-5678<br>
+      📍 東京都港区
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>メニュー</h2>
+    <div style="font-size:14px;line-height:2.4">
+      <div>📊 実績・分析</div>
+      <div>📌 保存した投稿</div>
+      <div>🏷️ タグ管理</div>
+      <div>🔔 通知設定</div>
+      <div>🔒 プライバシー</div>
+      <div>❓ ヘルプ・お問い合わせ</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="btn btn-danger btn-block" onclick="RC.resetAll()">🔄 全データを初期化</button>
+  </div>
+
+  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
+  <p style="text-align:center;color:#9CA3AF;font-size:11px;margin-top:16px">RE-Connect v7.0 © 2026</p>
+</section>
+
+</main>
+
+<nav class="bottom-nav">
+  <a href="#top" class="nav-btn"><span class="nav-icon">🏠</span>ホーム</a>
+  <a href="#cases" class="nav-btn"><span class="nav-icon">📊</span>案件</a>
+  <a href="#customers" class="nav-btn"><span class="nav-icon">👥</span>顧客</a>
+  <a href="#community" class="nav-btn"><span class="nav-icon">💬</span>SNS</a>
+  <a href="#mypage" class="nav-btn"><span class="nav-icon">👤</span>マイページ</a>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script>
+window.RC = {};
+RC.KEY = 're-connect-v7';
+
+RC.defaults = {
+  profile: {
+    name: '田中 健一', company: '(株)グローバル不動産', role: '営業部長',
+    email: 'tanaka@global-re.co.jp', phone: '090-1234-5678', area: '東京都港区',
+    avatarImage: '', bgImage: ''
+  },
+  cases: [
+    { id: 1, customer: '山田 太郎', type: 'マンション', status: '商談中', price: '5000', rent: '', area: '港区', layout: '3LDK/75㎡', date: '2026/07/22', memo: '' },
+    { id: 2, customer: '佐藤 花子', type: '戸建て', status: '内見予定', price: '7500', rent: '', area: '世田谷区', layout: '4LDK/120㎡', date: '2026/07/23', memo: '' },
+    { id: 3, customer: '鈴木 一郎', type: '投資用', status: '成約', price: '3000', rent: '', area: '新宿区', layout: '1K/25㎡', date: '2026/07/18', memo: '' },
+    { id: 4, customer: '高橋 恵子', type: 'マンション', status: '見込み', price: '4200', rent: '', area: '渋谷区', layout: '2LDK/60㎡', date: '2026/07/24', memo: '' }
+  ],
+  customers: [
+    { id: 1, name: '山田 太郎', tag: '購入希望', phone: '090-1111-2222', email: '', memo: '港区の3LDK希望', priority: '高' },
+    { id: 2, name: '佐藤 花子', tag: '購入希望', phone: '090-3333-4444', email: '', memo: '戸建て・世田谷区', priority: '中' },
+    { id: 3, name: '鈴木 一郎', tag: '投資家', phone: '090-5555-6666', email: '', memo: '利回り重視', priority: '高' }
+  ],
+  posts: [
+    { id: 1, user: '田中 健一', company: '(株)グローバル不動産', avatar: '田', avatarImage: '', text: '港区で新着物件が入りました！3LDK・タワーマンション・眺望◎ ご興味ある方はDMまで。', time: '2時間前', tags: ['#港区','#タワマン'], likes: 24, comments: 5, shares: 2, images: [], liked: false, isSample: true },
+    { id: 2, user: '佐藤 美咲', company: '東京ライフ不動産', avatar: '佐', avatarImage: '', text: '本日、成約1件！お客様のご希望にピッタリの物件が見つかりました。感謝です🙏', time: '5時間前', tags: ['#成約','#世田谷'], likes: 42, comments: 8, shares: 3, images: [], liked: false, isSample: true },
+    { id: 3, user: '山本 大輔', company: 'プレミアム不動産', avatar: '山', avatarImage: '', text: '投資用ワンルーム、都心5区の物件情報をまとめました。利回り5〜7%物件が中心です。', time: '昨日', tags: ['#投資','#ワンルーム'], likes: 68, comments: 12, shares: 15, images: [], liked: false, isSample: true }
+  ]
+};
+
+RC.data = null;
+RC._postDraftImages = [];
+RC._avatarDraft = null;
+RC._bgDraft = null;
+
+RC.load = function() {
+  try {
+    var raw = localStorage.getItem(RC.KEY);
+    if (raw) {
+      RC.data = JSON.parse(raw);
+    } else {
+      RC.data = JSON.parse(JSON.stringify(RC.defaults));
+    }
+  } catch (e) {
+    RC.data = JSON.parse(JSON.stringify(RC.defaults));
+  }
+  if (!RC.data.profile) RC.data.profile = JSON.parse(JSON.stringify(RC.defaults.profile));
+  if (!RC.data.cases) RC.data.cases = JSON.parse(JSON.stringify(RC.defaults.cases));
+  if (!RC.data.customers) RC.data.customers = JSON.parse(JSON.stringify(RC.defaults.customers));
+  if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
+};
+
+RC.save = function() {
+  try {
+    localStorage.setItem(RC.KEY, JSON.stringify(RC.data));
+    return true;
+  } catch (e) {
+    RC.toast('⚠️ 保存に失敗しました（容量制限の可能性）');
+    return false;
+  }
+};
+
+RC.esc = function(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(m) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+  });
+};
+
+RC.toast = function(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.style.display = 'none'; }, 2500);
+};
+
+RC.statusChipClass = function(status) {
+  var m = { '見込み':'chip-gray','商談中':'chip-orange','内見予定':'chip-info','契約予定':'chip-info','成約':'chip-success','販売中止':'chip-red' };
+  return m[status] || 'chip-gray';
+};
+
+RC.tagChipClass = function(tag) {
+  var m = { '購入希望':'chip-info','売却希望':'chip-orange','投資家':'chip-orange','賃貸希望':'chip-info','見込み客':'chip-gray','成約済':'chip-success' };
+  return m[tag] || 'chip-gray';
+};
+
+RC.renderHome = function() {
+  var cases = RC.data.cases || [];
+  var customers = RC.data.customers || [];
+  var progress = cases.filter(function(c){ return c.status !== '成約' && c.status !== '販売中止'; }).length;
+  var closed = cases.filter(function(c){ return c.status === '成約'; }).length;
+  var neg = cases.filter(function(c){ return c.status === '商談中' || c.status === '内見予定' || c.status === '契約予定'; }).length;
+  var prospects = customers.filter(function(c){ return c.tag === '購入希望' || c.tag === '見込み客'; }).length;
+
+  var $p = document.getElementById('kpi-progress'); if ($p) $p.textContent = progress;
+  var $c = document.getElementById('kpi-closed'); if ($c) $c.textContent = closed;
+  var $n = document.getElementById('kpi-negotiating'); if ($n) $n.textContent = neg;
+  var $u = document.getElementById('kpi-customers'); if ($u) $u.textContent = prospects;
+
+  var tl = document.getElementById('home-timeline');
+  if (tl) {
+    var posts = (RC.data.posts || []).slice(0, 3);
+    if (posts.length === 0) {
+      tl.innerHTML = '<div class="empty-state">投稿がありません</div>';
+    } else {
+      tl.innerHTML = posts.map(function(p) {
+        var thumb;
+        if (p.images && p.images.length > 0) {
+          thumb = '<div class="timeline-thumb"><img src="' + p.images[0] + '" alt=""></div>';
+        } else {
+          thumb = '<div class="timeline-thumb">💬</div>';
+        }
+        return '<div class="timeline-item">' + thumb +
+          '<div class="timeline-body">' +
+            '<div class="timeline-name">' + RC.esc(p.user) + ' ・ <span style="color:#64748B;font-weight:400">' + RC.esc(p.time) + '</span></div>' +
+            '<div class="timeline-text">' + RC.esc(p.text) + '</div>' +
+          '</div></div>';
+      }).join('');
+    }
+  }
+
+  var today = new Date();
+  var dow = ['日','月','火','水','木','金','土'][today.getDay()];
+  var tl2 = document.getElementById('today-label');
+  if (tl2) tl2.textContent = today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日 '+dow+'曜日';
+};
+
+RC.renderCases = function() {
+  var list = document.getElementById('cases-list');
+  var count = document.getElementById('cases-count');
+  if (!list) return;
+  var cases = RC.data.cases || [];
+  if (count) count.textContent = '(' + cases.length + '件)';
+  if (cases.length === 0) {
+    list.innerHTML = '<div class="empty-state">案件がまだ登録されていません。<br>「➕ 新規案件を登録」から追加してください。</div>';
+    return;
+  }
+  list.innerHTML = cases.slice().reverse().map(function(c) {
+    var price = c.price ? c.price + '万円' : (c.rent ? c.rent + '万円/月' : '');
+    var meta = [c.type, price, c.area].filter(function(x){return x;}).join(' ・ ');
+    return '<div class="list-item">' +
+      '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
+      '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
+      '<div class="list-item-meta">' + RC.esc(meta) + '</div>' +
+      (c.layout ? '<div class="list-item-meta">' + RC.esc(c.layout) + '</div>' : '') +
+      (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
+      '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
+    '</div>';
+  }).join('');
+};
+
+RC.renderCustomers = function() {
+  var list = document.getElementById('customers-list');
+  var count = document.getElementById('customers-count');
+  if (!list) return;
+  var customers = RC.data.customers || [];
+  if (count) count.textContent = '(' + customers.length + '名)';
+  if (customers.length === 0) {
+    list.innerHTML = '<div class="empty-state">顧客がまだ登録されていません。<br>「➕ 新規顧客を登録」から追加してください。</div>';
+    return;
+  }
+  list.innerHTML = customers.slice().reverse().map(function(c) {
+    return '<div class="list-item">' +
+      '<button class="list-item-del" onclick="RC.delCustomer(' + c.id + ')">削除</button>' +
+      '<div class="list-item-head"><strong>' + RC.esc(c.name) + '</strong><span class="chip ' + RC.tagChipClass(c.tag) + '">' + RC.esc(c.tag) + '</span></div>' +
+      (c.phone ? '<div class="list-item-meta">📞 ' + RC.esc(c.phone) + '</div>' : '') +
+      (c.email ? '<div class="list-item-meta">📧 ' + RC.esc(c.email) + '</div>' : '') +
+      (c.memo ? '<div class="list-item-meta" style="margin-top:4px">' + RC.esc(c.memo) + '</div>' : '') +
+    '</div>';
+  }).join('');
+};
+
+RC.renderPosts = function() {
+  var list = document.getElementById('posts-list');
+  var count = document.getElementById('posts-count');
+  if (!list) return;
+  var posts = RC.data.posts || [];
+  if (count) count.textContent = '(' + posts.length + '件)';
+  if (posts.length === 0) {
+    list.innerHTML = '<div class="empty-state">投稿がまだありません</div>';
+    return;
+  }
+  list.innerHTML = posts.map(function(p) {
+    var avHtml;
+    if (p.avatarImage) {
+      avHtml = '<div class="avatar"><img src="' + p.avatarImage + '" alt=""></div>';
+    } else {
+      avHtml = '<div class="avatar" style="background:' + (p.avatarColor || '#1E3A8A') + '">' + RC.esc(p.avatar) + '</div>';
+    }
+    var imgHtml = '';
+    if (p.images && p.images.length > 0) {
+      if (p.images.length === 1) {
+        imgHtml = '<div class="post-image"><img src="' + p.images[0] + '" alt=""></div>';
+      } else {
+        var cls = 'g' + Math.min(p.images.length, 4);
+        imgHtml = '<div class="post-image-grid ' + cls + '">' + p.images.slice(0, 4).map(function(img) {
+          return '<img src="' + img + '" alt="">';
+        }).join('') + '</div>';
+      }
+    }
+    var tagsHtml = (p.tags || []).map(function(t){ return '<span class="post-tag">' + RC.esc(t) + '</span>'; }).join('');
+    var delBtn = p.isSample ? '' : '<button class="post-del" onclick="RC.delPost(' + p.id + ')">削除</button>';
+    return '<div class="post">' + delBtn +
+      '<div class="post-header">' + avHtml +
+        '<div class="post-user">' +
+          '<div class="post-user-name">' + RC.esc(p.user) + '</div>' +
+          '<div class="post-user-company">' + RC.esc(p.company) + '</div>' +
+          '<div class="post-time">' + RC.esc(p.time) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="post-text">' + RC.esc(p.text) + '</div>' +
+      imgHtml +
+      (tagsHtml ? '<div class="post-tags">' + tagsHtml + '</div>' : '') +
+      '<div class="post-actions">' +
+        '<button class="post-action ' + (p.liked ? 'liked' : '') + '" onclick="RC.toggleLike(' + p.id + ')">❤️ ' + p.likes + '</button>' +
+        '<button class="post-action" onclick="RC.toast(\'コメント機能は次期実装\')">💬 ' + p.comments + '</button>' +
+        '<button class="post-action" onclick="RC.sharePost(' + p.id + ')">🔄 ' + p.shares + '</button>' +
+      '</div></div>';
+  }).join('');
+};
+
+RC.renderProfile = function() {
+  var pr = RC.data.profile;
+  var avEl = document.getElementById('profile-avatar-big');
+  if (avEl) {
+    if (pr.avatarImage) avEl.innerHTML = '<img src="' + pr.avatarImage + '" alt="">';
+    else avEl.textContent = (pr.name || '田').charAt(0);
+  }
+  var haEl = document.getElementById('header-avatar');
+  if (haEl) {
+    if (pr.avatarImage) haEl.innerHTML = '<img src="' + pr.avatarImage + '" alt="">';
+    else haEl.textContent = (pr.name || '田').charAt(0);
+  }
+  var hero = document.getElementById('profile-hero');
+  if (hero) {
+    if (pr.bgImage) {
+      hero.style.backgroundImage = "linear-gradient(135deg,rgba(30,58,138,0.4),rgba(255,122,69,0.4)),url('" + pr.bgImage.replace(/'/g,'%27') + "')";
+    } else {
+      hero.style.backgroundImage = '';
+    }
+  }
+  var $n = document.getElementById('profile-name'); if ($n) $n.innerHTML = RC.esc(pr.name) + ' ✓';
+  var $c = document.getElementById('profile-company'); if ($c) $c.textContent = pr.company;
+  var $r = document.getElementById('profile-role'); if ($r) $r.textContent = pr.role;
+  var $bi = document.getElementById('basic-info');
+  if ($bi) $bi.innerHTML = '📧 ' + RC.esc(pr.email) + '<br>📞 ' + RC.esc(pr.phone) + '<br>📍 ' + RC.esc(pr.area);
+  var $sp = document.getElementById('stat-posts');
+  if ($sp) $sp.textContent = (RC.data.posts || []).filter(function(p){ return !p.isSample; }).length + 42;
+  /* フォーム側にも反映 */
+  var fields = { 'p-name':pr.name, 'p-company':pr.company, 'p-role':pr.role, 'p-email':pr.email, 'p-phone':pr.phone, 'p-area':pr.area };
+  for (var id in fields) {
+    var el = document.getElementById(id);
+    if (el && document.activeElement !== el) el.value = fields[id];
+  }
+  var ap = document.getElementById('avatar-preview');
+  if (ap && pr.avatarImage) {
+    ap.style.backgroundImage = "url('" + pr.avatarImage.replace(/'/g,'%27') + "')";
+    ap.style.borderStyle = 'solid';
+    ap.innerHTML = '';
+  }
+  var bp = document.getElementById('bg-preview');
+  if (bp && pr.bgImage) {
+    bp.style.backgroundImage = "url('" + pr.bgImage.replace(/'/g,'%27') + "')";
+    bp.style.borderStyle = 'solid';
+    bp.innerHTML = '';
+  }
+};
+
+RC.renderAll = function() {
+  try {
+    RC.renderHome();
+    RC.renderCases();
+    RC.renderCustomers();
+    RC.renderPosts();
+    RC.renderProfile();
+  } catch (e) {
+    if (window.console) console.error('render error', e);
+  }
+};
+
+RC.readFile = function(file, cb) {
+  var r = new FileReader();
+  r.onload = function(e){ cb(String(e.target.result || '')); };
+  r.onerror = function(){ cb(null); };
+  r.readAsDataURL(file);
+};
+
+RC.saveCase = function(ev) {
+  ev.preventDefault();
+  var form = ev.target;
+  var d = new Date();
+  var dateStr = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+  var newCase = {
+    id: Date.now(),
+    customer: form.customer.value.trim(),
+    type: form.type.value,
+    status: form.status.value,
+    price: form.price.value.trim(),
+    rent: form.rent.value.trim(),
+    mgmt: form.mgmt.value.trim(),
+    repair: form.repair.value.trim(),
+    area: form.area.value.trim(),
+    layout: form.layout.value.trim(),
+    age: form.age.value.trim(),
+    owner_change: form.owner_change.value,
+    memo: form.memo.value.trim(),
+    date: dateStr
+  };
+  if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
+  RC.data.cases.push(newCase);
+  RC.save();
+  RC.renderAll();
+  form.reset();
+  RC.toast('✓ 案件を登録しました');
+  setTimeout(function(){ location.hash = '#cases'; }, 300);
+  return false;
+};
+
+RC.delCase = function(id) {
+  if (!confirm('この案件を削除しますか？')) return;
+  RC.data.cases = RC.data.cases.filter(function(c){ return c.id !== id; });
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ 削除しました');
+};
+
+RC.saveCustomer = function(ev) {
+  ev.preventDefault();
+  var form = ev.target;
+  var newC = {
+    id: Date.now(),
+    name: form.name.value.trim(),
+    kana: form.kana.value.trim(),
+    tag: form.tag.value,
+    priority: form.priority.value,
+    phone: form.phone.value.trim(),
+    email: form.email.value.trim(),
+    address: form.address.value.trim(),
+    want_area: form.want_area.value.trim(),
+    want_budget: form.want_budget.value.trim(),
+    want_cond: form.want_cond.value.trim(),
+    memo: form.memo.value.trim()
+  };
+  if (!newC.name) { RC.toast('お名前は必須です'); return false; }
+  RC.data.customers.push(newC);
+  RC.save();
+  RC.renderAll();
+  form.reset();
+  RC.toast('✓ 顧客を登録しました');
+  setTimeout(function(){ location.hash = '#customers'; }, 300);
+  return false;
+};
+
+RC.delCustomer = function(id) {
+  if (!confirm('この顧客を削除しますか？')) return;
+  RC.data.customers = RC.data.customers.filter(function(c){ return c.id !== id; });
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ 削除しました');
+};
+
+RC.previewPostImages = function(input) {
+  var files = input.files || [];
+  RC._postDraftImages = [];
+  var pv = document.getElementById('post-images-preview');
+  if (pv) pv.innerHTML = '';
+  var max = Math.min(files.length, 20);
+  var loaded = 0;
+  for (var i = 0; i < max; i++) {
+    (function(f){
+      RC.readFile(f, function(dataUrl) {
+        if (dataUrl) {
+          RC._postDraftImages.push(dataUrl);
+          if (pv) {
+            var d = document.createElement('div');
+            d.style.cssText = 'width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;background:#F1F5F9';
+            d.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover" alt="">';
+            pv.appendChild(d);
+          }
+        }
+        loaded++;
+      });
+    })(files[i]);
+  }
+};
+
+RC.clearPostForm = function() {
+  RC._postDraftImages = [];
+  var pv = document.getElementById('post-images-preview');
+  if (pv) pv.innerHTML = '';
+};
+
+RC.savePost = function(ev) {
+  ev.preventDefault();
+  var form = ev.target;
+  var text = form.text.value.trim();
+  if (!text && RC._postDraftImages.length === 0) { RC.toast('本文か画像を入力してください'); return false; }
+  var tagsRaw = form.tags.value.trim();
+  var tags = tagsRaw ? tagsRaw.split(/[,、\s]+/).filter(function(x){return x;}).map(function(x){ return x.charAt(0) === '#' ? x : '#' + x; }) : [];
+  var pr = RC.data.profile;
+  var newPost = {
+    id: Date.now(),
+    user: pr.name,
+    company: pr.company,
+    avatar: (pr.name || '田').charAt(0),
+    avatarImage: pr.avatarImage || '',
+    text: text,
+    time: 'たった今',
+    tags: tags,
+    likes: 0, comments: 0, shares: 0,
+    images: RC._postDraftImages.slice(),
+    liked: false,
+    isSample: false
+  };
+  RC.data.posts.unshift(newPost);
+  RC._postDraftImages = [];
+  RC.save();
+  RC.renderAll();
+  form.reset();
+  var pv = document.getElementById('post-images-preview');
+  if (pv) pv.innerHTML = '';
+  RC.toast('✓ 投稿しました');
+  return false;
+};
+
+RC.delPost = function(id) {
+  if (!confirm('この投稿を削除しますか？')) return;
+  RC.data.posts = RC.data.posts.filter(function(p){ return p.id !== id; });
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ 削除しました');
+};
+
+RC.toggleLike = function(id) {
+  var p = null;
+  for (var i = 0; i < RC.data.posts.length; i++) {
+    if (RC.data.posts[i].id === id) { p = RC.data.posts[i]; break; }
+  }
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes += p.liked ? 1 : -1;
+  if (p.likes < 0) p.likes = 0;
+  RC.save();
+  RC.renderPosts();
+};
+
+RC.sharePost = function(id) {
+  var p = null;
+  for (var i = 0; i < RC.data.posts.length; i++) {
+    if (RC.data.posts[i].id === id) { p = RC.data.posts[i]; break; }
+  }
+  if (!p) return;
+  p.shares = (p.shares || 0) + 1;
+  RC.save();
+  RC.renderPosts();
+  RC.toast('✓ シェアしました');
+};
+
+RC.previewAvatar = function(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  RC.readFile(f, function(dataUrl) {
+    if (!dataUrl) return;
+    RC._avatarDraft = dataUrl;
+    var ap = document.getElementById('avatar-preview');
+    if (ap) {
+      ap.style.backgroundImage = "url('" + dataUrl.replace(/'/g,'%27') + "')";
+      ap.style.borderStyle = 'solid';
+      ap.innerHTML = '';
+    }
+  });
+};
+
+RC.previewBg = function(input) {
+  var f = input.files && input.files[0];
+  if (!f) return;
+  RC.readFile(f, function(dataUrl) {
+    if (!dataUrl) return;
+    RC._bgDraft = dataUrl;
+    var bp = document.getElementById('bg-preview');
+    if (bp) {
+      bp.style.backgroundImage = "url('" + dataUrl.replace(/'/g,'%27') + "')";
+      bp.style.borderStyle = 'solid';
+      bp.innerHTML = '';
+    }
+  });
+};
+
+RC.saveProfile = function(ev) {
+  ev.preventDefault();
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  var pr = RC.data.profile;
+  pr.name = g('p-name') || pr.name;
+  pr.company = g('p-company') || pr.company;
+  pr.role = g('p-role') || pr.role;
+  pr.email = g('p-email') || pr.email;
+  pr.phone = g('p-phone') || pr.phone;
+  pr.area = g('p-area') || pr.area;
+  if (RC._avatarDraft) { pr.avatarImage = RC._avatarDraft; RC._avatarDraft = null; }
+  if (RC._bgDraft) { pr.bgImage = RC._bgDraft; RC._bgDraft = null; }
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ プロフィールを保存しました');
+  var det = document.querySelector('details.edit-details');
+  if (det) det.open = false;
+  return false;
+};
+
+RC.cancelProfile = function() {
+  RC._avatarDraft = null;
+  RC._bgDraft = null;
+  RC.renderProfile();
+  var det = document.querySelector('details.edit-details');
+  if (det) det.open = false;
+};
+
+RC.resetAll = function() {
+  if (!confirm('全てのデータを初期化しますか？\n（登録した案件・顧客・投稿・プロフィールがすべて消えます）')) return;
+  try { localStorage.removeItem(RC.KEY); } catch(e) {}
+  RC.data = JSON.parse(JSON.stringify(RC.defaults));
+  RC.save();
+  RC.renderAll();
+  RC.toast('✓ 初期化しました');
+  location.hash = '#top';
+};
+
+RC.boot = function() {
+  try {
+    RC.load();
+    RC.renderAll();
+  } catch (e) {
+    if (window.console) console.error('boot error', e);
+  }
+};
+
+/* 起動 */
+RC.boot();
+document.addEventListener('DOMContentLoaded', RC.boot);
+window.addEventListener('load', RC.boot);
+</script>
+
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
+</html>

@@ -17,20 +17,22 @@ summary{cursor:pointer;list-style:none;outline:none}
 summary::-webkit-details-marker{display:none}
 
 .header{position:sticky;top:0;z-index:40;background:#1E3A8A;color:white;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
-.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;cursor:pointer}
 .logo-icon{width:32px;height:32px;border-radius:8px;background:#FF7A45;color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
 .header-actions{display:flex;gap:10px;align-items:center}
 .badge-bell{position:relative;color:white;font-size:20px;padding:6px}
 .badge-bell::after{content:"3";position:absolute;top:-4px;right:-6px;background:#EF4444;color:white;font-size:10px;min-width:16px;height:16px;border-radius:999px;padding:0 4px;display:flex;align-items:center;justify-content:center;font-weight:700}
-.header-avatar{width:36px;height:36px;border-radius:999px;background:#FF7A45;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden}
+.header-avatar{width:36px;height:36px;border-radius:999px;background:#FF7A45;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;cursor:pointer}
 .header-avatar img{width:100%;height:100%;object-fit:cover}
 
 main{padding:16px;max-width:900px;margin:0 auto}
-.section{scroll-margin-top:60px;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #E5E7EB}
-.section:last-child{border-bottom:none}
+/* 各ページは独立表示。デフォルトすべて非表示、activeのみ表示 */
+.page{display:none}
+.page.active{display:block}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:white;border-top:1px solid #E5E7EB;display:flex;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto}
-.nav-btn{flex:1 0 auto;min-width:60px;padding:8px 4px;font-size:10px;color:#64748B;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;justify-content:center;text-align:center}
+.nav-btn{flex:1 0 auto;min-width:60px;padding:8px 4px;font-size:10px;color:#64748B;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;justify-content:center;text-align:center;background:none;border:none}
+.nav-btn.active{color:#FF7A45;font-weight:700}
 .nav-icon{font-size:20px;line-height:1}
 
 .card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
@@ -64,7 +66,7 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .list-item-sub{font-size:11px;color:#9CA3AF;margin-top:4px}
 .list-item-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none}
 
-.post{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.post{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative}
 .post-header{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
 .avatar{width:40px;height:40px;border-radius:999px;background:#1E3A8A;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -75,7 +77,6 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .post-text{font-size:14px;margin:8px 0;word-break:break-word;white-space:pre-wrap}
 .post-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .post-tag{font-size:11px;color:#1E40AF}
-.post-image-emoji{border-radius:8px;background:linear-gradient(135deg,#1E3A8A20,#FF7A4520);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;font-size:40px;margin:8px 0}
 .post-image{border-radius:8px;overflow:hidden;margin:8px 0;background:#F1F5F9}
 .post-image img{width:100%;height:auto;display:block}
 .post-image-grid{display:grid;gap:4px;margin:8px 0}
@@ -87,9 +88,8 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .post-action{flex:1;padding:8px;font-size:12px;color:#64748B;border-radius:6px;background:none;border:none;cursor:pointer}
 .post-action.liked{color:#EF4444;font-weight:700}
 .post-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none;z-index:2}
-.post{position:relative}
 
-.timeline-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #F1F5F9;align-items:center}
+.timeline-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #F1F5F9;align-items:center;cursor:pointer}
 .timeline-item:last-child{border-bottom:none}
 .timeline-thumb{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,#1E3A8A20,#FF7A4520);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden}
 .timeline-thumb img{width:100%;height:100%;object-fit:cover}
@@ -114,8 +114,6 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .form-actions .btn{flex:1}
 .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-.section-tag{display:inline-block;background:#1E3A8A;color:white;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px}
-
 .edit-toggle{display:block;background:linear-gradient(135deg,#1E3A8A,#FF7A45);color:white;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(30,58,138,0.25)}
 .edit-toggle::after{content:"　▼ タップで開く";font-size:11px;opacity:0.85;font-weight:400}
 details[open] .edit-toggle::after{content:"　▲ タップで閉じる"}
@@ -127,34 +125,51 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .file-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;width:100%;height:100%}
 .file-preview{width:100px;height:100px;border-radius:999px;background:#F3F4F6;border:2px dashed #CBD5E1;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:11px;overflow:hidden;text-align:center;padding:6px;background-size:cover;background-position:center}
 .file-preview.bg-preview{width:100%;height:120px;border-radius:8px}
-.file-preview img{width:100%;height:100%;object-fit:cover}
 
 .toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:white;padding:10px 20px;border-radius:999px;font-size:13px;z-index:200;display:none;max-width:90%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
 
 .empty-state{text-align:center;padding:30px 20px;color:#94A3B8;font-size:13px}
 
+.page-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:8px}
+.page-title-row h1{margin:0;padding:0}
+.count-label{font-size:12px;color:#64748B;font-weight:400}
+
 @media (min-width:768px){.kpi-grid{grid-template-columns:repeat(4,1fr)}.nav-btn{font-size:12px}.nav-icon{font-size:22px}}
 </style>
 </head>
-<body id="top">
+<body>
 
 <header class="header">
-  <a href="#top" class="logo">
+  <div class="logo" onclick="RC.go('home')">
     <div class="logo-icon">R</div><span>RE-Connect</span>
-  </a>
+  </div>
   <div class="header-actions">
     <span class="badge-bell">🔔</span>
-    <a href="#mypage" class="header-avatar" id="header-avatar">田</a>
+    <div class="header-avatar" id="header-avatar" onclick="RC.go('mypage')">田</div>
   </div>
 </header>
 
 <main>
 
 <!-- ホーム -->
-<section id="home" class="section">
-  <span class="section-tag">🏠 ホーム</span>
+<div class="page" id="page-home">
   <h1>ホーム</h1>
   <p style="color:#64748B;font-size:12px;margin-bottom:12px" id="today-label">2026年7月24日 金曜日</p>
+
+  <div class="card">
+    <h2>📅 今日の予定</h2>
+    <div style="font-size:13px;line-height:2">
+      <div>🕑 14:00 販売中確認</div>
+      <div>🕓 16:00 商談フォロー</div>
+      <div>🕕 18:00 契約予定確認</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📡 業界タイムライン</h2>
+    <div id="home-timeline"></div>
+    <button class="btn btn-secondary btn-block" style="margin-top:10px" onclick="RC.go('community')">すべて見る →</button>
+  </div>
 
   <div class="kpi-grid">
     <div class="kpi"><div class="kpi-num" id="kpi-progress">0</div><div class="kpi-label">進行中案件</div></div>
@@ -166,63 +181,39 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <div class="card">
     <h2>⚡ クイックアクション</h2>
     <div class="btn-grid">
-      <a href="#new-case" class="btn btn-orange">➕ 案件登録</a>
-      <a href="#new-customer" class="btn btn-orange">➕ 顧客登録</a>
-      <a href="#community" class="btn btn-primary">💬 SNS投稿</a>
-      <a href="#mypage" class="btn btn-secondary">👤 マイページ</a>
+      <button class="btn btn-orange" onclick="RC.go('new-case')">➕ 案件登録</button>
+      <button class="btn btn-orange" onclick="RC.go('new-customer')">➕ 顧客登録</button>
+      <button class="btn btn-primary" onclick="RC.go('community')">💬 SNS投稿</button>
+      <button class="btn btn-secondary" onclick="RC.go('mypage')">👤 マイページ</button>
     </div>
   </div>
+</div>
 
-  <div class="card">
-    <h2>📡 業界タイムライン</h2>
-    <div id="home-timeline"></div>
-    <a href="#community" class="btn btn-secondary btn-block" style="margin-top:10px">すべて見る →</a>
+<!-- 案件一覧 -->
+<div class="page" id="page-cases">
+  <div class="page-title-row">
+    <h1>案件一覧</h1>
+    <span class="count-label" id="cases-count"></span>
   </div>
-
-  <div class="card">
-    <h2>📅 今日の予定</h2>
-    <div style="font-size:13px;line-height:2">
-      <div>🕑 14:00 販売中確認</div>
-      <div>🕓 16:00 商談フォロー</div>
-      <div>🕕 18:00 契約予定確認</div>
-    </div>
-  </div>
-</section>
-
-<!-- 案件 -->
-<section id="cases" class="section">
-  <span class="section-tag">📊 案件</span>
-  <h1>案件一覧 <span id="cases-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
-  <a href="#new-case" class="btn btn-orange btn-block" style="margin-bottom:12px">➕ 新規案件を登録</a>
+  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.go('new-case')">➕ 新規案件を登録</button>
   <div id="cases-list"></div>
-  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
-</section>
+</div>
 
 <!-- 新規案件登録 -->
-<section id="new-case" class="section">
-  <span class="section-tag">➕ 案件登録</span>
-  <h1>新規案件登録</h1>
+<div class="page" id="page-new-case">
+  <h1>➕ 新規案件登録</h1>
   <div class="card">
     <form id="form-case" onsubmit="return RC.saveCase(event)">
       <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
       <div class="form-grid-2">
         <div class="form-row"><label>物件種別</label>
           <select name="type">
-            <option>マンション</option>
-            <option>戸建て</option>
-            <option>土地</option>
-            <option>投資用</option>
-            <option>店舗・事務所</option>
+            <option>マンション</option><option>戸建て</option><option>土地</option><option>投資用</option><option>店舗・事務所</option>
           </select>
         </div>
         <div class="form-row"><label>ステータス</label>
           <select name="status">
-            <option>見込み</option>
-            <option>商談中</option>
-            <option>内見予定</option>
-            <option>契約予定</option>
-            <option>成約</option>
-            <option>販売中止</option>
+            <option>見込み</option><option>商談中</option><option>内見予定</option><option>契約予定</option><option>成約</option><option>販売中止</option>
           </select>
         </div>
       </div>
@@ -239,55 +230,40 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       <div class="form-row"><label>築年数</label><input name="age" inputmode="numeric" placeholder="例: 5"></div>
       <div class="form-row">
         <label>オーナーチェンジ</label>
-        <select name="owner_change">
-          <option>該当なし</option>
-          <option>該当あり</option>
-        </select>
+        <select name="owner_change"><option>該当なし</option><option>該当あり</option></select>
       </div>
       <div class="form-row"><label>メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
       <div class="form-actions">
-        <a href="#cases" class="btn btn-secondary">キャンセル</a>
+        <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
       </div>
     </form>
   </div>
-  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
-</section>
+</div>
 
-<!-- 顧客 -->
-<section id="customers" class="section">
-  <span class="section-tag">👥 顧客</span>
-  <h1>顧客一覧 <span id="customers-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
-  <a href="#new-customer" class="btn btn-orange btn-block" style="margin-bottom:12px">➕ 新規顧客を登録</a>
+<!-- 顧客一覧 -->
+<div class="page" id="page-customers">
+  <div class="page-title-row">
+    <h1>顧客一覧</h1>
+    <span class="count-label" id="customers-count"></span>
+  </div>
+  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.go('new-customer')">➕ 新規顧客を登録</button>
   <div id="customers-list"></div>
-  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
-</section>
+</div>
 
 <!-- 新規顧客登録 -->
-<section id="new-customer" class="section">
-  <span class="section-tag">➕ 顧客登録</span>
-  <h1>新規顧客登録</h1>
+<div class="page" id="page-new-customer">
+  <h1>➕ 新規顧客登録</h1>
   <div class="card">
     <form id="form-customer" onsubmit="return RC.saveCustomer(event)">
       <div class="form-row"><label>お名前 <span style="color:#EF4444">*</span></label><input name="name" placeholder="例: 山田 太郎" required></div>
       <div class="form-row"><label>フリガナ</label><input name="kana" placeholder="例: ヤマダ タロウ"></div>
       <div class="form-grid-2">
         <div class="form-row"><label>タグ</label>
-          <select name="tag">
-            <option>購入希望</option>
-            <option>売却希望</option>
-            <option>投資家</option>
-            <option>賃貸希望</option>
-            <option>見込み客</option>
-            <option>成約済</option>
-          </select>
+          <select name="tag"><option>購入希望</option><option>売却希望</option><option>投資家</option><option>賃貸希望</option><option>見込み客</option><option>成約済</option></select>
         </div>
         <div class="form-row"><label>優先度</label>
-          <select name="priority">
-            <option>高</option>
-            <option>中</option>
-            <option>低</option>
-          </select>
+          <select name="priority"><option>高</option><option>中</option><option>低</option></select>
         </div>
       </div>
       <div class="form-row"><label>電話番号</label><input name="phone" type="tel" placeholder="090-1234-5678"></div>
@@ -300,18 +276,19 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       <div class="form-row"><label>希望条件</label><textarea name="want_cond" placeholder="間取り、駅距離、築年数など" style="min-height:70px;resize:vertical"></textarea></div>
       <div class="form-row"><label>メモ</label><textarea name="memo" placeholder="対応履歴、備考など" style="min-height:80px;resize:vertical"></textarea></div>
       <div class="form-actions">
-        <a href="#customers" class="btn btn-secondary">キャンセル</a>
+        <button type="button" class="btn btn-secondary" onclick="RC.go('customers')">キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
       </div>
     </form>
   </div>
-  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
-</section>
+</div>
 
 <!-- SNS -->
-<section id="community" class="section">
-  <span class="section-tag">💬 SNS</span>
-  <h1>SNS <span id="posts-count" style="font-size:12px;color:#64748B;font-weight:400"></span></h1>
+<div class="page" id="page-community">
+  <div class="page-title-row">
+    <h1>SNS</h1>
+    <span class="count-label" id="posts-count"></span>
+  </div>
 
   <div class="card">
     <h2>💬 新規投稿</h2>
@@ -325,10 +302,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <input type="file" id="post-images" accept="image/*" multiple onchange="RC.previewPostImages(this)">
         <div id="post-images-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:4px;margin-top:8px"></div>
       </div>
-      <div class="form-row">
-        <label>タグ（カンマ区切り）</label>
-        <input name="tags" placeholder="#港区,#タワマン">
-      </div>
+      <div class="form-row"><label>タグ（カンマ区切り）</label><input name="tags" placeholder="#港区,#タワマン"></div>
       <div style="display:flex;gap:6px">
         <button type="reset" class="btn btn-secondary" onclick="RC.clearPostForm()">クリア</button>
         <button type="submit" class="btn btn-orange" style="flex:1">投稿する</button>
@@ -337,12 +311,10 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   </div>
 
   <div id="posts-list"></div>
-  <a href="#top" class="btn btn-secondary btn-block" style="margin-top:10px">↑ ホームに戻る</a>
-</section>
+</div>
 
 <!-- マイページ -->
-<section id="mypage" class="section">
-  <span class="section-tag">👤 マイページ</span>
+<div class="page" id="page-mypage">
   <div class="profile-hero" id="profile-hero">
     <div class="profile-avatar-big" id="profile-avatar-big">田</div>
     <div class="profile-name" id="profile-name">田中 健一 ✓</div>
@@ -392,9 +364,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <div class="card">
     <h2>基本情報</h2>
     <div style="font-size:13px;line-height:1.9" id="basic-info">
-      📧 tanaka@global-re.co.jp<br>
-      📞 090-1234-5678<br>
-      📍 東京都港区
+      📧 tanaka@global-re.co.jp<br>📞 090-1234-5678<br>📍 東京都港区
     </div>
   </div>
 
@@ -414,25 +384,25 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
     <button class="btn btn-danger btn-block" onclick="RC.resetAll()">🔄 全データを初期化</button>
   </div>
 
-  <a href="#top" class="btn btn-secondary btn-block">↑ ホームに戻る</a>
-  <p style="text-align:center;color:#9CA3AF;font-size:11px;margin-top:16px">RE-Connect v7.0 © 2026</p>
-</section>
+  <p style="text-align:center;color:#9CA3AF;font-size:11px;margin-top:16px">RE-Connect v8.0 © 2026</p>
+</div>
 
 </main>
 
 <nav class="bottom-nav">
-  <a href="#top" class="nav-btn"><span class="nav-icon">🏠</span>ホーム</a>
-  <a href="#cases" class="nav-btn"><span class="nav-icon">📊</span>案件</a>
-  <a href="#customers" class="nav-btn"><span class="nav-icon">👥</span>顧客</a>
-  <a href="#community" class="nav-btn"><span class="nav-icon">💬</span>SNS</a>
-  <a href="#mypage" class="nav-btn"><span class="nav-icon">👤</span>マイページ</a>
+  <button class="nav-btn" data-view="home" onclick="RC.go('home')"><span class="nav-icon">🏠</span>ホーム</button>
+  <button class="nav-btn" data-view="cases" onclick="RC.go('cases')"><span class="nav-icon">📊</span>案件</button>
+  <button class="nav-btn" data-view="customers" onclick="RC.go('customers')"><span class="nav-icon">👥</span>顧客</button>
+  <button class="nav-btn" data-view="community" onclick="RC.go('community')"><span class="nav-icon">💬</span>SNS</button>
+  <button class="nav-btn" data-view="mypage" onclick="RC.go('mypage')"><span class="nav-icon">👤</span>マイページ</button>
 </nav>
 
 <div id="toast" class="toast"></div>
 
 <script>
 window.RC = {};
-RC.KEY = 're-connect-v7';
+RC.KEY = 're-connect-v8';
+RC.currentView = 'home';
 
 RC.defaults = {
   profile: {
@@ -453,8 +423,8 @@ RC.defaults = {
   ],
   posts: [
     { id: 1, user: '田中 健一', company: '(株)グローバル不動産', avatar: '田', avatarImage: '', text: '港区で新着物件が入りました！3LDK・タワーマンション・眺望◎ ご興味ある方はDMまで。', time: '2時間前', tags: ['#港区','#タワマン'], likes: 24, comments: 5, shares: 2, images: [], liked: false, isSample: true },
-    { id: 2, user: '佐藤 美咲', company: '東京ライフ不動産', avatar: '佐', avatarImage: '', text: '本日、成約1件！お客様のご希望にピッタリの物件が見つかりました。感謝です🙏', time: '5時間前', tags: ['#成約','#世田谷'], likes: 42, comments: 8, shares: 3, images: [], liked: false, isSample: true },
-    { id: 3, user: '山本 大輔', company: 'プレミアム不動産', avatar: '山', avatarImage: '', text: '投資用ワンルーム、都心5区の物件情報をまとめました。利回り5〜7%物件が中心です。', time: '昨日', tags: ['#投資','#ワンルーム'], likes: 68, comments: 12, shares: 15, images: [], liked: false, isSample: true }
+    { id: 2, user: '佐藤 美咲', company: '東京ライフ不動産', avatar: '佐', avatarImage: '', text: '本日、成約1件！お客様のご希望にピッタリの物件が見つかりました。感謝です🙏', time: '5時間前', tags: ['#成約','#世田谷'], likes: 42, comments: 8, shares: 3, images: [], liked: false, isSample: true, avatarColor: '#DC2626' },
+    { id: 3, user: '山本 大輔', company: 'プレミアム不動産', avatar: '山', avatarImage: '', text: '投資用ワンルーム、都心5区の物件情報をまとめました。利回り5〜7%物件が中心です。', time: '昨日', tags: ['#投資','#ワンルーム'], likes: 68, comments: 12, shares: 15, images: [], liked: false, isSample: true, avatarColor: '#059669' }
   ]
 };
 
@@ -466,14 +436,8 @@ RC._bgDraft = null;
 RC.load = function() {
   try {
     var raw = localStorage.getItem(RC.KEY);
-    if (raw) {
-      RC.data = JSON.parse(raw);
-    } else {
-      RC.data = JSON.parse(JSON.stringify(RC.defaults));
-    }
-  } catch (e) {
-    RC.data = JSON.parse(JSON.stringify(RC.defaults));
-  }
+    RC.data = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(RC.defaults));
+  } catch (e) { RC.data = JSON.parse(JSON.stringify(RC.defaults)); }
   if (!RC.data.profile) RC.data.profile = JSON.parse(JSON.stringify(RC.defaults.profile));
   if (!RC.data.cases) RC.data.cases = JSON.parse(JSON.stringify(RC.defaults.cases));
   if (!RC.data.customers) RC.data.customers = JSON.parse(JSON.stringify(RC.defaults.customers));
@@ -481,13 +445,8 @@ RC.load = function() {
 };
 
 RC.save = function() {
-  try {
-    localStorage.setItem(RC.KEY, JSON.stringify(RC.data));
-    return true;
-  } catch (e) {
-    RC.toast('⚠️ 保存に失敗しました（容量制限の可能性）');
-    return false;
-  }
+  try { localStorage.setItem(RC.KEY, JSON.stringify(RC.data)); return true; }
+  catch (e) { RC.toast('⚠️ 保存に失敗しました'); return false; }
 };
 
 RC.esc = function(s) {
@@ -505,14 +464,32 @@ RC.toast = function(msg) {
   t._timer = setTimeout(function() { t.style.display = 'none'; }, 2500);
 };
 
-RC.statusChipClass = function(status) {
-  var m = { '見込み':'chip-gray','商談中':'chip-orange','内見予定':'chip-info','契約予定':'chip-info','成約':'chip-success','販売中止':'chip-red' };
-  return m[status] || 'chip-gray';
+/* ========== ページ切替（SPA型：他ページ非表示） ========== */
+RC.go = function(view) {
+  try {
+    RC.currentView = view;
+    var pages = document.querySelectorAll('.page');
+    for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+    var target = document.getElementById('page-' + view);
+    if (target) target.classList.add('active');
+    var btns = document.querySelectorAll('.nav-btn');
+    for (var j = 0; j < btns.length; j++) {
+      btns[j].classList.toggle('active', btns[j].getAttribute('data-view') === view);
+    }
+    window.scrollTo(0, 0);
+    RC.renderAll();
+  } catch (e) {
+    if (window.console) console.error('go error', view, e);
+  }
 };
 
-RC.tagChipClass = function(tag) {
+RC.statusChipClass = function(s) {
+  var m = { '見込み':'chip-gray','商談中':'chip-orange','内見予定':'chip-info','契約予定':'chip-info','成約':'chip-success','販売中止':'chip-red' };
+  return m[s] || 'chip-gray';
+};
+RC.tagChipClass = function(t) {
   var m = { '購入希望':'chip-info','売却希望':'chip-orange','投資家':'chip-orange','賃貸希望':'chip-info','見込み客':'chip-gray','成約済':'chip-success' };
-  return m[tag] || 'chip-gray';
+  return m[t] || 'chip-gray';
 };
 
 RC.renderHome = function() {
@@ -522,12 +499,10 @@ RC.renderHome = function() {
   var closed = cases.filter(function(c){ return c.status === '成約'; }).length;
   var neg = cases.filter(function(c){ return c.status === '商談中' || c.status === '内見予定' || c.status === '契約予定'; }).length;
   var prospects = customers.filter(function(c){ return c.tag === '購入希望' || c.tag === '見込み客'; }).length;
-
-  var $p = document.getElementById('kpi-progress'); if ($p) $p.textContent = progress;
-  var $c = document.getElementById('kpi-closed'); if ($c) $c.textContent = closed;
-  var $n = document.getElementById('kpi-negotiating'); if ($n) $n.textContent = neg;
-  var $u = document.getElementById('kpi-customers'); if ($u) $u.textContent = prospects;
-
+  var kp = document.getElementById('kpi-progress'); if (kp) kp.textContent = progress;
+  var kc = document.getElementById('kpi-closed'); if (kc) kc.textContent = closed;
+  var kn = document.getElementById('kpi-negotiating'); if (kn) kn.textContent = neg;
+  var ku = document.getElementById('kpi-customers'); if (ku) ku.textContent = prospects;
   var tl = document.getElementById('home-timeline');
   if (tl) {
     var posts = (RC.data.posts || []).slice(0, 3);
@@ -535,13 +510,10 @@ RC.renderHome = function() {
       tl.innerHTML = '<div class="empty-state">投稿がありません</div>';
     } else {
       tl.innerHTML = posts.map(function(p) {
-        var thumb;
-        if (p.images && p.images.length > 0) {
-          thumb = '<div class="timeline-thumb"><img src="' + p.images[0] + '" alt=""></div>';
-        } else {
-          thumb = '<div class="timeline-thumb">💬</div>';
-        }
-        return '<div class="timeline-item">' + thumb +
+        var thumb = (p.images && p.images.length > 0)
+          ? '<div class="timeline-thumb"><img src="' + p.images[0] + '" alt=""></div>'
+          : '<div class="timeline-thumb">💬</div>';
+        return '<div class="timeline-item" onclick="RC.go(\'community\')">' + thumb +
           '<div class="timeline-body">' +
             '<div class="timeline-name">' + RC.esc(p.user) + ' ・ <span style="color:#64748B;font-weight:400">' + RC.esc(p.time) + '</span></div>' +
             '<div class="timeline-text">' + RC.esc(p.text) + '</div>' +
@@ -549,11 +521,10 @@ RC.renderHome = function() {
       }).join('');
     }
   }
-
   var today = new Date();
   var dow = ['日','月','火','水','木','金','土'][today.getDay()];
-  var tl2 = document.getElementById('today-label');
-  if (tl2) tl2.textContent = today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日 '+dow+'曜日';
+  var tlbl = document.getElementById('today-label');
+  if (tlbl) tlbl.textContent = today.getFullYear()+'年'+(today.getMonth()+1)+'月'+today.getDate()+'日 '+dow+'曜日';
 };
 
 RC.renderCases = function() {
@@ -612,12 +583,9 @@ RC.renderPosts = function() {
     return;
   }
   list.innerHTML = posts.map(function(p) {
-    var avHtml;
-    if (p.avatarImage) {
-      avHtml = '<div class="avatar"><img src="' + p.avatarImage + '" alt=""></div>';
-    } else {
-      avHtml = '<div class="avatar" style="background:' + (p.avatarColor || '#1E3A8A') + '">' + RC.esc(p.avatar) + '</div>';
-    }
+    var avHtml = p.avatarImage
+      ? '<div class="avatar"><img src="' + p.avatarImage + '" alt=""></div>'
+      : '<div class="avatar" style="background:' + (p.avatarColor || '#1E3A8A') + '">' + RC.esc(p.avatar) + '</div>';
     var imgHtml = '';
     if (p.images && p.images.length > 0) {
       if (p.images.length === 1) {
@@ -639,8 +607,7 @@ RC.renderPosts = function() {
           '<div class="post-time">' + RC.esc(p.time) + '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="post-text">' + RC.esc(p.text) + '</div>' +
-      imgHtml +
+      '<div class="post-text">' + RC.esc(p.text) + '</div>' + imgHtml +
       (tagsHtml ? '<div class="post-tags">' + tagsHtml + '</div>' : '') +
       '<div class="post-actions">' +
         '<button class="post-action ' + (p.liked ? 'liked' : '') + '" onclick="RC.toggleLike(' + p.id + ')">❤️ ' + p.likes + '</button>' +
@@ -677,20 +644,19 @@ RC.renderProfile = function() {
   if ($bi) $bi.innerHTML = '📧 ' + RC.esc(pr.email) + '<br>📞 ' + RC.esc(pr.phone) + '<br>📍 ' + RC.esc(pr.area);
   var $sp = document.getElementById('stat-posts');
   if ($sp) $sp.textContent = (RC.data.posts || []).filter(function(p){ return !p.isSample; }).length + 42;
-  /* フォーム側にも反映 */
   var fields = { 'p-name':pr.name, 'p-company':pr.company, 'p-role':pr.role, 'p-email':pr.email, 'p-phone':pr.phone, 'p-area':pr.area };
   for (var id in fields) {
     var el = document.getElementById(id);
     if (el && document.activeElement !== el) el.value = fields[id];
   }
   var ap = document.getElementById('avatar-preview');
-  if (ap && pr.avatarImage) {
+  if (ap && pr.avatarImage && !RC._avatarDraft) {
     ap.style.backgroundImage = "url('" + pr.avatarImage.replace(/'/g,'%27') + "')";
     ap.style.borderStyle = 'solid';
     ap.innerHTML = '';
   }
   var bp = document.getElementById('bg-preview');
-  if (bp && pr.bgImage) {
+  if (bp && pr.bgImage && !RC._bgDraft) {
     bp.style.backgroundImage = "url('" + pr.bgImage.replace(/'/g,'%27') + "')";
     bp.style.borderStyle = 'solid';
     bp.innerHTML = '';
@@ -704,9 +670,7 @@ RC.renderAll = function() {
     RC.renderCustomers();
     RC.renderPosts();
     RC.renderProfile();
-  } catch (e) {
-    if (window.console) console.error('render error', e);
-  }
+  } catch (e) { if (window.console) console.error('render error', e); }
 };
 
 RC.readFile = function(file, cb) {
@@ -724,26 +688,19 @@ RC.saveCase = function(ev) {
   var newCase = {
     id: Date.now(),
     customer: form.customer.value.trim(),
-    type: form.type.value,
-    status: form.status.value,
-    price: form.price.value.trim(),
-    rent: form.rent.value.trim(),
-    mgmt: form.mgmt.value.trim(),
-    repair: form.repair.value.trim(),
-    area: form.area.value.trim(),
-    layout: form.layout.value.trim(),
-    age: form.age.value.trim(),
-    owner_change: form.owner_change.value,
-    memo: form.memo.value.trim(),
-    date: dateStr
+    type: form.type.value, status: form.status.value,
+    price: form.price.value.trim(), rent: form.rent.value.trim(),
+    mgmt: form.mgmt.value.trim(), repair: form.repair.value.trim(),
+    area: form.area.value.trim(), layout: form.layout.value.trim(),
+    age: form.age.value.trim(), owner_change: form.owner_change.value,
+    memo: form.memo.value.trim(), date: dateStr
   };
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
   RC.data.cases.push(newCase);
   RC.save();
-  RC.renderAll();
   form.reset();
   RC.toast('✓ 案件を登録しました');
-  setTimeout(function(){ location.hash = '#cases'; }, 300);
+  RC.go('cases');
   return false;
 };
 
@@ -760,25 +717,19 @@ RC.saveCustomer = function(ev) {
   var form = ev.target;
   var newC = {
     id: Date.now(),
-    name: form.name.value.trim(),
-    kana: form.kana.value.trim(),
-    tag: form.tag.value,
-    priority: form.priority.value,
-    phone: form.phone.value.trim(),
-    email: form.email.value.trim(),
+    name: form.name.value.trim(), kana: form.kana.value.trim(),
+    tag: form.tag.value, priority: form.priority.value,
+    phone: form.phone.value.trim(), email: form.email.value.trim(),
     address: form.address.value.trim(),
-    want_area: form.want_area.value.trim(),
-    want_budget: form.want_budget.value.trim(),
-    want_cond: form.want_cond.value.trim(),
-    memo: form.memo.value.trim()
+    want_area: form.want_area.value.trim(), want_budget: form.want_budget.value.trim(),
+    want_cond: form.want_cond.value.trim(), memo: form.memo.value.trim()
   };
   if (!newC.name) { RC.toast('お名前は必須です'); return false; }
   RC.data.customers.push(newC);
   RC.save();
-  RC.renderAll();
   form.reset();
   RC.toast('✓ 顧客を登録しました');
-  setTimeout(function(){ location.hash = '#customers'; }, 300);
+  RC.go('customers');
   return false;
 };
 
@@ -796,7 +747,6 @@ RC.previewPostImages = function(input) {
   var pv = document.getElementById('post-images-preview');
   if (pv) pv.innerHTML = '';
   var max = Math.min(files.length, 20);
-  var loaded = 0;
   for (var i = 0; i < max; i++) {
     (function(f){
       RC.readFile(f, function(dataUrl) {
@@ -809,7 +759,6 @@ RC.previewPostImages = function(input) {
             pv.appendChild(d);
           }
         }
-        loaded++;
       });
     })(files[i]);
   }
@@ -829,28 +778,21 @@ RC.savePost = function(ev) {
   var tagsRaw = form.tags.value.trim();
   var tags = tagsRaw ? tagsRaw.split(/[,、\s]+/).filter(function(x){return x;}).map(function(x){ return x.charAt(0) === '#' ? x : '#' + x; }) : [];
   var pr = RC.data.profile;
-  var newPost = {
-    id: Date.now(),
-    user: pr.name,
-    company: pr.company,
-    avatar: (pr.name || '田').charAt(0),
-    avatarImage: pr.avatarImage || '',
-    text: text,
-    time: 'たった今',
-    tags: tags,
+  RC.data.posts.unshift({
+    id: Date.now(), user: pr.name, company: pr.company,
+    avatar: (pr.name || '田').charAt(0), avatarImage: pr.avatarImage || '',
+    text: text, time: 'たった今', tags: tags,
     likes: 0, comments: 0, shares: 0,
-    images: RC._postDraftImages.slice(),
-    liked: false,
-    isSample: false
-  };
-  RC.data.posts.unshift(newPost);
+    images: RC._postDraftImages.slice(), liked: false, isSample: false
+  });
   RC._postDraftImages = [];
   RC.save();
-  RC.renderAll();
   form.reset();
   var pv = document.getElementById('post-images-preview');
   if (pv) pv.innerHTML = '';
+  RC.renderAll();
   RC.toast('✓ 投稿しました');
+  window.scrollTo(0, 0);
   return false;
 };
 
@@ -868,11 +810,13 @@ RC.toggleLike = function(id) {
     if (RC.data.posts[i].id === id) { p = RC.data.posts[i]; break; }
   }
   if (!p) return;
+  var y = window.scrollY;
   p.liked = !p.liked;
   p.likes += p.liked ? 1 : -1;
   if (p.likes < 0) p.likes = 0;
   RC.save();
   RC.renderPosts();
+  window.scrollTo(0, y);
 };
 
 RC.sharePost = function(id) {
@@ -881,9 +825,11 @@ RC.sharePost = function(id) {
     if (RC.data.posts[i].id === id) { p = RC.data.posts[i]; break; }
   }
   if (!p) return;
+  var y = window.scrollY;
   p.shares = (p.shares || 0) + 1;
   RC.save();
   RC.renderPosts();
+  window.scrollTo(0, y);
   RC.toast('✓ シェアしました');
 };
 
@@ -934,6 +880,7 @@ RC.saveProfile = function(ev) {
   RC.toast('✓ プロフィールを保存しました');
   var det = document.querySelector('details.edit-details');
   if (det) det.open = false;
+  window.scrollTo(0, 0);
   return false;
 };
 
@@ -952,24 +899,22 @@ RC.resetAll = function() {
   RC.save();
   RC.renderAll();
   RC.toast('✓ 初期化しました');
-  location.hash = '#top';
+  RC.go('home');
 };
 
 RC.boot = function() {
   try {
     RC.load();
-    RC.renderAll();
+    RC.go('home');
   } catch (e) {
     if (window.console) console.error('boot error', e);
   }
 };
 
-/* 起動 */
 RC.boot();
 document.addEventListener('DOMContentLoaded', RC.boot);
 window.addEventListener('load', RC.boot);
 </script>
 
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>

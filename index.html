@@ -810,6 +810,10 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <div class="form-row"><label>メール</label><input id="p-email" type="email" value="tanaka@global-re.co.jp"></div>
         <div class="form-row"><label>電話</label><input id="p-phone" value="090-1234-5678"></div>
         <div class="form-row"><label>エリア</label><input id="p-area" value="東京都港区"></div>
+        <div class="form-row"><label>Google Drive 保存フォルダ</label><input id="p-cloud-gdrive" placeholder="例: 物件資料 / 2026年"></div>
+        <div class="form-row"><label>OneDrive 保存フォルダ</label><input id="p-cloud-onedrive" placeholder="例: RE-Connect/物件資料"></div>
+        <div class="form-row"><label>Dropbox 保存フォルダ</label><input id="p-cloud-dropbox" placeholder="例: /物件資料"></div>
+        <div class="form-row"><label>iCloud Drive 保存フォルダ</label><input id="p-cloud-icloud" placeholder="例: 物件資料"></div>
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="RC.cancelProfile()">キャンセル</button>
           <button type="submit" class="btn btn-primary">保存</button>
@@ -909,7 +913,8 @@ RC.defaults = {
   profile: {
     name: '田中 健一', company: '(株)グローバル不動産', role: '営業部長',
     email: 'tanaka@global-re.co.jp', phone: '090-1234-5678', area: '東京都港区',
-    avatarImage: '', bgImage: ''
+    avatarImage: '', bgImage: '',
+    cloudFolders: { gdrive: '物件資料', onedrive: '物件資料', dropbox: '/物件資料', icloud: '物件資料' }
   },
   cases: [
     { id: 1, customer: '山田 太郎', type: 'マンション', status: '商談中', price: '5000', rent: '', area: '港区', layout: '3LDK/75㎡', date: '2026/07/22', memo: '' },
@@ -2373,6 +2378,7 @@ RC.renderAll = function() {
     RC.renderPosts();
     RC.renderProfile();
     RC.renderScheduleList();
+    if (RC.hydrateProfileForm) RC.hydrateProfileForm();
   } catch (e) { if (window.console) console.error('render error', e); }
 };
 
@@ -2629,6 +2635,7 @@ RC.collectCaseSheetData = function(form) {
     agent_area: pr && pr.area ? String(pr.area) : '',
     company_logo: pr && pr.avatarImage ? String(pr.avatarImage) : '',
     company_bg: pr && pr.bgImage ? String(pr.bgImage) : '',
+    cloud_folders: (pr && pr.cloudFolders) ? {gdrive: pr.cloudFolders.gdrive||'', onedrive: pr.cloudFolders.onedrive||'', dropbox: pr.cloudFolders.dropbox||'', icloud: pr.cloudFolders.icloud||''} : {},
     images: (RC._caseAttachDraft && RC._caseAttachDraft.images) ? RC._caseAttachDraft.images.slice() : [],
     pdfs: (RC._caseAttachDraft && RC._caseAttachDraft.pdfs) ? RC._caseAttachDraft.pdfs.slice() : []
   };
@@ -2751,7 +2758,7 @@ RC.buildCaseSheetHtml = function(c) {
       '<div class="lux-contact-card"><div class="lux-contact-title">添付資料</div>' + pdfHtml + '</div>'+
     '</div></div>'+
     '<div class="lux-footer"><div><strong>' + RC.esc(c.company_name || 'RE-Connect') + '</strong><br>' + RC.esc(c.agent_name || '') + (c.agent_role ? (' / ' + RC.esc(c.agent_role)) : '') + '</div><div>' + RC.esc(c.agent_phone || '') + (c.agent_email ? (' / ' + RC.esc(c.agent_email)) : '') + '</div></div>'+
-    '</div></div>' + '<scr' + 'ipt>var __flyerPayload=' + JSON.stringify({title: (c.property_name || '物件資料'), subject: '【物件資料】' + (c.property_name || '') + (c.customer ? '（' + c.customer + '様）' : ''), body: '以下の物件資料をお送りします。\n物件名: ' + (c.property_name || '-') + '\n所在地: ' + (c.address || c.area || '-') + '\n' + (c.trade_kind === 'sale' ? '販売価格' : '賃料') + ': ' + (c.trade_kind === 'sale' ? (c.price ? c.price + '万円' : '-') : (c.rent ? c.rent + '万円/月' : '-')) + '\n担当: ' + (c.agent_name || '') + ' / ' + (c.agent_phone || '') + ' / ' + (c.agent_email || '')}) + ';(function(){function safeAlert(m){try{alert(m);}catch(e){}}function toast(m){var t=document.createElement("div");t.textContent=m;t.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;z-index:9999;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.25)";document.body.appendChild(t);setTimeout(function(){t.style.transition="opacity .4s";t.style.opacity="0";setTimeout(function(){t.remove();},450);},1600);}var fileName=(__flyerPayload.title||"物件資料").replace(/[\\\/:*?\"<>|]+/g,"_")+".pdf";function doPrint(){try{window.focus();window.print();}catch(e){}}function pdfWorker(){var target=document.querySelector(".lux-wrap")||document.body;var opt={margin:0,filename:fileName,image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}};if(!window.html2pdf){safeAlert("PDFライブラリを読み込めませんでした。印刷から保存してください。");doPrint();return null;}return window.html2pdf().set(opt).from(target);}function downloadPdf(){var w=pdfWorker();if(!w)return;w.save().then(function(){toast("PDFを保存しました");}).catch(function(err){console.error(err);safeAlert("PDF生成に失敗しました。印刷から保存してください。");});}function getPdfBlob(){var w=pdfWorker();if(!w)return Promise.reject(new Error("html2pdf missing"));return w.outputPdf("blob");}function openCloud(url,label){try{window.open(url,"_blank","noopener");toast(label+"を開きました");}catch(e){safeAlert(label+"を開けませんでした");}}function copyShareUrl(){var url=window.location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){toast("共有URLをコピーしました");},function(){window.prompt("共有URL（Ctrl/Cmd+Cでコピー）",url);});}else{window.prompt("共有URL（Ctrl/Cmd+Cでコピー）",url);}}function sendMail(){var s=encodeURIComponent(__flyerPayload.subject||"物件資料");var b=encodeURIComponent((__flyerPayload.body||"")+"\n\n▼ 資料URL\n"+window.location.href);var href="mailto:?subject="+s+"&body="+b;var a=document.createElement("a");a.href=href;a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},50);}function shareFlyer(){var url=window.location.href;var title=__flyerPayload.title||"物件資料";var text=__flyerPayload.body||"";if(navigator.share){navigator.share({title:title,text:text,url:url}).catch(function(){copyShareUrl();});}else{copyShareUrl();}}function cloudSave(){var choice=window.prompt("クラウド保存先を選んでください\n1: Google Drive\n2: OneDrive\n3: Dropbox\n4: iCloud Drive\n番号を入力","1");if(!choice)return;downloadPdf();setTimeout(function(){var map={"1":["https://drive.google.com/drive/u/0/my-drive","Google Drive"],"2":["https://onedrive.live.com/?id=root","OneDrive"],"3":["https://www.dropbox.com/home","Dropbox"],"4":["https://www.icloud.com/iclouddrive","iCloud Drive"]};var m=map[String(choice).trim()];if(!m){safeAlert("番号が無効です");return;}toast("ダウンロードしたPDFを"+m[1]+"にアップロードしてください");openCloud(m[0],m[1]);},800);}window.__downloadPdf=downloadPdf;window.__sendMail=sendMail;window.__copyShareUrl=copyShareUrl;window.__shareFlyer=shareFlyer;window.__cloudSave=cloudSave;function bind(id,fn){var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){e.preventDefault();fn();});}bind("btn-close",function(){try{window.close();}catch(e){}});bind("btn-pdf",downloadPdf);bind("btn-cloud",cloudSave);bind("btn-print",doPrint);bind("btn-mail",sendMail);bind("btn-share",shareFlyer);bind("btn-copy",copyShareUrl);function done(){setTimeout(function(){try{window.focus();}catch(e){}},300);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});})();<\/scr' + 'ipt></body></html>';
+    '</div></div>' + '<scr' + 'ipt>var __flyerPayload=' + JSON.stringify({title: (c.property_name || '物件資料'), subject: '【物件資料】' + (c.property_name || '') + (c.customer ? '（' + c.customer + '様）' : ''), body: '以下の物件資料をお送りします。\n物件名: ' + (c.property_name || '-') + '\n所在地: ' + (c.address || c.area || '-') + '\n' + (c.trade_kind === 'sale' ? '販売価格' : '賃料') + ': ' + (c.trade_kind === 'sale' ? (c.price ? c.price + '万円' : '-') : (c.rent ? c.rent + '万円/月' : '-')) + '\n担当: ' + (c.agent_name || '') + ' / ' + (c.agent_phone || '') + ' / ' + (c.agent_email || ''), cloudFolders: c.cloud_folders || {}}) + ';(function(){function safeAlert(m){try{alert(m);}catch(e){}}function toast(m){var t=document.createElement("div");t.textContent=m;t.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;z-index:9999;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.25)";document.body.appendChild(t);setTimeout(function(){t.style.transition="opacity .4s";t.style.opacity="0";setTimeout(function(){t.remove();},450);},1600);}var fileName=(__flyerPayload.title||"物件資料").replace(/[\\\/:*?\"<>|]+/g,"_")+".pdf";function doPrint(){try{window.focus();window.print();}catch(e){}}function pdfWorker(){var target=document.querySelector(".lux-wrap")||document.body;var opt={margin:0,filename:fileName,image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}};if(!window.html2pdf){safeAlert("PDFライブラリを読み込めませんでした。印刷から保存してください。");doPrint();return null;}return window.html2pdf().set(opt).from(target);}function downloadPdf(){var w=pdfWorker();if(!w)return;w.save().then(function(){toast("PDFを保存しました");}).catch(function(err){console.error(err);safeAlert("PDF生成に失敗しました。印刷から保存してください。");});}function getPdfBlob(){var w=pdfWorker();if(!w)return Promise.reject(new Error("html2pdf missing"));return w.outputPdf("blob");}function openCloud(url,label){try{window.open(url,"_blank","noopener");toast(label+"を開きました");}catch(e){safeAlert(label+"を開けませんでした");}}function copyShareUrl(){var url=window.location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){toast("共有URLをコピーしました");},function(){window.prompt("共有URL（Ctrl/Cmd+Cでコピー）",url);});}else{window.prompt("共有URL（Ctrl/Cmd+Cでコピー）",url);}}function sendMail(){var s=encodeURIComponent(__flyerPayload.subject||"物件資料");var b=encodeURIComponent((__flyerPayload.body||"")+"\n\n▼ 資料URL\n"+window.location.href);var href="mailto:?subject="+s+"&body="+b;var a=document.createElement("a");a.href=href;a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},50);}function shareFlyer(){var url=window.location.href;var title=__flyerPayload.title||"物件資料";var text=__flyerPayload.body||"";if(navigator.share){navigator.share({title:title,text:text,url:url}).catch(function(){copyShareUrl();});}else{copyShareUrl();}}function cloudSave(){var cf=(__flyerPayload&&__flyerPayload.cloudFolders)||{};var mk=function(k,name){var f=cf[k]||"";return name+(f?(" ("+f+")"):" (未設定)");};var msg="クラウド保存先を選んでください\n1: "+mk("gdrive","Google Drive")+"\n2: "+mk("onedrive","OneDrive")+"\n3: "+mk("dropbox","Dropbox")+"\n4: "+mk("icloud","iCloud Drive")+"\n番号を入力";var choice=window.prompt(msg,"1");if(!choice)return;downloadPdf();setTimeout(function(){var map={"1":{url:"https://drive.google.com/drive/u/0/my-drive",label:"Google Drive",folder:cf.gdrive||"",search:function(f){return "https://drive.google.com/drive/u/0/search?q="+encodeURIComponent(f);}},"2":{url:"https://onedrive.live.com/?id=root",label:"OneDrive",folder:cf.onedrive||"",search:function(f){return "https://onedrive.live.com/?qt=search&q="+encodeURIComponent(f);}},"3":{url:"https://www.dropbox.com/home",label:"Dropbox",folder:cf.dropbox||"",search:function(f){var pp=String(f||"").replace(/^\/+/,"");return pp?"https://www.dropbox.com/home/"+encodeURIComponent(pp):"https://www.dropbox.com/home";}},"4":{url:"https://www.icloud.com/iclouddrive",label:"iCloud Drive",folder:cf.icloud||"",search:function(){return "https://www.icloud.com/iclouddrive";}}};var m=map[String(choice).trim()];if(!m){safeAlert("番号が無効です");return;}var openUrl=m.folder?m.search(m.folder):m.url;var suffix=m.folder?("（フォルダ: "+m.folder+"）"):"";toast("ダウンロードしたPDFを"+m.label+suffix+"にアップロードしてください");openCloud(openUrl,m.label);},900);}window.__downloadPdf=downloadPdf;window.__sendMail=sendMail;window.__copyShareUrl=copyShareUrl;window.__shareFlyer=shareFlyer;window.__cloudSave=cloudSave;function bind(id,fn){var el=document.getElementById(id);if(el)el.addEventListener("click",function(e){e.preventDefault();fn();});}bind("btn-close",function(){try{window.close();}catch(e){}});bind("btn-pdf",downloadPdf);bind("btn-cloud",cloudSave);bind("btn-print",doPrint);bind("btn-mail",sendMail);bind("btn-share",shareFlyer);bind("btn-copy",copyShareUrl);function done(){setTimeout(function(){try{window.focus();}catch(e){}},300);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});})();<\/scr' + 'ipt></body></html>';
 };
 
 RC.openFlyerHtml = function(html) {
@@ -3265,6 +3272,15 @@ RC.previewBg = function(input) {
   });
 };
 
+RC.hydrateProfileForm = function() {
+  var pr = (RC.data && RC.data.profile) ? RC.data.profile : {};
+  var set = function(id, v){ var el = document.getElementById(id); if (el && typeof v === 'string' && v) el.value = v; };
+  set('p-name', pr.name); set('p-company', pr.company); set('p-role', pr.role);
+  set('p-email', pr.email); set('p-phone', pr.phone); set('p-area', pr.area);
+  var cf = pr.cloudFolders || {};
+  set('p-cloud-gdrive', cf.gdrive); set('p-cloud-onedrive', cf.onedrive);
+  set('p-cloud-dropbox', cf.dropbox); set('p-cloud-icloud', cf.icloud);
+};
 RC.saveProfile = function(ev) {
   ev.preventDefault();
   var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ''; };
@@ -3275,6 +3291,11 @@ RC.saveProfile = function(ev) {
   pr.email = g('p-email') || pr.email;
   pr.phone = g('p-phone') || pr.phone;
   pr.area = g('p-area') || pr.area;
+  if (!pr.cloudFolders) pr.cloudFolders = { gdrive: '', onedrive: '', dropbox: '', icloud: '' };
+  pr.cloudFolders.gdrive = g('p-cloud-gdrive');
+  pr.cloudFolders.onedrive = g('p-cloud-onedrive');
+  pr.cloudFolders.dropbox = g('p-cloud-dropbox');
+  pr.cloudFolders.icloud = g('p-cloud-icloud');
   if (RC._avatarDraft) { pr.avatarImage = RC._avatarDraft; RC._avatarDraft = null; }
   if (RC._bgDraft) { pr.bgImage = RC._bgDraft; RC._bgDraft = null; }
   RC.save();

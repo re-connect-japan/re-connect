@@ -2592,20 +2592,37 @@ RC.caseSheetRowHtml = function(label, value) {
   return '<div class="sheet-row"><div class="sheet-label">' + RC.esc(label) + '</div><div class="sheet-value">' + RC.esc(value) + '</div></div>';
 };
 RC.buildCaseSheetHtml = function(c) {
+  var mainImage = '';
+  var thumbHtml = '';
+  var imgs = c.images || [];
+  if (imgs.length) {
+    mainImage = (typeof imgs[0] === 'string') ? imgs[0] : ((imgs[0] && imgs[0].data) ? imgs[0].data : '');
+    thumbHtml = imgs.slice(1, 5).map(function(item){
+      var src = typeof item === 'string' ? item : (item && item.data ? item.data : '');
+      return '<div class="flyer-thumb"><img src="' + RC.esc(src) + '" alt="thumb"></div>';
+    }).join('');
+  }
+  var summaryPrice = c.trade_kind === 'sale'
+    ? (c.price ? c.price + '万円' : '価格未入力')
+    : (c.rent ? c.rent + '万円 / 月' : '賃料未入力');
+  var summarySub = [];
+  if (c.layout) summarySub.push(c.layout);
+  if (c.exclusive_area) summarySub.push(c.exclusive_area);
+  else if (c.usage_area) summarySub.push(c.usage_area);
+  if (c.floor_info) summarySub.push(c.floor_info);
+  var summarySubText = summarySub.join(' / ');
   var commonRows = [
-    RC.caseSheetRowHtml('顧客名', c.customer),
-    RC.caseSheetRowHtml('取引区分', c.trade_kind_label),
-    RC.caseSheetRowHtml('ステータス', c.status),
-    RC.caseSheetRowHtml('物件名', c.property_name),
-    RC.caseSheetRowHtml('物件種別', c.type),
-    RC.caseSheetRowHtml('エリア', c.area),
-    RC.caseSheetRowHtml('所在地', c.address),
+    RC.caseSheetRowHtml('所在地', c.address || c.area),
     RC.caseSheetRowHtml('交通', c.traffic),
+    RC.caseSheetRowHtml('物件種別', c.type),
     RC.caseSheetRowHtml('間取り', c.layout),
     RC.caseSheetRowHtml('築年月', c.built_ym),
     RC.caseSheetRowHtml('建物構造', c.structure),
     RC.caseSheetRowHtml('総階数・所在階', c.floor_info),
     RC.caseSheetRowHtml('号室', c.room_number),
+    RC.caseSheetRowHtml('エリア', c.area),
+    RC.caseSheetRowHtml('顧客名', c.customer),
+    RC.caseSheetRowHtml('ステータス', c.status),
     RC.caseSheetRowHtml('メモ', c.memo)
   ].join('');
   var saleRows = [
@@ -2615,21 +2632,21 @@ RC.buildCaseSheetHtml = function(c) {
     RC.caseSheetRowHtml('専有面積', c.exclusive_area),
     RC.caseSheetRowHtml('土地面積', c.land_area),
     RC.caseSheetRowHtml('建物面積', c.building_area),
+    RC.caseSheetRowHtml('用途地域', c.zoning),
+    RC.caseSheetRowHtml('建ぺい率', c.building_coverage_ratio),
+    RC.caseSheetRowHtml('容積率', c.floor_area_ratio),
+    RC.caseSheetRowHtml('地勢', c.sale_topography),
     RC.caseSheetRowHtml('バルコニー方向', c.sale_balcony_dir),
     RC.caseSheetRowHtml('棟総戸数', c.sale_total_units),
     RC.caseSheetRowHtml('駐車場', c.sale_parking_status),
     RC.caseSheetRowHtml('駐車場月額', c.sale_parking_fee),
-    RC.caseSheetRowHtml('地勢', c.sale_topography),
-    RC.caseSheetRowHtml('用途地域', c.zoning),
-    RC.caseSheetRowHtml('建ぺい率', c.building_coverage_ratio),
-    RC.caseSheetRowHtml('容積率', c.floor_area_ratio),
     RC.caseSheetRowHtml('現況', c.sale_occupancy),
     RC.caseSheetRowHtml('引渡', c.sale_handover),
     RC.caseSheetRowHtml('設備', c.sale_equipment),
     RC.caseSheetRowHtml('オーナーチェンジ', c.owner_change)
   ].join('');
   var rentRows = [
-    RC.caseSheetRowHtml('賃料', c.rent ? (c.rent + '万円/月') : ''),
+    RC.caseSheetRowHtml('賃料', c.rent ? (c.rent + '万円 / 月') : ''),
     RC.caseSheetRowHtml('管理費', c.rent_mgmt),
     RC.caseSheetRowHtml('保証金', c.deposit_guarantee),
     RC.caseSheetRowHtml('権利金', c.right_money),
@@ -2647,39 +2664,62 @@ RC.buildCaseSheetHtml = function(c) {
     RC.caseSheetRowHtml('設備', c.equipment),
     RC.caseSheetRowHtml('賃貸備考', c.rent_notes)
   ].join('');
-  var imageHtml = (c.images || []).length ? (c.images || []).map(function(item){
-    var src = typeof item === 'string' ? item : (item && item.data ? item.data : '');
-    return '<div class="sheet-image"><img src="' + RC.esc(src) + '" alt="image"></div>';
-  }).join('') : '<div class="sheet-empty">画像はまだ添付されていません。</div>';
-  var pdfHtml = (c.pdfs || []).length ? '<div class="sheet-pdf-list">' + (c.pdfs || []).map(function(item, idx){
+  var pdfHtml = (c.pdfs || []).length ? '<div class="flyer-chip-list">' + (c.pdfs || []).map(function(item, idx){
     var name = item && item.name ? item.name : ('PDF-' + (idx + 1) + '.pdf');
-    return '<span class="sheet-pdf-chip">📄 ' + RC.esc(name) + '</span>';
-  }).join('') + '</div>' : '<div class="sheet-empty">添付PDFはありません。</div>';
+    return '<span class="flyer-chip">📄 ' + RC.esc(name) + '</span>';
+  }).join('') + '</div>' : '<div class="flyer-empty">添付PDFはありません。</div>';
+  var featureChips = [
+    c.layout,
+    c.exclusive_area || c.usage_area,
+    c.floor_info,
+    c.structure,
+    c.zoning || c.move_in,
+    c.sale_occupancy || c.occupancy
+  ].filter(function(x){ return String(x || '').trim(); }).slice(0, 6).map(function(x){
+    return '<span class="flyer-chip accent">' + RC.esc(x) + '</span>';
+  }).join('');
   return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>物件資料</title><style>' +
-    'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Yu Gothic",sans-serif;background:#F3F6FB;color:#0F172A}'+
-    '.sheet-wrap{max-width:980px;margin:0 auto;padding:20px}'+
-    '.sheet-toolbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;justify-content:flex-end;background:rgba(243,246,251,.96);padding:12px 0 16px}'+
-    '.sheet-toolbar button{border:none;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}'+
-    '.sheet-toolbar .print{background:#1E3A8A;color:#fff}.sheet-toolbar .close{background:#E5E7EB;color:#1F2937}'+
-    '.sheet-card{background:#fff;border-radius:18px;box-shadow:0 16px 40px rgba(15,23,42,.08);padding:24px}'+
-    '.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:2px solid #DBEAFE;padding-bottom:16px;margin-bottom:16px}'+
-    '.sheet-title{font-size:28px;font-weight:900;color:#1E3A8A}.sheet-sub{font-size:13px;color:#64748B;margin-top:6px}'+
-    '.sheet-badge{display:inline-flex;background:#FFEDD5;color:#C2410C;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}'+
-    '.sheet-section{margin-top:22px}.sheet-section h2{margin:0 0 12px;font-size:18px;color:#1E3A8A}'+
-    '.sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.sheet-row{border:1px solid #E5E7EB;border-radius:12px;padding:12px;background:#F8FAFC;break-inside:avoid}'+
-    '.sheet-label{font-size:12px;font-weight:800;color:#475569;margin-bottom:6px}.sheet-value{font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word}'+
-    '.sheet-images{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.sheet-image{border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;background:#fff;page-break-inside:avoid}.sheet-image img{width:100%;display:block;height:auto}'+
-    '.sheet-pdf-list{display:flex;gap:8px;flex-wrap:wrap}.sheet-pdf-chip{display:inline-flex;align-items:center;background:#FEF3C7;color:#92400E;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800}'+
-    '.sheet-empty{border:1px dashed #CBD5E1;border-radius:12px;padding:20px;text-align:center;color:#64748B;background:#F8FAFC}'+
-    '@media(max-width:720px){.sheet-wrap{padding:12px}.sheet-card{padding:16px}.sheet-grid{grid-template-columns:1fr}.sheet-images{grid-template-columns:1fr}.sheet-title{font-size:22px}}'+
-    '@media print{body{background:#fff}.sheet-wrap{padding:0}.sheet-toolbar{display:none}.sheet-card{box-shadow:none;border-radius:0;padding:18px}.sheet-section{page-break-inside:avoid}}'+
-    '</style></head><body><div class="sheet-wrap"><div class="sheet-toolbar"><button class="close" onclick="window.close()">閉じる</button><button class="print" onclick="window.print()">PDF保存 / 印刷</button></div><div class="sheet-card"><div class="sheet-head"><div><div class="sheet-title">物件資料</div><div class="sheet-sub">作成日時: ' + RC.esc(c.created_at) + '</div><div class="sheet-sub">印刷画面で「PDFに保存」を選択してください。</div></div><div class="sheet-badge">' + RC.esc(c.trade_kind_label) + '</div></div>'+
-    '<div class="sheet-section"><h2>基本情報</h2><div class="sheet-grid">' + commonRows + '</div></div>' +
-    '<div class="sheet-section"><h2>' + (c.trade_kind === 'sale' ? '売買情報' : '賃貸情報') + '</h2><div class="sheet-grid">' + (c.trade_kind === 'sale' ? saleRows : rentRows) + '</div></div>' +
-    '<div class="sheet-section"><h2>画像</h2><div class="sheet-images">' + imageHtml + '</div></div>' +
-    '<div class="sheet-section"><h2>添付PDF</h2>' + pdfHtml + '</div>' +
+    'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Yu Gothic",sans-serif;background:#EEF2F7;color:#0F172A}'+
+    '.flyer-wrap{max-width:1100px;margin:0 auto;padding:20px}'+
+    '.flyer-toolbar{position:sticky;top:0;z-index:30;display:flex;gap:8px;justify-content:flex-end;background:rgba(238,242,247,.96);padding:12px 0 16px}'+
+    '.flyer-toolbar button{border:none;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}'+
+    '.flyer-toolbar .print{background:#1D4ED8;color:#fff}.flyer-toolbar .close{background:#E5E7EB;color:#1F2937}'+
+    '.flyer-card{background:#fff;border-radius:20px;box-shadow:0 20px 50px rgba(15,23,42,.08);overflow:hidden}'+
+    '.flyer-head{padding:22px 24px 18px;background:linear-gradient(135deg,#0F3D91,#1D4ED8 55%,#60A5FA);color:#fff}'+
+    '.flyer-topline{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}'+
+    '.flyer-kicker{font-size:12px;font-weight:800;letter-spacing:.08em;opacity:.9}'+
+    '.flyer-title{font-size:34px;font-weight:900;line-height:1.2;margin-top:8px;word-break:break-word}'+
+    '.flyer-sub{margin-top:10px;font-size:13px;line-height:1.7;opacity:.95}'+
+    '.flyer-badge{display:inline-flex;align-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}'+
+    '.flyer-pricebar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:18px 24px;background:#F8FBFF;border-bottom:1px solid #DBEAFE}'+
+    '.flyer-price{font-size:38px;line-height:1;font-weight:900;color:#D97706}.flyer-price small{font-size:14px;color:#475569;font-weight:700;margin-right:8px}'+
+    '.flyer-summary{font-size:14px;color:#334155;font-weight:700;text-align:right}'+
+    '.flyer-chip-row{display:flex;gap:8px;flex-wrap:wrap;padding:16px 24px 0}'+
+    '.flyer-chip{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;background:#E2E8F0;color:#334155;font-size:12px;font-weight:800}'+
+    '.flyer-chip.accent{background:#DBEAFE;color:#1D4ED8}'+
+    '.flyer-main{display:grid;grid-template-columns:1.25fr .9fr;gap:20px;padding:20px 24px 24px}'+
+    '.flyer-hero{display:flex;flex-direction:column;gap:12px}.flyer-hero-main{background:#F8FAFC;border:1px solid #E5E7EB;border-radius:18px;overflow:hidden;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}'+
+    '.flyer-hero-main img{width:100%;height:100%;object-fit:cover}.flyer-noimage{font-size:14px;color:#64748B;font-weight:700}'+
+    '.flyer-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.flyer-thumb{border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;background:#fff;aspect-ratio:1/1}.flyer-thumb img{width:100%;height:100%;object-fit:cover}'+
+    '.flyer-panel{border:1px solid #E5E7EB;border-radius:18px;background:#fff;overflow:hidden}.flyer-panel h2{margin:0;padding:12px 14px;background:#F8FAFC;border-bottom:1px solid #E5E7EB;font-size:16px;color:#1E3A8A}'+
+    '.flyer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}.sheet-row{border:1px solid #E5E7EB;border-radius:12px;padding:10px 12px;background:#fff;break-inside:avoid}.sheet-label{font-size:11px;font-weight:800;color:#64748B;margin-bottom:6px;letter-spacing:.02em}.sheet-value{font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;font-weight:600;color:#0F172A}'+
+    '.flyer-sections{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 24px 24px}.flyer-note{padding:0 24px 24px}.flyer-note-box{border:1px solid #E5E7EB;border-radius:18px;background:#FFFBEB;padding:16px}.flyer-note-title{font-size:15px;font-weight:900;color:#B45309;margin-bottom:8px}'+
+    '.flyer-pdf{padding:0 24px 24px}.flyer-chip-list{display:flex;gap:8px;flex-wrap:wrap;padding:14px}.flyer-empty{padding:18px 14px;color:#64748B;font-size:13px}'+
+    '.flyer-footer{padding:14px 24px 24px;color:#64748B;font-size:11px;text-align:right}'+
+    '@media(max-width:860px){.flyer-wrap{padding:12px}.flyer-title{font-size:26px}.flyer-main,.flyer-sections{grid-template-columns:1fr}.flyer-pricebar{flex-direction:column;align-items:flex-start}.flyer-summary{text-align:left}.flyer-grid{grid-template-columns:1fr}.flyer-thumbs{grid-template-columns:repeat(2,1fr)}}'+
+    '@media print{body{background:#fff}.flyer-wrap{padding:0}.flyer-toolbar{display:none}.flyer-card{box-shadow:none;border-radius:0}.flyer-main,.flyer-sections{page-break-inside:avoid}.flyer-panel,.flyer-note-box{break-inside:avoid}}'+
+    '</style></head><body><div class="flyer-wrap"><div class="flyer-toolbar"><button class="close" onclick="window.close()">閉じる</button><button class="print" onclick="window.print()">PDF保存 / 印刷</button></div><div class="flyer-card">'+
+    '<div class="flyer-head"><div class="flyer-topline"><div><div class="flyer-kicker">PROPERTY FLYER</div><div class="flyer-title">' + RC.esc(c.property_name || '物件資料') + '</div><div class="flyer-sub">' + RC.esc(c.address || c.area || '') + '<br>' + RC.esc(c.traffic || '交通情報未入力') + '</div></div><div class="flyer-badge">' + RC.esc(c.trade_kind_label) + ' / ' + RC.esc(c.status || '募集中') + '</div></div></div>'+
+    '<div class="flyer-pricebar"><div><div class="flyer-price"><small>' + (c.trade_kind === 'sale' ? '販売価格' : '賃料') + '</small>' + RC.esc(summaryPrice) + '</div></div><div class="flyer-summary">' + RC.esc(summarySubText || '主要情報を上部に集約表示') + '<br><span style="font-size:12px;color:#64748B">作成日時: ' + RC.esc(c.created_at) + '</span></div></div>'+
+    '<div class="flyer-chip-row">' + (featureChips || '<span class="flyer-chip">特徴情報を入力してください</span>') + '</div>'+
+    '<div class="flyer-main"><div class="flyer-hero"><div class="flyer-hero-main">' + (mainImage ? ('<img src="' + RC.esc(mainImage) + '" alt="main">') : '<div class="flyer-noimage">画像はまだ添付されていません</div>') + '</div>' + (thumbHtml ? ('<div class="flyer-thumbs">' + thumbHtml + '</div>') : '') + '</div>'+
+    '<div class="flyer-panel"><h2>基本情報</h2><div class="flyer-grid">' + commonRows + '</div></div></div>'+
+    '<div class="flyer-sections"><div class="flyer-panel"><h2>' + (c.trade_kind === 'sale' ? '売買条件' : '賃貸条件') + '</h2><div class="flyer-grid">' + (c.trade_kind === 'sale' ? saleRows : rentRows) + '</div></div><div class="flyer-panel"><h2>資料添付</h2>' + pdfHtml + '</div></div>'+
+    '<div class="flyer-note"><div class="flyer-note-box"><div class="flyer-note-title">担当メモ</div><div class="sheet-value">' + RC.esc(c.memo || '備考・訴求ポイントを入力するとここに表示されます。') + '</div></div></div>'+
+    '<div class="flyer-footer">RE-Connect 物件資料 / 印刷画面で「PDFに保存」を選択してください。</div>'+
     '</div></div>' + '<scr' + 'ipt>(function(){function done(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},500);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});})();<\/scr' + 'ipt></body></html>';
 };
+
 RC.exportCaseSheetPdf = function() {
   var form = document.getElementById('form-case');
   if (!form) return false;

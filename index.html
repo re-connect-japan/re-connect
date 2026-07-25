@@ -133,6 +133,8 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .case-section-title{font-size:13px;font-weight:800;color:#1E3A8A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .case-section-note{font-size:11px;color:#64748B;margin:-4px 0 10px}
 .case-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#DBEAFE;color:#1E40AF;font-size:11px;font-weight:700}
+.case-subgrid-4{display:grid;grid-template-columns:1.2fr 1.2fr .8fr .8fr;gap:12px}
+@media (max-width:640px){.case-subgrid-4{grid-template-columns:1fr 1fr}}
 .place-actions .btn{flex:1;min-width:0}
 .schedule-inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .schedule-map-btn{display:inline-flex;align-items:center;gap:4px;background:#EEF2FF;color:#3730A3;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;border:none;cursor:pointer}
@@ -350,16 +352,16 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <div class="case-section-title">🏢 共通情報</div>
         <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
         <div class="form-grid-2">
-          <div class="form-row"><label>物件名</label><input name="property_name" placeholder="例: Re-Home南青山」></div>
+          <div class="form-row"><label>物件名</label><input name="property_name" placeholder="例: Re-Home南青山"></div>
           <div class="form-row"><label>物件種別</label>
             <select name="type">
               <option>マンション</option><option>戸建て</option><option>土地</option><option>投資用</option><option>店舗・事務所</option><option>貸戸建</option><option>テラスハウス</option><option>アパート</option><option>貸マンション</option>
             </select>
           </div>
         </div>
-        <div class="form-row"><label>エリア</label><input name="area" placeholder="例: 東京都港区南青山"></div>
-        <div class="form-row"><label>物件所在地</label><input name="address" placeholder="例: 大阪府堺市北区..."></div>
-        <div class="form-row"><label>交通状況</label><input name="traffic" placeholder="例: ○○線 ○○駅 徒歩5分 / バス10分"></div>
+        <div class="form-row"><label>エリア</label><input name="area" id="case-area" list="case-area-list" placeholder="例: 東京都港区南青山"><datalist id="case-area-list"></datalist></div>
+        <div class="form-row"><label>物件所在地</label><input name="address" id="case-address" placeholder="例: 大阪府堺市北区..."><div class="place-actions"><button type="button" class="btn btn-secondary" onclick="RC.openCaseAddressMapInput()">📍 Googleマップで確認</button></div></div>
+        <div class="form-row"><label>交通状況</label><div class="case-subgrid-4"><div class="form-row"><label style="font-size:11px">沿線</label><input name="traffic_line" id="case-line" list="case-line-list" placeholder="例: 御堂筋線"><datalist id="case-line-list"></datalist></div><div class="form-row"><label style="font-size:11px">駅</label><input name="traffic_station" id="case-station" list="case-station-list" placeholder="例: なんば駅"><datalist id="case-station-list"></datalist></div><div class="form-row"><label style="font-size:11px">徒歩</label><input name="walk_minutes" inputmode="numeric" placeholder="5"></div><div class="form-row"><label style="font-size:11px">バス</label><input name="bus_minutes" inputmode="numeric" placeholder="10"></div></div></div>
         <div class="form-grid-2">
           <div class="form-row"><label>間取り</label><input name="layout" placeholder="例: 3LDK"></div>
           <div class="form-row"><label>築年月</label><input name="built_ym" placeholder="例: 2021/06"></div>
@@ -710,7 +712,8 @@ RC.defaults = {
     { id: 1, title: '販売中物件の在庫確認', date: '2026-07-24', start: '14:00', end: '15:00', type: '会議', place: '本社会議室A', customer_id: '', case_id: '', priority: '中', remind: '10', memo: '週次ミーティング', done: false },
     { id: 2, title: '山田様 商談フォロー', date: '2026-07-24', start: '16:00', end: '17:00', type: '商談', place: 'カフェ・アオヤマ', customer_id: 1, case_id: 1, priority: '高', remind: '30', memo: '前回の内見の感想確認、次回内見の候補提案', done: false },
     { id: 3, title: '契約予定確認（鈴木様）', date: '2026-07-24', start: '18:00', end: '18:30', type: '電話', place: '', customer_id: 3, case_id: 3, priority: '高', remind: '10', memo: '契約書送付確認', done: false }
-  ]
+  ],
+  caseLookup: { areas: ['港区','世田谷区','新宿区','渋谷区'], lines: [], stations: [] }
 };
 
 RC.data = null;
@@ -728,6 +731,7 @@ RC.load = function() {
   if (!RC.data.customers) RC.data.customers = JSON.parse(JSON.stringify(RC.defaults.customers));
   if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
   if (!RC.data.schedules) RC.data.schedules = JSON.parse(JSON.stringify(RC.defaults.schedules));
+  if (!RC.data.caseLookup) RC.data.caseLookup = JSON.parse(JSON.stringify(RC.defaults.caseLookup));
 };
 
 RC.save = function() {
@@ -845,7 +849,7 @@ RC.go = function(view) {
     }
     RC.fixViewport();
     RC.renderAll();
-    if (view === 'new-case') setTimeout(function(){ RC.toggleCaseFields((document.getElementById('case-trade-kind') || {}).value || 'rent'); }, 0);
+    if (view === 'new-case') setTimeout(function(){ RC.toggleCaseFields((document.getElementById('case-trade-kind') || {}).value || 'rent'); RC.renderCaseLookupOptions(); }, 0);
     setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 0);
     setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 80);
   } catch (e) {
@@ -1022,6 +1026,48 @@ RC.openPlaceMapInput = function() {
 RC.openPlaceMap = function(place) {
   if (!place) return RC.toast('場所が未設定です');
   window.open(RC.mapUrl(place), '_blank');
+};
+RC.openCaseAddressMapInput = function() {
+  var el = document.getElementById('case-address');
+  var place = el ? el.value.trim() : '';
+  if (!place) return RC.toast('所在地を入力してください');
+  window.open(RC.mapUrl(place), '_blank');
+};
+RC.composeTrafficValue = function(line, station, walk, bus, fallback) {
+  if (fallback && !line && !station && !walk && !bus) return fallback;
+  var parts = [];
+  var rail = [line, station].filter(function(x){ return x; }).join(' ');
+  if (rail) parts.push(rail);
+  if (walk) parts.push('徒歩' + walk + '分');
+  if (bus) parts.push('バス' + bus + '分');
+  return parts.join(' / ');
+};
+RC.uniqueText = function(arr) {
+  var seen = {};
+  return (arr || []).map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v && !seen[v] && (seen[v] = true); });
+};
+RC.refreshCaseLookup = function() {
+  if (!RC.data.caseLookup) RC.data.caseLookup = { areas: [], lines: [], stations: [] };
+  var areas = (RC.data.caseLookup.areas || []).slice();
+  var lines = (RC.data.caseLookup.lines || []).slice();
+  var stations = (RC.data.caseLookup.stations || []).slice();
+  (RC.data.cases || []).forEach(function(c){
+    if (c.area) areas.push(c.area);
+    if (c.traffic_line) lines.push(c.traffic_line);
+    if (c.traffic_station) stations.push(c.traffic_station);
+  });
+  RC.data.caseLookup.areas = RC.uniqueText(areas);
+  RC.data.caseLookup.lines = RC.uniqueText(lines);
+  RC.data.caseLookup.stations = RC.uniqueText(stations);
+};
+RC.renderCaseLookupOptions = function() {
+  RC.refreshCaseLookup();
+  var area = document.getElementById('case-area-list');
+  var line = document.getElementById('case-line-list');
+  var station = document.getElementById('case-station-list');
+  if (area) area.innerHTML = (RC.data.caseLookup.areas || []).map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
+  if (line) line.innerHTML = (RC.data.caseLookup.lines || []).map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
+  if (station) station.innerHTML = (RC.data.caseLookup.stations || []).map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
 };
 
 RC.priorityChipClass = function(p) {
@@ -1631,7 +1677,8 @@ RC.renderCases = function() {
     var price = deal === '売買' ? (c.price ? c.price + '万円' : '') : (c.rent ? c.rent + '万円/月' : '');
     var subCost = deal === '売買' ? (c.mgmt ? '管理費 ' + c.mgmt : '') : (c.rent_mgmt ? '管理費 ' + c.rent_mgmt : '');
     var meta = [deal, c.type, price, c.area].filter(function(x){return x;}).join(' ・ ');
-    var detail2 = [c.property_name, c.layout, c.traffic].filter(function(x){return x;}).join(' / ');
+    var trafficText = RC.composeTrafficValue(c.traffic_line, c.traffic_station, c.walk_minutes, c.bus_minutes, c.traffic);
+    var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
@@ -1772,6 +1819,7 @@ RC.openNewCase = function() {
     var form = document.getElementById('form-case');
     if (form) form.reset();
     RC.toggleCaseFields('rent');
+    RC.renderCaseLookupOptions();
   }, 30);
 };
 
@@ -1798,6 +1846,10 @@ RC.saveCase = function(ev) {
   var form = ev.target;
   var d = new Date();
   var dateStr = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
+  var trafficLine = form.traffic_line ? form.traffic_line.value.trim() : '';
+  var trafficStation = form.traffic_station ? form.traffic_station.value.trim() : '';
+  var walkMinutes = form.walk_minutes ? form.walk_minutes.value.trim() : '';
+  var busMinutes = form.bus_minutes ? form.bus_minutes.value.trim() : '';
   var newCase = {
     id: Date.now(),
     customer: form.customer.value.trim(),
@@ -1806,7 +1858,9 @@ RC.saveCase = function(ev) {
     type: form.type.value, status: form.status.value,
     price: form.price.value.trim(), rent: form.rent.value.trim(),
     mgmt: form.mgmt ? form.mgmt.value.trim() : '', repair: form.repair ? form.repair.value.trim() : '',
-    area: form.area.value.trim(), address: form.address.value.trim(), traffic: form.traffic.value.trim(),
+    area: form.area.value.trim(), address: form.address.value.trim(),
+    traffic_line: trafficLine, traffic_station: trafficStation, walk_minutes: walkMinutes, bus_minutes: busMinutes,
+    traffic: RC.composeTrafficValue(trafficLine, trafficStation, walkMinutes, busMinutes, ''),
     layout: form.layout.value.trim(), built_ym: form.built_ym.value.trim(),
     structure: form.structure.value.trim(), floor_info: form.floor_info.value.trim(),
     exclusive_area: form.exclusive_area ? form.exclusive_area.value.trim() : '',
@@ -1833,9 +1887,11 @@ RC.saveCase = function(ev) {
   };
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
   RC.data.cases.push(newCase);
+  RC.refreshCaseLookup();
   RC.save();
   form.reset();
   RC.toggleCaseFields('rent');
+  RC.renderCaseLookupOptions();
   RC.toast('✓ 案件を登録しました');
   RC.go('cases');
   return false;
@@ -2042,6 +2098,7 @@ RC.resetAll = function() {
 RC.boot = function() {
   try {
     RC.load();
+    RC.refreshCaseLookup();
     RC.go('home');
   } catch (e) {
     if (window.console) console.error('boot error', e);

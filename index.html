@@ -446,6 +446,18 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
           </div>
         </div>
         <div class="form-grid-2">
+          <div class="form-row"><label>建ぺい率</label>
+            <select name="building_coverage_ratio">
+              <option value="">選択してください</option><option>30%</option><option>40%</option><option>50%</option><option>60%</option><option>70%</option><option>80%</option>
+            </select>
+          </div>
+          <div class="form-row"><label>容積率</label>
+            <select name="floor_area_ratio">
+              <option value="">選択してください</option><option>50%</option><option>60%</option><option>80%</option><option>100%</option><option>150%</option><option>160%</option><option>200%</option><option>300%</option><option>400%</option><option>500%</option><option>600%</option><option>700%</option><option>800%</option><option>900%</option><option>1000%</option><option>1100%</option><option>1200%</option><option>1300%</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
           <div class="form-row"><label>現況</label>
             <select name="sale_occupancy"><option value="">選択してください</option><option>所有者居住中</option><option>空家</option><option>賃貸中</option><option>未完成</option></select>
           </div>
@@ -1867,7 +1879,7 @@ RC.renderCases = function() {
     var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
     var detail3 = [builtText, c.structure, c.floor_info, c.room_number].filter(function(x){return x;}).join(' / ');
     var areaDetail = [c.exclusive_area ? ('専有 ' + RC.formatAreaDisplay(c.exclusive_area)) : '', c.land_area ? ('土地 ' + RC.formatAreaDisplay(c.land_area)) : '', c.building_area ? ('建物 ' + RC.formatAreaDisplay(c.building_area)) : ''].filter(function(x){return x;}).join(' / ');
-    var saleDetail = [c.zoning ? ('用途地域 ' + c.zoning) : '', c.sale_topography ? ('地勢 ' + c.sale_topography) : '', c.sale_occupancy ? ('現況 ' + c.sale_occupancy) : ''].filter(function(x){return x;}).join(' / ');
+    var saleDetail = [c.zoning ? ('用途地域 ' + c.zoning) : '', c.building_coverage_ratio ? ('建ぺい率 ' + c.building_coverage_ratio) : '', c.floor_area_ratio ? ('容積率 ' + c.floor_area_ratio) : '', c.sale_topography ? ('地勢 ' + c.sale_topography) : '', c.sale_occupancy ? ('現況 ' + c.sale_occupancy) : ''].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
@@ -2083,6 +2095,8 @@ RC.saveCase = function(ev) {
     sale_parking_fee: form.sale_parking_fee ? form.sale_parking_fee.value.trim() : '',
     sale_topography: form.sale_topography ? form.sale_topography.value : '',
     zoning: form.zoning ? form.zoning.value : '',
+    building_coverage_ratio: form.building_coverage_ratio ? form.building_coverage_ratio.value : '',
+    floor_area_ratio: form.floor_area_ratio ? form.floor_area_ratio.value : '',
     sale_occupancy: form.sale_occupancy ? form.sale_occupancy.value : '',
     sale_handover: form.sale_handover ? form.sale_handover.value : '',
     sale_equipment: form.sale_equipment ? form.sale_equipment.value.trim() : '',

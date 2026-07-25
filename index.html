@@ -175,6 +175,7 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .color-preset{width:26px;height:26px;border-radius:999px;border:2px solid white;box-shadow:0 0 0 1px #D1D5DB inset, 0 1px 3px rgba(0,0,0,.08)}
 .place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .case-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.case-lock-note{margin-top:6px;font-size:11px;color:#B45309;font-weight:700;display:none}
 @media (max-width:420px){.case-mode-grid{grid-template-columns:1fr}}
 .case-section{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-bottom:12px;background:#F8FAFC}
 .case-section-title{font-size:13px;font-weight:800;color:#1E3A8A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -392,7 +393,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
           <select name="trade_kind" id="case-trade-kind" onchange="RC.toggleCaseFields(this.value)">
             <option value="sale">売買</option>
             <option value="rent" selected>賃貸</option>
-          </select>
+          </select><div id="case-trade-kind-lock-note" class="case-lock-note">登録後は取引区分を変更できません</div>
         </div>
         <div class="form-row"><label>ステータス</label>
           <select name="status" id="case-status"></select>
@@ -2205,11 +2206,22 @@ RC.applyRentEquipment = function(value) {
   }
   RC.syncRentEquipment();
 };
+RC.setCaseTradeKindLock = function(isLocked) {
+  var sel = document.getElementById('case-trade-kind');
+  var note = document.getElementById('case-trade-kind-lock-note');
+  if (sel) {
+    sel.disabled = !!isLocked;
+    sel.style.opacity = isLocked ? '0.72' : '1';
+    sel.style.cursor = isLocked ? 'not-allowed' : '';
+  }
+  if (note) note.style.display = isLocked ? 'block' : 'none';
+};
 RC.setCaseFormMode = function(isEdit) {
   var title = document.getElementById('case-form-title');
   var btn = document.getElementById('case-save-btn');
   if (title) title.textContent = isEdit ? '✏️ 案件編集' : '➕ 新規案件登録';
   if (btn) btn.textContent = isEdit ? '更新' : '保存';
+  RC.setCaseTradeKindLock(!!isEdit);
 };
 RC.resetCaseForm = function(defaultKind) {
   var form = document.getElementById('form-case');
@@ -2312,11 +2324,12 @@ RC.toggleCaseFields = function(kind) {
   var sale = document.getElementById('case-sale-fields');
   var rent = document.getElementById('case-rent-fields');
   var kindSel = document.getElementById('case-trade-kind');
-  var mgmt = document.querySelector('#case-sale-fields input[name="mgmt"]');
-  if (kindSel && kind) kindSel.value = kind;
-  if (sale) sale.style.display = (kind === 'sale') ? 'block' : 'none';
-  if (rent) rent.style.display = (kind === 'rent') ? 'block' : 'none';
-  RC.updateCaseStatusOptions(kind || (kindSel ? kindSel.value : 'sale'));
+  var actualKind = kind || (kindSel ? kindSel.value : 'sale');
+  if (kindSel && kind && !kindSel.disabled) kindSel.value = kind;
+  if (kindSel && kindSel.disabled) actualKind = kindSel.value || actualKind;
+  if (sale) sale.style.display = (actualKind === 'sale') ? 'block' : 'none';
+  if (rent) rent.style.display = (actualKind === 'rent') ? 'block' : 'none';
+  RC.updateCaseStatusOptions(actualKind || (kindSel ? kindSel.value : 'sale'));
 };
 
 RC.openNewCase = function() {
@@ -2800,9 +2813,29 @@ RC.saveCase = function(ev) {
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
   newCase.images = (RC._caseAttachDraft && RC._caseAttachDraft.images) ? RC._caseAttachDraft.images.slice() : [];
   newCase.pdfs = (RC._caseAttachDraft && RC._caseAttachDraft.pdfs) ? RC._caseAttachDraft.pdfs.slice() : [];
+  var sanitizeCaseByTradeKind = function(target, tradeKind) {
+    if (tradeKind === 'sale') {
+      target.rent = ''; target.rent_mgmt = ''; target.deposit_guarantee = ''; target.right_money = ''; target.key_money = '';
+      target.security_deposit = ''; target.cancellation_fee = ''; target.move_in = ''; target.usage_area = ''; target.partial_area = '';
+      target.room_count = ''; target.balcony_dir = ''; target.parking_status = ''; target.parking_fee = ''; target.occupancy = '';
+      target.equipment = ''; target.rent_notes = '';
+    } else if (tradeKind === 'rent') {
+      target.price = ''; target.mgmt = ''; target.repair = ''; target.exclusive_area = ''; target.land_area = ''; target.building_area = '';
+      target.sale_balcony_dir = ''; target.sale_total_units = ''; target.sale_parking_status = ''; target.sale_parking_fee = '';
+      target.sale_topography = ''; target.zoning = ''; target.building_coverage_ratio = ''; target.floor_area_ratio = '';
+      target.sale_occupancy = ''; target.sale_handover = ''; target.sale_equipment = ''; target.owner_change = '';
+    }
+    return target;
+  };
   var editId = form.case_id ? String(form.case_id.value || '') : '';
   var isEdit = !!editId;
   if (isEdit) {
+    var originalCase = null;
+    for (var i = 0; i < (RC.data.cases || []).length; i++) {
+      if (String(RC.data.cases[i].id) === editId) { originalCase = RC.data.cases[i]; break; }
+    }
+    if (originalCase && originalCase.trade_kind) newCase.trade_kind = originalCase.trade_kind;
+    sanitizeCaseByTradeKind(newCase, newCase.trade_kind || 'rent');
     newCase.id = Number(editId) || editId;
     newCase.date = (RC.data.cases || []).reduce(function(foundDate, item){
       return String(item.id) === editId ? (item.date || foundDate) : foundDate;
@@ -2811,6 +2844,7 @@ RC.saveCase = function(ev) {
       return String(item.id) === editId ? newCase : item;
     });
   } else {
+    sanitizeCaseByTradeKind(newCase, newCase.trade_kind || 'rent');
     RC.data.cases.push(newCase);
   }
   RC.refreshCaseLookup();

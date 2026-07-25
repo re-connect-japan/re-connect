@@ -1112,8 +1112,8 @@ RC.renderScheduleList = function() {
     filtered = all.filter(function(s){ return s.date >= monthScrollStartStr && s.date <= monthScrollEndStr; });
     if (rangeLabel) rangeLabel.textContent = '表示範囲: 過去6ヶ月〜未来6ヶ月（月間カレンダー）';
   } else if (RC._scheduleFilter === 'task') {
-    filtered = all.filter(function(s){ return s.type === 'タスク'; });
-    if (rangeLabel) rangeLabel.textContent = '表示範囲: タスク';
+    filtered = all.filter(function(s){ return s.type === 'タスク' && !s.done; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: 未完了タスク';
   } else {
     filtered = all.slice();
     if (rangeLabel) rangeLabel.textContent = '表示範囲: すべての予定';

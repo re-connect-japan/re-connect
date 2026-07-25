@@ -991,6 +991,14 @@ RC.setScheduleFilter = function(f) {
 RC.openScheduleDay = function(dateStr) {
   RC._scheduleSelectedDate = dateStr;
   RC._scheduleFilter = 'today';
+  if (RC.currentView !== 'schedule') {
+    RC.go('schedule');
+    setTimeout(function(){
+      var list = document.getElementById('schedule-list');
+      if (list) list.scrollTop = 0;
+    }, 80);
+    return;
+  }
   RC.renderScheduleList();
   RC.updateScheduleLayout();
   var list = document.getElementById('schedule-list');

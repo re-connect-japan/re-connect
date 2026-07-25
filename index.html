@@ -958,6 +958,85 @@ RC.compactDataForStorage = function(data) {
   return clone;
 };
 
+RC.snapshotDataForLocal = function(data) {
+  var clone = RC.compactDataForStorage(data);
+  if (clone.profile) {
+    delete clone.profile.avatarImage;
+    delete clone.profile.bgImage;
+  }
+  var cases = clone.cases || [];
+  for (var i = 0; i < cases.length; i++) {
+    if (cases[i].images) cases[i].images = [];
+    if (cases[i].pdfs) cases[i].pdfs = (cases[i].pdfs || []).map(function(p){ return p && p.name ? { name: p.name } : {}; });
+  }
+  var posts = clone.posts || [];
+  for (var k = 0; k < posts.length; k++) {
+    if (posts[k].images) posts[k].images = [];
+    delete posts[k].avatarImage;
+  }
+  return clone;
+};
+
+RC.idbOpen = function() {
+  return new Promise(function(resolve, reject) {
+    try {
+      if (!window.indexedDB) return reject(new Error('indexedDB unavailable'));
+      var req = window.indexedDB.open('re-connect-db', 1);
+      req.onupgradeneeded = function() {
+        var db = req.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+      };
+      req.onsuccess = function() { resolve(req.result); };
+      req.onerror = function() { reject(req.error || new Error('indexedDB open failed')); };
+    } catch (e) { reject(e); }
+  });
+};
+RC.idbGet = function(key) {
+  return RC.idbOpen().then(function(db){
+    return new Promise(function(resolve, reject){
+      try {
+        var tx = db.transaction('kv', 'readonly');
+        var store = tx.objectStore('kv');
+        var req = store.get(key);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ reject(req.error || new Error('indexedDB get failed')); };
+      } catch (e) { reject(e); }
+    });
+  });
+};
+RC.idbSet = function(key, value) {
+  return RC.idbOpen().then(function(db){
+    return new Promise(function(resolve, reject){
+      try {
+        var tx = db.transaction('kv', 'readwrite');
+        var store = tx.objectStore('kv');
+        var req = store.put(value, key);
+        req.onsuccess = function(){ resolve(true); };
+        req.onerror = function(){ reject(req.error || new Error('indexedDB put failed')); };
+      } catch (e) { reject(e); }
+    });
+  });
+};
+RC.hydrateFromIndexedDb = function() {
+  if (!window.indexedDB) return;
+  RC.idbGet(RC.KEY).then(function(full){
+    if (!full) return;
+    var localTs = RC.data && RC.data._saved_at ? Number(RC.data._saved_at) : 0;
+    var idbTs = full && full._saved_at ? Number(full._saved_at) : 0;
+    var shouldApply = idbTs >= localTs;
+    if (!shouldApply) return;
+    RC.data = full;
+    if (!RC.data.profile) RC.data.profile = JSON.parse(JSON.stringify(RC.defaults.profile));
+    if (!RC.data.cases) RC.data.cases = JSON.parse(JSON.stringify(RC.defaults.cases));
+    if (!RC.data.customers) RC.data.customers = JSON.parse(JSON.stringify(RC.defaults.customers));
+    if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
+    if (!RC.data.schedules) RC.data.schedules = JSON.parse(JSON.stringify(RC.defaults.schedules));
+    if (!RC.data.caseLookup) RC.data.caseLookup = JSON.parse(JSON.stringify(RC.defaults.caseLookup));
+    RC.refreshCaseLookup();
+    RC.renderAll();
+  }).catch(function(){});
+};
+
 RC.load = function() {
   try {
     var raw = localStorage.getItem(RC.KEY);
@@ -969,21 +1048,24 @@ RC.load = function() {
   if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
   if (!RC.data.schedules) RC.data.schedules = JSON.parse(JSON.stringify(RC.defaults.schedules));
   if (!RC.data.caseLookup) RC.data.caseLookup = JSON.parse(JSON.stringify(RC.defaults.caseLookup));
-  try {
-    var compacted = RC.compactDataForStorage(RC.data);
-    var before = JSON.stringify(RC.data);
-    var after = JSON.stringify(compacted);
-    if (after.length < before.length) {
-      RC.data = compacted;
-      localStorage.setItem(RC.KEY, after);
-    }
-  } catch (e) {}
+  RC.hydrateFromIndexedDb();
 };
 
 RC.save = function() {
   try {
     RC.data = RC.compactDataForStorage(RC.data);
-    localStorage.setItem(RC.KEY, JSON.stringify(RC.data));
+    RC.data._saved_at = Date.now();
+    var snapshot = RC.snapshotDataForLocal(RC.data);
+    var savedSomewhere = false;
+    try {
+      localStorage.setItem(RC.KEY, JSON.stringify(snapshot));
+      savedSomewhere = true;
+    } catch (e) {}
+    if (window.indexedDB) {
+      savedSomewhere = true;
+      RC.idbSet(RC.KEY, RC.data).catch(function(){});
+    }
+    if (!savedSomewhere) throw new Error('no storage available');
     return true;
   }
   catch (e) { RC.toast('⚠️ 保存に失敗しました'); return false; }

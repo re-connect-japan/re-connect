@@ -2894,6 +2894,7 @@ RC.openFlyerHtml = function(html, context) {
   try { frame.setAttribute('srcdoc', html); } catch(e) { frame.srcdoc = html; }
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
+  setTimeout(function(){ try { RC.foRefreshLinks(); } catch(e){} }, 300);
   return { overlay: true };
 };
 RC.closeFlyerOverlay = function() {
@@ -3010,31 +3011,85 @@ RC.foCloud = function() {
   RC.foDownloadPdf();
   setTimeout(function(){ try{ window.open(m.url,'_blank','noopener'); }catch(e){} RC.toast('作成したPDFを' + m.label + 'にアップロードしてください'); }, 900);
 };
+RC._foBlobUrl = '';
+RC.foPreparePdfLink = function() {
+  var a = document.getElementById('fo-pdf');
+  if (!a) return;
+  a.setAttribute('href', '#');
+  a.setAttribute('download', RC.getPdfFileNameForCurrent());
+  a.textContent = '📥 PDFを準備中...';
+  RC.foRenderPdfBlob().then(function(blob){
+    var U = window.URL || window.webkitURL;
+    if (RC._foBlobUrl && U && U.revokeObjectURL) { try { U.revokeObjectURL(RC._foBlobUrl); } catch(e){} }
+    RC._foBlobUrl = U.createObjectURL(blob);
+    a.setAttribute('href', RC._foBlobUrl);
+    a.setAttribute('download', RC.getPdfFileNameForCurrent());
+    a.setAttribute('target', '_blank');
+    a.textContent = '📥 PDF保存';
+    RC._foPdfBlob = blob;
+  }).catch(function(err){ console.error(err); a.textContent = '📥 PDF再試行'; a.setAttribute('href','javascript:void(0)'); RC.toast('PDF生成に失敗しました'); });
+};
+RC.foPrepareMailLink = function() {
+  var a = document.getElementById('fo-mail');
+  if (!a) return;
+  var data = RC.getCurrentFlyerData() || {};
+  var subject = '【物件資料】' + (data.property_name || '') + (data.customer ? ('（' + data.customer + '様）') : '');
+  var body = RC.buildFlyerMailBody(data, RC.htmlToDataUrl((RC._currentFlyer && RC._currentFlyer.html) || ''));
+  a.setAttribute('href', 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
+};
+RC.foPrepareCloudLink = function() {
+  var a = document.getElementById('fo-cloud');
+  if (!a) return;
+  var pr = (RC.data && RC.data.profile) || {};
+  var cf = pr.cloudFolders || {};
+  var url = 'https://drive.google.com/drive/u/0/my-drive';
+  if (cf.gdrive) url = 'https://drive.google.com/drive/u/0/search?q=' + encodeURIComponent(cf.gdrive);
+  a.setAttribute('href', url);
+  a.setAttribute('target', '_blank');
+  a.setAttribute('rel', 'noopener');
+};
 RC.foInit = function() {
   var overlay = document.getElementById('flyer-overlay');
   if (!overlay || overlay._bound) return;
   overlay._bound = true;
-  var actions = { close:RC.closeFlyerOverlay, pdf:RC.foDownloadPdf, cloud:RC.foCloud, print:RC.foPrint, mail:RC.foMail, share:RC.foShare, copy:RC.foCopyUrl };
-  var handler = function(e) {
-    var t = e.target;
-    while (t && t !== overlay) {
-      var act = t.getAttribute && t.getAttribute('data-fo');
-      if (act && actions[act]) {
-        if (e.preventDefault) e.preventDefault();
-        if (e.stopPropagation) e.stopPropagation();
-        var now = Date.now();
-        if (t.__last && now - t.__last < 500) return;
-        t.__last = now;
-        try { actions[act](); } catch(err) { console.error(err); RC.toast('処理でエラー: ' + (err && err.message ? err.message : act)); }
-        return;
-      }
-      t = t.parentNode;
+  var close = document.getElementById('fo-close');
+  var pdf = document.getElementById('fo-pdf');
+  var cloud = document.getElementById('fo-cloud');
+  var pr = document.getElementById('fo-print');
+  var mail = document.getElementById('fo-mail');
+  var shr = document.getElementById('fo-share');
+  var cpy = document.getElementById('fo-copy');
+  if (close) close.addEventListener('click', function(e){ e.preventDefault(); RC.closeFlyerOverlay(); });
+  if (pr) pr.addEventListener('click', function(e){ e.preventDefault(); RC.foPrint(); });
+  if (shr) shr.addEventListener('click', function(e){ e.preventDefault(); RC.foShare(); });
+  if (cpy) cpy.addEventListener('click', function(e){ e.preventDefault(); RC.foCopyUrl(); });
+  if (pdf) pdf.addEventListener('click', function(e){
+    if (!RC._foPdfBlob) { e.preventDefault(); RC.toast('PDFを生成中です。数秒後にもう一度タップしてください'); RC.foPreparePdfLink(); return; }
+    if (RC.isMobileUa() && navigator.canShare && typeof File !== 'undefined') {
+      try {
+        var file = new File([RC._foPdfBlob], RC.getPdfFileNameForCurrent(), { type:'application/pdf' });
+        if (navigator.canShare({ files:[file] })) {
+          e.preventDefault();
+          navigator.share({ files:[file], title: RC.getPdfFileNameForCurrent() }).then(function(){ RC.toast('✓ PDFを共有/保存しました'); }).catch(function(){});
+          return;
+        }
+      } catch(err){}
     }
-  };
-  overlay.addEventListener('click', handler, true);
-  overlay.addEventListener('touchend', handler, { capture:true, passive:false });
-  overlay.addEventListener('pointerup', handler, true);
+    // let native download fire
+  });
+  if (cloud) cloud.addEventListener('click', function(e){
+    if (!RC._foPdfBlob) { RC.toast('PDFを準備中。数秒後に再タップしてください'); RC.foPreparePdfLink(); }
+    else { RC._fallbackPdfBlob(RC._foPdfBlob, RC.getPdfFileNameForCurrent()); }
+  });
 };
+RC.foRefreshLinks = function() {
+  RC._foPdfBlob = null;
+  RC.foPreparePdfLink();
+  RC.foPrepareMailLink();
+  RC.foPrepareCloudLink();
+};
+if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', RC.foInit); } else { RC.foInit(); }
+window.addEventListener('load', RC.foInit);
 if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', RC.foInit); } else { RC.foInit(); }
 window.addEventListener('load', RC.foInit);
 RC.exportCaseSheetPdf = function() {
@@ -3639,13 +3694,13 @@ window.addEventListener('orientationchange', function(){ setTimeout(function(){ 
 </style>
 <div id="flyer-overlay" role="dialog" aria-modal="true" aria-label="物件資料">
   <div class="fo-bar">
-    <button type="button" class="fo-btn fo-close" data-fo="close">✕ 閉じる</button>
-    <button type="button" class="fo-btn fo-pdf" data-fo="pdf">📥 PDF保存</button>
-    <button type="button" class="fo-btn fo-cloud" data-fo="cloud">☁️ クラウド</button>
-    <button type="button" class="fo-btn fo-print" data-fo="print">🖨 印刷</button>
-    <button type="button" class="fo-btn fo-mail" data-fo="mail">✉️ メール</button>
-    <button type="button" class="fo-btn fo-share" data-fo="share">🔗 共有</button>
-    <button type="button" class="fo-btn fo-copy" data-fo="copy">📋 URL</button>
+    <a id="fo-close" class="fo-btn fo-close" href="javascript:void(0)" role="button">✕ 閉じる</a>
+    <a id="fo-pdf" class="fo-btn fo-pdf" href="#" download="物件資料.pdf" target="_blank" rel="noopener" role="button">📥 PDF保存</a>
+    <a id="fo-cloud" class="fo-btn fo-cloud" href="https://drive.google.com/drive/u/0/my-drive" target="_blank" rel="noopener" role="button">☁️ クラウド</a>
+    <a id="fo-print" class="fo-btn fo-print" href="javascript:void(0)" role="button">🖨 印刷</a>
+    <a id="fo-mail" class="fo-btn fo-mail" href="mailto:" role="button">✉️ メール</a>
+    <a id="fo-share" class="fo-btn fo-share" href="javascript:void(0)" role="button">🔗 共有</a>
+    <a id="fo-copy" class="fo-btn fo-copy" href="javascript:void(0)" role="button">📋 URL</a>
   </div>
   <iframe id="flyer-overlay-frame" class="fo-frame" title="物件資料"></iframe>
 </div>

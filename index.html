@@ -182,13 +182,14 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .page-title-row h1{margin:0;padding:0}
 .count-label{font-size:12px;color:#64748B;font-weight:400}
 #page-schedule{position:relative}
-.schedule-toolbar{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:18;background:rgba(245,247,250,0.98);backdrop-filter:blur(8px);padding:2px 0 10px;margin-bottom:8px;border-bottom:1px solid #E5E7EB}
+#page-schedule.page.active{display:flex;flex-direction:column;overflow:hidden}
+.schedule-toolbar{position:relative;z-index:18;background:rgba(245,247,250,0.98);backdrop-filter:blur(8px);padding:2px 0 10px;margin-bottom:8px;border-bottom:1px solid #E5E7EB;flex:0 0 auto}
 .schedule-toolbar .page-title-row{margin-bottom:10px;padding-top:0}
 .schedule-toolbar .btn-block{margin-bottom:10px}
 #schedule-filter-bar{margin-bottom:8px !important}
 #schedule-range-label{font-size:12px;color:#64748B;margin-bottom:0 !important}
-#schedule-list{padding-bottom:14px}
-@media (max-width:640px){.schedule-toolbar{top:calc(58px + env(safe-area-inset-top));padding-bottom:8px}}
+#schedule-list{padding-bottom:14px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:640px){.schedule-toolbar{padding-bottom:8px}}
 
 .schedule-card.t-内見{border-left:4px solid #2563EB;background:linear-gradient(90deg,#EFF6FF 0,#FFFFFF 22%)}
 .schedule-card.t-商談{border-left:4px solid #D97706;background:linear-gradient(90deg,#FFF7ED 0,#FFFFFF 22%)}
@@ -668,11 +669,58 @@ RC.fixViewport = function() {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     document.documentElement.style.width = '100%';
     document.body.style.width = '100%';
-    document.documentElement.style.overflowX = 'clip';
-    document.body.style.overflowX = 'clip';
+    document.documentElement.style.overflowX = 'hidden';
+    document.body.style.overflowX = 'hidden';
     document.documentElement.scrollLeft = 0;
     document.body.scrollLeft = 0;
     if (window.scrollTo) window.scrollTo(0, 0);
+  } catch (e) {}
+};
+RC.clearScheduleLayout = function() {
+  try {
+    var main = document.querySelector('main');
+    var page = document.getElementById('page-schedule');
+    var list = document.getElementById('schedule-list');
+    document.documentElement.style.overflowY = '';
+    document.body.style.overflowY = '';
+    if (main) main.style.overflow = '';
+    if (page) {
+      page.style.height = '';
+      page.style.minHeight = '';
+    }
+    if (list) {
+      list.style.maxHeight = '';
+      list.style.height = '';
+      list.scrollTop = 0;
+    }
+  } catch (e) {}
+};
+RC.updateScheduleLayout = function() {
+  try {
+    if (RC.currentView !== 'schedule') return RC.clearScheduleLayout();
+    var main = document.querySelector('main');
+    var header = document.querySelector('.header');
+    var nav = document.querySelector('.bottom-nav');
+    var page = document.getElementById('page-schedule');
+    var toolbar = page ? page.querySelector('.schedule-toolbar') : null;
+    var list = document.getElementById('schedule-list');
+    if (!main || !page || !toolbar || !list) return;
+    var cs = window.getComputedStyle(main);
+    var pt = parseFloat(cs.paddingTop) || 0;
+    var pb = parseFloat(cs.paddingBottom) || 0;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+    var headerH = header ? header.getBoundingClientRect().height : 0;
+    var navH = nav ? nav.getBoundingClientRect().height : 0;
+    var toolbarH = toolbar.getBoundingClientRect().height || 0;
+    var usable = Math.max(260, vh - headerH - navH - pt - pb - 6);
+    var listH = Math.max(180, usable - toolbarH - 2);
+    page.style.height = usable + 'px';
+    page.style.minHeight = usable + 'px';
+    list.style.height = listH + 'px';
+    list.style.maxHeight = listH + 'px';
+    if (main) main.style.overflow = 'hidden';
+    document.documentElement.style.overflowY = 'hidden';
+    document.body.style.overflowY = 'hidden';
   } catch (e) {}
 };
 RC.go = function(view) {
@@ -688,8 +736,8 @@ RC.go = function(view) {
     }
     RC.fixViewport();
     RC.renderAll();
-    setTimeout(RC.fixViewport, 0);
-    setTimeout(RC.fixViewport, 60);
+    setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 0);
+    setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 80);
   } catch (e) {
     if (window.console) console.error('go error', view, e);
   }
@@ -1740,10 +1788,10 @@ RC.boot = function() {
 };
 
 RC.boot();
-document.addEventListener('DOMContentLoaded', function(){ RC.boot(); RC.fixViewport(); });
-window.addEventListener('load', function(){ RC.boot(); RC.fixViewport(); });
-window.addEventListener('resize', RC.fixViewport);
-window.addEventListener('orientationchange', function(){ setTimeout(RC.fixViewport, 120); });
+document.addEventListener('DOMContentLoaded', function(){ RC.boot(); RC.fixViewport(); RC.updateScheduleLayout(); });
+window.addEventListener('load', function(){ RC.boot(); RC.fixViewport(); RC.updateScheduleLayout(); });
+window.addEventListener('resize', function(){ RC.fixViewport(); RC.updateScheduleLayout(); });
+window.addEventListener('orientationchange', function(){ setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 120); });
 </script>
 
 </body>

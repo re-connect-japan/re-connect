@@ -414,11 +414,11 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         </div>
         <div class="form-grid-2">
           <div class="form-row"><label>修繕積立金</label><input name="repair" inputmode="numeric" placeholder="1.2（万円）"></div>
-          <div class="form-row"><label>専有面積</label><input name="exclusive_area" placeholder="例: 75㎡"></div>
+          <div class="form-row"><label>専有面積</label><input name="exclusive_area" id="case-exclusive-area" placeholder="例: 75㎡" oninput="RC.updateAreaPreview('exclusive_area', this.value)"><div id="preview-exclusive-area" class="form-note">㎡入力で坪を併記表示</div></div>
         </div>
         <div class="form-grid-2">
-          <div class="form-row"><label>土地面積</label><input name="land_area" placeholder="例: 100㎡"></div>
-          <div class="form-row"><label>建物面積</label><input name="building_area" placeholder="例: 92㎡"></div>
+          <div class="form-row"><label>土地面積</label><input name="land_area" id="case-land-area" placeholder="例: 100㎡" oninput="RC.updateAreaPreview('land_area', this.value)"><div id="preview-land-area" class="form-note">㎡入力で坪を併記表示</div></div>
+          <div class="form-row"><label>建物面積</label><input name="building_area" id="case-building-area" placeholder="例: 92㎡" oninput="RC.updateAreaPreview('building_area', this.value)"><div id="preview-building-area" class="form-note">㎡入力で坪を併記表示</div></div>
         </div>
         <div class="form-row">
           <label>オーナーチェンジ</label>
@@ -1150,6 +1150,31 @@ RC.composeFloorInfo = function(total, current) {
   if (current) parts.push(current + '階部分');
   return parts.join(' / ');
 };
+RC.parseAreaNumber = function(value) {
+  value = String(value || '').trim();
+  if (!value) return NaN;
+  var m = value.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+  return m ? parseFloat(m[0]) : NaN;
+};
+RC.formatAreaDisplay = function(value) {
+  value = String(value || '').trim();
+  if (!value) return '';
+  var sqm = RC.parseAreaNumber(value);
+  if (!isFinite(sqm)) return value;
+  var tsubo = sqm / 3.305785;
+  return sqm + '㎡（' + tsubo.toFixed(2) + '坪）';
+};
+RC.updateAreaPreview = function(kind, value) {
+  var map = {
+    exclusive_area: 'preview-exclusive-area',
+    land_area: 'preview-land-area',
+    building_area: 'preview-building-area'
+  };
+  var el = document.getElementById(map[kind] || '');
+  if (!el) return;
+  var txt = RC.formatAreaDisplay(value);
+  el.textContent = txt || '㎡入力で坪を併記表示';
+};
 RC.refreshCaseLookup = function() {
   if (!RC.data.caseLookup) RC.data.caseLookup = { areas: [], lines: [], stations: [] };
   var areas = (RC.data.caseLookup.areas || []).slice();
@@ -1807,12 +1832,14 @@ RC.renderCases = function() {
     var builtText = RC.formatBuiltYmDisplay(c.built_ym || '');
     var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
     var detail3 = [builtText, c.structure, c.floor_info, c.room_number].filter(function(x){return x;}).join(' / ');
+    var areaDetail = [c.exclusive_area ? ('専有 ' + RC.formatAreaDisplay(c.exclusive_area)) : '', c.land_area ? ('土地 ' + RC.formatAreaDisplay(c.land_area)) : '', c.building_area ? ('建物 ' + RC.formatAreaDisplay(c.building_area)) : ''].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
       '<div class="list-item-meta">' + RC.esc(meta) + '</div>' +
       (detail2 ? '<div class="list-item-meta">' + RC.esc(detail2) + '</div>' : '') +
       (detail3 ? '<div class="list-item-meta">' + RC.esc(detail3) + '</div>' : '') +
+      (areaDetail ? '<div class="list-item-meta">' + RC.esc(areaDetail) + '</div>' : '') +
       (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
@@ -1951,6 +1978,9 @@ RC.openNewCase = function() {
     RC.toggleCaseLayoutOther('');
     RC.toggleCaseStructureOther('');
     RC.updateCaseBuiltYmPreview('');
+    RC.updateAreaPreview('exclusive_area', '');
+    RC.updateAreaPreview('land_area', '');
+    RC.updateAreaPreview('building_area', '');
     RC.renderCaseLookupOptions();
   }, 30);
 };

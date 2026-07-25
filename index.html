@@ -182,13 +182,13 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .page-title-row h1{margin:0;padding:0}
 .count-label{font-size:12px;color:#64748B;font-weight:400}
 #page-schedule{position:relative}
-#page-schedule.page.active{display:flex;flex-direction:column;overflow:hidden}
+#page-schedule.page.active{display:flex;flex-direction:column;overflow:hidden;background:#F5F7FA}
 .schedule-toolbar{position:relative;z-index:18;background:rgba(245,247,250,0.98);backdrop-filter:blur(8px);padding:2px 0 10px;margin-bottom:8px;border-bottom:1px solid #E5E7EB;flex:0 0 auto}
 .schedule-toolbar .page-title-row{margin-bottom:10px;padding-top:0}
 .schedule-toolbar .btn-block{margin-bottom:10px}
 #schedule-filter-bar{margin-bottom:8px !important}
 #schedule-range-label{font-size:12px;color:#64748B;margin-bottom:0 !important}
-#schedule-list{padding-bottom:14px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#schedule-list{padding-bottom:14px;flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 @media (max-width:640px){.schedule-toolbar{padding-bottom:8px}}
 
 .schedule-card.t-内見{border-left:4px solid #2563EB;background:linear-gradient(90deg,#EFF6FF 0,#FFFFFF 22%)}
@@ -683,10 +683,22 @@ RC.clearScheduleLayout = function() {
     var list = document.getElementById('schedule-list');
     document.documentElement.style.overflowY = '';
     document.body.style.overflowY = '';
-    if (main) main.style.overflow = '';
+    if (main) {
+      main.style.overflow = '';
+      main.style.height = '';
+      main.style.minHeight = '';
+    }
     if (page) {
+      page.style.position = '';
+      page.style.left = '';
+      page.style.right = '';
+      page.style.top = '';
+      page.style.bottom = '';
+      page.style.width = '';
       page.style.height = '';
       page.style.minHeight = '';
+      page.style.maxHeight = '';
+      page.style.paddingRight = '';
     }
     if (list) {
       list.style.maxHeight = '';
@@ -705,20 +717,30 @@ RC.updateScheduleLayout = function() {
     var toolbar = page ? page.querySelector('.schedule-toolbar') : null;
     var list = document.getElementById('schedule-list');
     if (!main || !page || !toolbar || !list) return;
+    var mainRect = main.getBoundingClientRect();
+    var headerRect = header ? header.getBoundingClientRect() : { bottom: 0, height: 0 };
+    var navRect = nav ? nav.getBoundingClientRect() : { height: 0 };
     var cs = window.getComputedStyle(main);
     var pt = parseFloat(cs.paddingTop) || 0;
     var pb = parseFloat(cs.paddingBottom) || 0;
-    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
-    var headerH = header ? header.getBoundingClientRect().height : 0;
-    var navH = nav ? nav.getBoundingClientRect().height : 0;
+    var pageTop = Math.max(headerRect.bottom + 4, mainRect.top);
+    var pageBottom = Math.max(navRect.height + 4, pb);
+    var pageWidth = Math.max(280, mainRect.width);
+    page.style.position = 'fixed';
+    page.style.left = Math.round(mainRect.left) + 'px';
+    page.style.top = Math.round(pageTop) + 'px';
+    page.style.bottom = Math.round(pageBottom) + 'px';
+    page.style.width = Math.round(pageWidth) + 'px';
+    page.style.height = 'auto';
+    page.style.minHeight = '0';
+    page.style.maxHeight = 'none';
+    var pageRect = page.getBoundingClientRect();
     var toolbarH = toolbar.getBoundingClientRect().height || 0;
-    var usable = Math.max(260, vh - headerH - navH - pt - pb - 6);
-    var listH = Math.max(180, usable - toolbarH - 2);
-    page.style.height = usable + 'px';
-    page.style.minHeight = usable + 'px';
+    var listH = Math.max(180, pageRect.height - toolbarH - 8);
     list.style.height = listH + 'px';
     list.style.maxHeight = listH + 'px';
-    if (main) main.style.overflow = 'hidden';
+    main.style.overflow = 'visible';
+    main.style.minHeight = '0';
     document.documentElement.style.overflowY = 'hidden';
     document.body.style.overflowY = 'hidden';
   } catch (e) {}

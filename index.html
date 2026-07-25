@@ -176,6 +176,10 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .case-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .case-lock-note{margin-top:6px;font-size:11px;color:#B45309;font-weight:700;display:none}
+.flyer-saved-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.flyer-saved-chip{display:inline-flex;align-items:center;gap:6px;background:#EEF2FF;color:#1E3A8A;border:1px solid #C7D2FE;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.flyer-saved-chip:active{background:#E0E7FF}
+.flyer-saved-chip .flyer-del{background:transparent;border:none;color:#B91C1C;font-weight:900;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
 @media (max-width:420px){.case-mode-grid{grid-template-columns:1fr}}
 .case-section{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-bottom:12px;background:#F8FAFC}
 .case-section-title{font-size:13px;font-weight:800;color:#1E3A8A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -608,9 +612,15 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <div class="case-attach-preview" id="case-attach-pdf-preview"></div>
       </div>
 
+      <div class="case-section" id="case-flyers-section">
+        <div class="case-section-title">📄 保存済み資料</div>
+        <div id="case-saved-flyers"><div style="font-size:11px;color:#64748B">保存済みの資料はまだありません。</div></div>
+      </div>
+
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
         <button type="button" class="btn btn-orange" id="case-sheet-btn" onclick="return RC.exportCaseSheetPdf()">📄 資料化（PDF）</button>
+        <button type="button" class="btn btn-secondary" id="case-sheet-save-btn" onclick="return RC.saveCaseSheet()">💾 資料を保存</button>
         <button type="submit" class="btn btn-primary" id="case-save-btn">保存</button>
       </div>
     </form>
@@ -2031,7 +2041,12 @@ RC.renderCases = function() {
         }
         return '<div class="case-detail-media">' + parts.join('') + '</div><div class="list-item-meta" style="margin-top:2px">🖼️ ' + imgs.length + ' 枚 / 📄 ' + pdfs.length + ' 枚</div>' + pdfButtons;
       })() +
-      '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
+      '<div class="list-item-sub">登録: ' + RC.esc(c.date) + ((c.flyers && c.flyers.length) ? (' / 保存済み資料 ' + c.flyers.length + ' 件') : '') + '</div>' +
+      ((c.flyers && c.flyers.length) ? (
+        '<div class="list-item-meta" style="margin-top:6px">' + c.flyers.slice(0,3).map(function(f){
+          return '<button type="button" class="btn btn-secondary" style="min-height:auto;padding:4px 8px;font-size:11px;margin:0 6px 6px 0" onclick="return RC.openSavedFlyer(' + c.id + ',' + f.id + ')">📄 ' + RC.esc(f.label || '資料') + '</button>';
+        }).join('') + '</div>'
+      ) : '') +
       '<div class="list-item-actions">' +
         '<button type="button" class="list-item-edit-btn" onclick="return RC.handleCaseItemActivate(' + c.id + ', event)" ontouchend="return RC.handleCaseItemActivate(' + c.id + ', event)">編集</button>' +
         '<button type="button" class="list-item-del-btn" onclick="RC.delCase(' + c.id + ', event)">削除</button>' +
@@ -2229,6 +2244,7 @@ RC.resetCaseForm = function(defaultKind) {
   var idField = document.getElementById('case-id');
   if (idField) idField.value = '';
   RC.setCaseFormMode(false);
+  RC.renderCaseSavedFlyers({flyers:[]});
   var kind = defaultKind || 'rent';
   RC.toggleCaseFields(kind);
   RC.toggleCaseLayoutOther('');
@@ -2295,6 +2311,7 @@ RC.editCase = function(id) {
     RC.updateAreaPreview('land_area', found.land_area || '');
     RC.updateAreaPreview('building_area', found.building_area || '');
     RC.loadCaseAttachments(found);
+    RC.renderCaseSavedFlyers(found);
     RC.renderCaseLookupOptions();
     window.scrollTo(0, 0);
   }, 30);
@@ -2728,18 +2745,106 @@ RC.buildCaseSheetHtml = function(c) {
     '</div></div>' + '<scr' + 'ipt>(function(){function done(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});})();<\/scr' + 'ipt></body></html>';
 };
 
+RC.openFlyerHtml = function(html) {
+  var win = window.open('', '_blank');
+  if (!win) { RC.toast('ポップアップを許可するとPDF化できます'); return false; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  return win;
+};
 RC.exportCaseSheetPdf = function() {
   var form = document.getElementById('form-case');
   if (!form) return false;
   var data = RC.collectCaseSheetData(form);
   if (!data) { RC.toast('資料化するデータがありません'); return false; }
-  var win = window.open('', '_blank');
-  if (!win) { RC.toast('ポップアップを許可するとPDF化できます'); return false; }
   var html = RC.buildCaseSheetHtml(data);
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  RC.openFlyerHtml(html);
   return false;
+};
+RC.saveCaseSheet = function() {
+  var form = document.getElementById('form-case');
+  if (!form) return false;
+  var idField = document.getElementById('case-id');
+  var caseId = idField ? idField.value : '';
+  if (!caseId) {
+    RC.toast('先に案件を保存してから資料を保存してください');
+    return false;
+  }
+  var data = RC.collectCaseSheetData(form);
+  if (!data) { RC.toast('資料化するデータがありません'); return false; }
+  var cases = RC.data.cases || [];
+  var target = null;
+  for (var i = 0; i < cases.length; i++) {
+    if (String(cases[i].id) === String(caseId)) { target = cases[i]; break; }
+  }
+  if (!target) { RC.toast('案件データが見つかりません'); return false; }
+  if (!target.flyers) target.flyers = [];
+  var now = new Date();
+  var stamp = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  var label = (data.property_name || data.customer || '物件資料') + ' - ' + stamp;
+  var flyer = {
+    id: Date.now(),
+    label: label,
+    created_at: stamp,
+    trade_kind: data.trade_kind,
+    data: data,
+    html: RC.buildCaseSheetHtml(data)
+  };
+  target.flyers.unshift(flyer);
+  if (target.flyers.length > 20) target.flyers = target.flyers.slice(0, 20);
+  RC.save();
+  RC.renderCaseSavedFlyers(target);
+  RC.renderCases();
+  RC.toast('✓ 資料を保存しました');
+  return false;
+};
+RC.openSavedFlyer = function(caseId, flyerId) {
+  var cases = RC.data.cases || [];
+  var flyer = null;
+  for (var i = 0; i < cases.length; i++) {
+    if (String(cases[i].id) === String(caseId)) {
+      var arr = cases[i].flyers || [];
+      for (var j = 0; j < arr.length; j++) {
+        if (String(arr[j].id) === String(flyerId)) { flyer = arr[j]; break; }
+      }
+      break;
+    }
+  }
+  if (!flyer) { RC.toast('資料が見つかりません'); return false; }
+  var html = flyer.html || (flyer.data ? RC.buildCaseSheetHtml(flyer.data) : '');
+  if (!html) { RC.toast('資料データが不正です'); return false; }
+  RC.openFlyerHtml(html);
+  return false;
+};
+RC.deleteSavedFlyer = function(caseId, flyerId, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
+  if (!confirm('この保存済み資料を削除しますか？')) return false;
+  var cases = RC.data.cases || [];
+  for (var i = 0; i < cases.length; i++) {
+    if (String(cases[i].id) === String(caseId)) {
+      cases[i].flyers = (cases[i].flyers || []).filter(function(f){ return String(f.id) !== String(flyerId); });
+      RC.save();
+      RC.renderCaseSavedFlyers(cases[i]);
+      RC.renderCases();
+      RC.toast('✓ 資料を削除しました');
+      return false;
+    }
+  }
+  return false;
+};
+RC.renderCaseSavedFlyers = function(caseData) {
+  var wrap = document.getElementById('case-saved-flyers');
+  if (!wrap) return;
+  var flyers = (caseData && caseData.flyers) ? caseData.flyers : [];
+  if (!flyers.length) {
+    wrap.innerHTML = '<div style="font-size:11px;color:#64748B">保存済みの資料はまだありません。</div>';
+    return;
+  }
+  var caseId = caseData.id;
+  wrap.innerHTML = '<div style="font-size:11px;color:#64748B;font-weight:700;margin-bottom:4px">保存済み資料 ' + flyers.length + ' 件</div><div class="flyer-saved-list">' + flyers.map(function(f){
+    return '<span class="flyer-saved-chip" onclick="return RC.openSavedFlyer(' + caseId + ',' + f.id + ')">📄 ' + RC.esc(f.label || '物件資料') + '<button type="button" class="flyer-del" onclick="return RC.deleteSavedFlyer(' + caseId + ',' + f.id + ', event)">×</button></span>';
+  }).join('') + '</div>';
 };
 
 RC.saveCase = function(ev) {

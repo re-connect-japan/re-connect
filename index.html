@@ -641,6 +641,18 @@ RC.toast = function(msg) {
 };
 
 /* ========== ページ切替（SPA型：他ページ非表示） ========== */
+RC.fixViewport = function() {
+  try {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    document.documentElement.style.width = '100%';
+    document.body.style.width = '100%';
+    document.documentElement.style.overflowX = 'clip';
+    document.body.style.overflowX = 'clip';
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+    if (window.scrollTo) window.scrollTo(0, 0);
+  } catch (e) {}
+};
 RC.go = function(view) {
   try {
     RC.currentView = view;
@@ -652,8 +664,10 @@ RC.go = function(view) {
     for (var j = 0; j < btns.length; j++) {
       btns[j].classList.toggle('active', btns[j].getAttribute('data-view') === view);
     }
-    window.scrollTo(0, 0);
+    RC.fixViewport();
     RC.renderAll();
+    setTimeout(RC.fixViewport, 0);
+    setTimeout(RC.fixViewport, 60);
   } catch (e) {
     if (window.console) console.error('go error', view, e);
   }
@@ -1635,8 +1649,10 @@ RC.boot = function() {
 };
 
 RC.boot();
-document.addEventListener('DOMContentLoaded', RC.boot);
-window.addEventListener('load', RC.boot);
+document.addEventListener('DOMContentLoaded', function(){ RC.boot(); RC.fixViewport(); });
+window.addEventListener('load', function(){ RC.boot(); RC.fixViewport(); });
+window.addEventListener('resize', RC.fixViewport);
+window.addEventListener('orientationchange', function(){ setTimeout(RC.fixViewport, 120); });
 </script>
 
 </body>

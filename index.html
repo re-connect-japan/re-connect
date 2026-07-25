@@ -361,7 +361,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         </div>
         <div class="form-row"><label>エリア</label><input name="area" id="case-area" list="case-area-list" placeholder="例: 東京都港区南青山"><datalist id="case-area-list"></datalist></div>
         <div class="form-row"><label>物件所在地</label><input name="address" id="case-address" placeholder="例: 大阪府堺市北区..."><div class="place-actions"><button type="button" class="btn btn-secondary" onclick="RC.openCaseAddressMapInput()">📍 Googleマップで確認</button></div></div>
-        <div class="form-row"><label>交通状況</label><div class="case-subgrid-4"><div class="form-row"><label style="font-size:11px">沿線</label><input name="traffic_line" id="case-line" list="case-line-list" placeholder="例: 御堂筋線" oninput="RC.updateCaseStationOptions()" onchange="RC.updateCaseStationOptions()"><datalist id="case-line-list"></datalist></div><div class="form-row"><label style="font-size:11px">駅</label><input name="traffic_station" id="case-station" list="case-station-list" placeholder="例: なんば駅"><datalist id="case-station-list"></datalist></div><div class="form-row"><label style="font-size:11px">徒歩</label><input name="walk_minutes" inputmode="numeric" placeholder="5"></div><div class="form-row"><label style="font-size:11px">バス</label><input name="bus_minutes" inputmode="numeric" placeholder="10"></div></div></div>
+        <div class="form-row"><label>交通状況</label><div class="case-subgrid-4"><div class="form-row"><label style="font-size:11px">沿線</label><select name="traffic_line" id="case-line" onchange="RC.updateCaseStationOptions()"><option value="">沿線を選択</option></select></div><div class="form-row"><label style="font-size:11px">駅</label><select name="traffic_station" id="case-station"><option value="">駅を選択</option></select></div><div class="form-row"><label style="font-size:11px">徒歩</label><input name="walk_minutes" inputmode="numeric" placeholder="5"></div><div class="form-row"><label style="font-size:11px">バス</label><input name="bus_minutes" inputmode="numeric" placeholder="10"></div></div></div>
         <div class="form-grid-2">
           <div class="form-row"><label>間取り</label><input name="layout" placeholder="例: 3LDK"></div>
           <div class="form-row"><label>築年月</label><input name="built_ym" placeholder="例: 2021/06"></div>
@@ -1062,10 +1062,11 @@ RC.refreshCaseLookup = function() {
   RC.data.caseLookup.lines = RC.uniqueText(lines);
   RC.data.caseLookup.stations = RC.uniqueText(stations);
 };
-RC.updateCaseStationOptions = function() {
-  var station = document.getElementById('case-station-list');
+RC.updateCaseStationOptions = function(selectedStation) {
+  var station = document.getElementById('case-station');
   var lineInput = document.getElementById('case-line');
   if (!station) return;
+  var currentStation = selectedStation || station.value || '';
   var selectedLine = lineInput ? String(lineInput.value || '').trim() : '';
   var officialStations = [];
   if (selectedLine && RC.OSAKA_RAIL_DATA && RC.OSAKA_RAIL_DATA.stations_by_line && RC.OSAKA_RAIL_DATA.stations_by_line[selectedLine]) {
@@ -1075,18 +1076,22 @@ RC.updateCaseStationOptions = function() {
   }
   var customStations = (RC.data.caseLookup && RC.data.caseLookup.stations) ? RC.data.caseLookup.stations : [];
   var mergedStations = RC.uniqueText([].concat(officialStations, customStations));
-  station.innerHTML = mergedStations.map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
+  station.innerHTML = '<option value="">駅を選択</option>' + mergedStations.map(function(v){ return '<option value="' + RC.esc(v) + '">' + RC.esc(v) + '</option>'; }).join('');
+  if (currentStation && mergedStations.indexOf(currentStation) !== -1) station.value = currentStation;
 };
-RC.renderCaseLookupOptions = function() {
+RC.renderCaseLookupOptions = function(selectedLine, selectedStation) {
   RC.refreshCaseLookup();
   var area = document.getElementById('case-area-list');
-  var line = document.getElementById('case-line-list');
+  var line = document.getElementById('case-line');
   var officialLines = (RC.OSAKA_RAIL_DATA && RC.OSAKA_RAIL_DATA.lines) ? RC.OSAKA_RAIL_DATA.lines : [];
   var customLines = (RC.data.caseLookup && RC.data.caseLookup.lines) ? RC.data.caseLookup.lines : [];
   var mergedLines = RC.uniqueText([].concat(officialLines, customLines));
   if (area) area.innerHTML = (RC.data.caseLookup.areas || []).map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
-  if (line) line.innerHTML = mergedLines.map(function(v){ return '<option value="' + RC.esc(v) + '"></option>'; }).join('');
-  RC.updateCaseStationOptions();
+  if (line) {
+    line.innerHTML = '<option value="">沿線を選択</option>' + mergedLines.map(function(v){ return '<option value="' + RC.esc(v) + '">' + RC.esc(v) + '</option>'; }).join('');
+    if (selectedLine && mergedLines.indexOf(selectedLine) !== -1) line.value = selectedLine;
+  }
+  RC.updateCaseStationOptions(selectedStation || '');
 };
 
 RC.priorityChipClass = function(p) {

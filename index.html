@@ -226,7 +226,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .month-cal-dow{background:#EAF1FF;color:#1E3A8A;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700}
 .month-cal-dow.sun{color:#DC2626;background:#FEE2E2}
 .month-cal-dow.sat{color:#2563EB;background:#DBEAFE}
-.month-cal-cell{background:white;border:1px solid #E5E7EB;border-radius:10px;min-height:116px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.month-cal-cell{background:white;border:1px solid #E5E7EB;border-radius:10px;min-height:116px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden;cursor:pointer}
 .month-cal-cell.is-other{background:#F8FAFC;color:#94A3B8}
 .month-cal-cell.is-today{border:2px solid #FF7A45;box-shadow:0 2px 8px rgba(255,122,69,0.18)}
 .month-cal-date{font-size:12px;font-weight:700;color:#1E3A8A;display:flex;align-items:center;justify-content:space-between;gap:4px}
@@ -982,9 +982,19 @@ RC.renderHomeSchedule = function() {
 };
 
 RC._scheduleFilter = 'today';
+RC._scheduleSelectedDate = RC.todayStr();
 RC.setScheduleFilter = function(f) {
   RC._scheduleFilter = f;
+  if (f === 'today') RC._scheduleSelectedDate = RC.todayStr();
   RC.renderScheduleList();
+};
+RC.openScheduleDay = function(dateStr) {
+  RC._scheduleSelectedDate = dateStr;
+  RC._scheduleFilter = 'today';
+  RC.renderScheduleList();
+  RC.updateScheduleLayout();
+  var list = document.getElementById('schedule-list');
+  if (list) list.scrollTop = 0;
 };
 
 RC.renderMonthCalendar = function(list, baseDateStr) {
@@ -1041,15 +1051,15 @@ RC.renderMonthCalendar = function(list, baseDateStr) {
       var items = map[dateStr] || [];
       var cls = 'month-cal-cell' + (other ? ' is-other' : '') + (dateStr === today ? ' is-today' : '');
       var toneCls = RC.dateToneClass(cellDate, dateStr);
-      html += '<div class="' + cls + '">';
-      html += '<div class="month-cal-date"><span class="month-cal-date-num ' + toneCls + '">' + label + '</span><span class="month-cal-date-right">'
+      html += '<div class="' + cls + '" onclick="RC.openScheduleDay(\'' + dateStr + '\')">';
+      html += '<div class="month-cal-date"><span class="month-cal-date-num ' + toneCls + '" onclick="event.stopPropagation()">' + label + '</span><span class="month-cal-date-right">'
         + (items.length ? '<span class="month-cal-count">' + items.length + '件</span>' : '')
         + '<button class="month-cal-add" onclick="event.stopPropagation();RC.newSchedule(\'' + dateStr + '\')">＋</button>'
         + '</span></div>';
       html += '<div class="month-cal-events">';
       items.slice(0,3).forEach(function(s){
         var time = s.start || '未定';
-        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '"' + RC.scheduleStyle(s,'event') + ' onclick="RC.editSchedule(' + s.id + ')">'
+        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '"' + RC.scheduleStyle(s,'event') + ' onclick="event.stopPropagation();RC.editSchedule(' + s.id + ')">'
           + '<span class="month-cal-event-time">' + RC.esc(time) + '</span>'
           + '<span class="month-cal-event-title">' + RC.esc(s.title) + '</span>'
           + '</button>';
@@ -1083,8 +1093,9 @@ RC.renderScheduleList = function() {
   var monthScrollEndStr = monthScrollEnd.getFullYear() + '-' + String(monthScrollEnd.getMonth()+1).padStart(2,'0') + '-' + String(monthScrollEnd.getDate()).padStart(2,'0');
   var filtered;
   if (RC._scheduleFilter === 'today') {
-    filtered = all.filter(function(s){ return s.date === today; });
-    if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日';
+    var selectedDate = RC._scheduleSelectedDate || today;
+    filtered = all.filter(function(s){ return s.date === selectedDate; });
+    if (rangeLabel) rangeLabel.textContent = (selectedDate === today) ? '表示範囲: 今日' : '表示範囲: ' + selectedDate + '（1日）';
   } else if (RC._scheduleFilter === 'week') {
     filtered = all.filter(function(s){ return s.date >= today && s.date <= weekLaterStr; });
     if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日から1週間';

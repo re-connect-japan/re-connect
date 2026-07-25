@@ -183,6 +183,7 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .flyer-act{appearance:none;border:none;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}
 .flyer-act.view{background:#1E3A8A;color:#fff}
 .flyer-act.pdf{background:#1D4ED8;color:#fff}
+.flyer-act.print{background:#334155;color:#fff}
 .flyer-act.mail{background:#0EA5E9;color:#fff}
 .flyer-act.share{background:#16A34A;color:#fff}
 .flyer-act.copy{background:#F59E0B;color:#fff}
@@ -2715,7 +2716,7 @@ RC.buildCaseSheetHtml = function(c) {
     var name = item && item.name ? item.name : ('PDF-' + (idx + 1) + '.pdf');
     return '<span class="lux-pdf-chip">📄 ' + RC.esc(name) + '</span>';
   }).join('') + '</div>' : '<div class="lux-muted">添付PDFなし</div>';
-  return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>物件資料</title><style>' +
+  return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>物件資料</title>' + '<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></scr'+'ipt>' + '<style>' +
     '@page{size:A4 portrait;margin:10mm}'+
     'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Yu Gothic",sans-serif;background:#F3F4F6;color:#0F172A}'+
     '.lux-wrap{width:210mm;min-height:297mm;max-width:210mm;margin:0 auto;background:#fff}'+
@@ -2738,7 +2739,7 @@ RC.buildCaseSheetHtml = function(c) {
     '.lux-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-top:10px;padding-top:8px;border-top:1px solid #E5E7EB;font-size:9.5px;color:#6B7280}.lux-footer strong{color:#111827}'+
     '@media screen and (max-width:900px){.lux-toolbar,.lux-wrap{width:100%;max-width:100%}.lux-page{min-height:auto}.lux-main,.lux-bottom,.lux-grid{grid-template-columns:1fr}.lux-photo-main{height:42vh;max-height:94mm}}'+
     '@media print{body{background:#fff}.lux-toolbar{display:none}.lux-wrap{width:auto;max-width:none}.lux-page{border:none;min-height:auto;padding:0}}'+
-    '</style></head><body><div class="lux-toolbar"><button class="close" onclick="window.close()">閉じる</button><button class="save-pdf" onclick="window.print()">📥 PDFで保存</button><button class="mail" onclick="window.__sendMail&&window.__sendMail()">✉️ メール送信</button><button class="share" onclick="window.__shareFlyer&&window.__shareFlyer()">🔗 共有</button><button class="copy" onclick="window.__copyShareUrl&&window.__copyShareUrl()">📋 URLコピー</button></div><div class="lux-wrap"><div class="lux-page">'+
+    '</style></head><body><div class="lux-toolbar"><button class="close" onclick="window.close()">閉じる</button><button class="save-pdf" onclick="window.__downloadPdf&&window.__downloadPdf()">📥 PDFダウンロード</button><button class="print" onclick="window.print()">🖨 印刷</button><button class="mail" onclick="window.__sendMail&&window.__sendMail()">✉️ メール送信</button><button class="share" onclick="window.__shareFlyer&&window.__shareFlyer()">🔗 共有</button><button class="copy" onclick="window.__copyShareUrl&&window.__copyShareUrl()">📋 URLコピー</button></div><div class="lux-wrap"><div class="lux-page">'+
     '<div class="lux-header">' + logoHtml + '<div><div class="lux-company">PREMIUM PROPERTY SHEET</div><div class="lux-title">' + RC.esc(c.property_name || '物件資料') + '</div><div class="lux-sub">' + RC.esc(headerSub || '所在地・交通情報を入力してください') + '</div></div><div class="lux-badge">' + RC.esc(isSale ? 'FOR SALE' : 'FOR RENT') + ' / ' + RC.esc(c.status || '募集中') + '</div></div>'+
     '<div class="lux-pricebar"><div><div class="lux-price-label">' + RC.esc(priceLabel) + '</div><div class="lux-price">' + RC.esc(priceValue) + '</div></div><div class="lux-hero-meta">' + RC.esc(heroMeta || '主要条件未入力') + '<br>作成日時: ' + RC.esc(c.created_at) + '</div></div>'+
     '<div class="lux-chip-row">' + (featureChips || '<span class="lux-chip">特徴未設定</span>') + '</div>'+
@@ -2749,7 +2750,7 @@ RC.buildCaseSheetHtml = function(c) {
       '<div class="lux-contact-card"><div class="lux-contact-title">添付資料</div>' + pdfHtml + '</div>'+
     '</div></div>'+
     '<div class="lux-footer"><div><strong>' + RC.esc(c.company_name || 'RE-Connect') + '</strong><br>' + RC.esc(c.agent_name || '') + (c.agent_role ? (' / ' + RC.esc(c.agent_role)) : '') + '</div><div>' + RC.esc(c.agent_phone || '') + (c.agent_email ? (' / ' + RC.esc(c.agent_email)) : '') + '</div></div>'+
-    '</div></div>' + '<scr' + 'ipt>var __flyerPayload=' + JSON.stringify({title: (c.property_name || '物件資料'), subject: '【物件資料】' + (c.property_name || '') + (c.customer ? '（' + c.customer + '様）' : ''), body: '以下の物件資料をお送りします。\n物件名: ' + (c.property_name || '-') + '\n所在地: ' + (c.address || c.area || '-') + '\n' + (c.trade_kind === 'sale' ? '販売価格' : '賃料') + ': ' + (c.trade_kind === 'sale' ? (c.price ? c.price + '万円' : '-') : (c.rent ? c.rent + '万円/月' : '-')) + '\n担当: ' + (c.agent_name || '') + ' / ' + (c.agent_phone || '') + ' / ' + (c.agent_email || '')}) + ';(function(){function done(){setTimeout(function(){try{window.focus();}catch(e){}},300);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});window.__sendMail=function(){var s=encodeURIComponent(__flyerPayload.subject||"物件資料");var b=encodeURIComponent(__flyerPayload.body||"");window.location.href="mailto:?subject="+s+"&body="+b;};window.__copyShareUrl=function(){var url=window.location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){alert("共有URLをコピーしました\n"+url);},function(){window.prompt("共有URL",url);});}else{window.prompt("共有URL",url);}};window.__shareFlyer=function(){var url=window.location.href;var title=__flyerPayload.title||"物件資料";var text=__flyerPayload.body||"";if(navigator.share){navigator.share({title:title,text:text,url:url}).catch(function(){window.__copyShareUrl();});}else{window.__copyShareUrl();}};})();<\/scr' + 'ipt></body></html>';
+    '</div></div>' + '<scr' + 'ipt>var __flyerPayload=' + JSON.stringify({title: (c.property_name || '物件資料'), subject: '【物件資料】' + (c.property_name || '') + (c.customer ? '（' + c.customer + '様）' : ''), body: '以下の物件資料をお送りします。\n物件名: ' + (c.property_name || '-') + '\n所在地: ' + (c.address || c.area || '-') + '\n' + (c.trade_kind === 'sale' ? '販売価格' : '賃料') + ': ' + (c.trade_kind === 'sale' ? (c.price ? c.price + '万円' : '-') : (c.rent ? c.rent + '万円/月' : '-')) + '\n担当: ' + (c.agent_name || '') + ' / ' + (c.agent_phone || '') + ' / ' + (c.agent_email || '')}) + ';(function(){function done(){setTimeout(function(){try{window.focus();}catch(e){}},300);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});window.__sendMail=function(){var s=encodeURIComponent(__flyerPayload.subject||"物件資料");var b=encodeURIComponent(__flyerPayload.body||"");window.location.href="mailto:?subject="+s+"&body="+b;};window.__copyShareUrl=function(){var url=window.location.href;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){alert("共有URLをコピーしました\n"+url);},function(){window.prompt("共有URL",url);});}else{window.prompt("共有URL",url);}};window.__shareFlyer=function(){var url=window.location.href;var title=__flyerPayload.title||"物件資料";var text=__flyerPayload.body||"";if(navigator.share){navigator.share({title:title,text:text,url:url}).catch(function(){window.__copyShareUrl();});}else{window.__copyShareUrl();}};window.__downloadPdf=function(){var name=(__flyerPayload.title||"物件資料").replace(/[\\\/:*?\"<>|]+/g,"_")+".pdf";var target=document.querySelector(".lux-wrap")||document.body;var opt={margin:0,filename:name,image:{type:"jpeg",quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}};if(window.html2pdf){window.html2pdf().set(opt).from(target).save().catch(function(err){alert("PDF生成に失敗しました。印刷から保存してください。");console.error(err);});}else{alert("PDFライブラリを読み込めませんでした。印刷から保存してください。");window.print();}};})();<\/scr' + 'ipt></body></html>';
 };
 
 RC.openFlyerHtml = function(html) {
@@ -2839,8 +2840,25 @@ RC.printSavedFlyer = function(caseId, flyerId, ev) {
   var html = flyer.html || (flyer.data ? RC.buildCaseSheetHtml(flyer.data) : '');
   var win = RC.openFlyerHtml(html);
   if (win) {
-    try { setTimeout(function(){ try { win.focus(); win.print(); } catch(e){} }, 500); } catch(e){}
+    try { setTimeout(function(){ try { win.focus(); win.print(); } catch(e){} }, 700); } catch(e){}
   }
+  return false;
+};
+RC.downloadSavedFlyerPdf = function(caseId, flyerId, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
+  var flyer = RC.findSavedFlyer(caseId, flyerId);
+  if (!flyer) { RC.toast('資料が見つかりません'); return false; }
+  var html = flyer.html || (flyer.data ? RC.buildCaseSheetHtml(flyer.data) : '');
+  var win = RC.openFlyerHtml(html);
+  if (!win) return false;
+  var kick = function(retry){
+    try {
+      if (win.__downloadPdf) { win.__downloadPdf(); return; }
+    } catch (e) {}
+    if (retry > 0) setTimeout(function(){ kick(retry - 1); }, 400);
+    else RC.toast('資料タブでPDFダウンロードを押してください');
+  };
+  setTimeout(function(){ kick(6); }, 800);
   return false;
 };
 RC.findSavedFlyer = function(caseId, flyerId) {
@@ -2893,8 +2911,8 @@ RC.saveCaseSheet = function() {
   RC.renderCases();
   RC.toast('✓ 資料を保存しました');
   setTimeout(function(){
-    if (confirm('保存した資料をPDFで保存しますか？（別ウィンドウで印刷ダイアログが開きます）')) {
-      RC.printSavedFlyer(target.id, flyer.id);
+    if (confirm('保存した資料をPDFでダウンロードしますか？')) {
+      RC.downloadSavedFlyerPdf(target.id, flyer.id);
     }
   }, 200);
   return false;
@@ -2945,7 +2963,8 @@ RC.renderCaseSavedFlyers = function(caseData) {
   wrap.innerHTML = '<div style="font-size:11px;color:#64748B;font-weight:700;margin-bottom:6px">保存済み資料 ' + flyers.length + ' 件</div><div class="flyer-saved-list">' + flyers.map(function(f){
     return '<div class="flyer-saved-card"><div class="flyer-saved-title">📄 ' + RC.esc(f.label || '物件資料') + '</div><div class="flyer-saved-actions">'
       + '<button type="button" class="flyer-act view" onclick="return RC.openSavedFlyer(' + caseId + ',' + f.id + ')">開く</button>'
-      + '<button type="button" class="flyer-act pdf" onclick="return RC.printSavedFlyer(' + caseId + ',' + f.id + ', event)">📥 PDF保存</button>'
+      + '<button type="button" class="flyer-act pdf" onclick="return RC.downloadSavedFlyerPdf(' + caseId + ',' + f.id + ', event)">📥 PDFダウンロード</button>'
+      + '<button type="button" class="flyer-act print" onclick="return RC.printSavedFlyer(' + caseId + ',' + f.id + ', event)">🖨 印刷</button>'
       + '<button type="button" class="flyer-act mail" onclick="return RC.mailFlyer(' + caseId + ',' + f.id + ')">✉️ メール</button>'
       + '<button type="button" class="flyer-act share" onclick="return RC.shareFlyer(' + caseId + ',' + f.id + ', event)">🔗 共有</button>'
       + '<button type="button" class="flyer-act copy" onclick="return RC.copyFlyerShareUrl(' + caseId + ',' + f.id + ', event)">📋 URL</button>'

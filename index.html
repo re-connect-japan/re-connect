@@ -121,6 +121,16 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .form-grid-2.time-grid{grid-template-columns:1fr auto 1fr;align-items:end;gap:8px}
 .form-grid-2.time-grid .time-sep{padding-bottom:12px;color:#94A3B8;font-weight:700;font-size:14px;text-align:center}
 @media (max-width:420px){.form-grid-2.time-grid{grid-template-columns:1fr 1fr;gap:12px}.form-grid-2.time-grid .time-sep{display:none}}
+.color-row{display:flex;align-items:center;gap:10px}
+.color-row input[type=color]{width:52px;height:40px;padding:4px;border:1px solid #D1D5DB;border-radius:10px;background:white}
+.color-code{font-size:12px;color:#64748B;font-weight:700}
+.color-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.color-preset{width:26px;height:26px;border-radius:999px;border:2px solid white;box-shadow:0 0 0 1px #D1D5DB inset, 0 1px 3px rgba(0,0,0,.08)}
+.place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.place-actions .btn{flex:1;min-width:0}
+.schedule-inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.schedule-map-btn{display:inline-flex;align-items:center;gap:4px;background:#EEF2FF;color:#3730A3;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;border:none;cursor:pointer}
+@media (max-width:420px){.schedule-inline-actions{flex-direction:column}.place-actions{flex-direction:column}}
 
 .edit-toggle{display:block;background:linear-gradient(135deg,#1E3A8A,#FF7A45);color:white;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(30,58,138,0.25)}
 .edit-toggle::after{content:"　▼ タップで開く";font-size:11px;opacity:0.85;font-weight:400}
@@ -461,7 +471,8 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         <div class="time-sep">～</div>
         <div class="form-row"><label>終了時刻</label><input type="time" name="end" id="sc-end"></div>
       </div>
-      <div class="form-row"><label>場所</label><input name="place" id="sc-place" placeholder="例: 港区南青山3-15 現地集合"></div>
+      <div class="form-row"><label>場所</label><input name="place" id="sc-place" placeholder="例: 港区南青山3-15 現地集合"><div class="place-actions"><button type="button" class="btn btn-secondary" onclick="RC.openPlaceMapInput()">📍 Googleマップで確認</button></div></div>
+      <div class="form-row"><label>予定カラー</label><div class="color-row"><input type="color" name="color" id="sc-color" value="#2563EB" oninput="RC.updateScheduleColorLabel(this.value)"><span class="color-code" id="sc-color-code">#2563EB</span></div><div class="color-presets"><button type="button" class="color-preset" style="background:#2563EB" onclick="RC.setScheduleColor('#2563EB')"></button><button type="button" class="color-preset" style="background:#D97706" onclick="RC.setScheduleColor('#D97706')"></button><button type="button" class="color-preset" style="background:#4F46E5" onclick="RC.setScheduleColor('#4F46E5')"></button><button type="button" class="color-preset" style="background:#16A34A" onclick="RC.setScheduleColor('#16A34A')"></button><button type="button" class="color-preset" style="background:#DB2777" onclick="RC.setScheduleColor('#DB2777')"></button><button type="button" class="color-preset" style="background:#EA580C" onclick="RC.setScheduleColor('#EA580C')"></button><button type="button" class="color-preset" style="background:#7C3AED" onclick="RC.setScheduleColor('#7C3AED')"></button><button type="button" class="color-preset" style="background:#475569" onclick="RC.setScheduleColor('#475569')"></button></div></div>
       <div class="form-row"><label>関連顧客</label>
         <select name="customer_id" id="sc-customer"><option value="">選択なし</option></select>
       </div>
@@ -887,6 +898,54 @@ RC.typeClass = function(t) {
   var allowed = { '内見':1,'商談':1,'打合':1,'契約':1,'決済':1,'電話':1,'訪問':1,'会議':1,'その他':1 };
   return allowed[t] ? ('t-' + t) : 't-その他';
 };
+RC.defaultScheduleColor = function(type) {
+  var m = { '内見':'#2563EB','商談':'#D97706','打合':'#4F46E5','契約':'#16A34A','決済':'#DB2777','電話':'#475569','訪問':'#EA580C','会議':'#7C3AED','その他':'#6B7280' };
+  return m[type] || '#2563EB';
+};
+RC.hexToRgb = function(hex) {
+  hex = String(hex || '').replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(function(c){ return c + c; }).join('');
+  var n = parseInt(hex, 16);
+  if (isNaN(n)) return {r:37,g:99,b:235};
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+};
+RC.mixWithWhite = function(hex, ratio) {
+  var rgb = RC.hexToRgb(hex), p = Math.max(0, Math.min(1, ratio));
+  var r = Math.round(rgb.r + (255 - rgb.r) * p);
+  var g = Math.round(rgb.g + (255 - rgb.g) * p);
+  var b = Math.round(rgb.b + (255 - rgb.b) * p);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+};
+RC.scheduleStyle = function(s, mode) {
+  var color = (s && s.color) ? s.color : RC.defaultScheduleColor(s && s.type);
+  if (!color) return '';
+  if (mode === 'card') return ' style="border-left:4px solid ' + color + ';background:linear-gradient(90deg,' + RC.mixWithWhite(color, 0.88) + ' 0,#FFFFFF 24%)"';
+  if (mode === 'badge') return ' style="background:' + RC.mixWithWhite(color, 0.82) + ';color:' + color + '"';
+  if (mode === 'event') return ' style="background:' + RC.mixWithWhite(color, 0.76) + ';border-color:' + RC.mixWithWhite(color, 0.45) + ';color:' + color + '"';
+  return '';
+};
+RC.updateScheduleColorLabel = function(color) {
+  var el = document.getElementById('sc-color-code');
+  if (el) el.textContent = String(color || '').toUpperCase();
+};
+RC.setScheduleColor = function(color) {
+  var el = document.getElementById('sc-color');
+  if (el) el.value = color;
+  RC.updateScheduleColorLabel(color);
+};
+RC.mapUrl = function(place) {
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place || '');
+};
+RC.openPlaceMapInput = function() {
+  var el = document.getElementById('sc-place');
+  var place = el ? el.value.trim() : '';
+  if (!place) return RC.toast('場所を入力してください');
+  window.open(RC.mapUrl(place), '_blank');
+};
+RC.openPlaceMap = function(place) {
+  if (!place) return RC.toast('場所が未設定です');
+  window.open(RC.mapUrl(place), '_blank');
+};
 
 RC.priorityChipClass = function(p) {
   var m = { '高':'chip-red','中':'chip-orange','低':'chip-gray' };
@@ -990,7 +1049,7 @@ RC.renderMonthCalendar = function(list, baseDateStr) {
       html += '<div class="month-cal-events">';
       items.slice(0,3).forEach(function(s){
         var time = s.start || '未定';
-        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '" onclick="RC.editSchedule(' + s.id + ')">'
+        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '"' + RC.scheduleStyle(s,'event') + ' onclick="RC.editSchedule(' + s.id + ')">'
           + '<span class="month-cal-event-time">' + RC.esc(time) + '</span>'
           + '<span class="month-cal-event-title">' + RC.esc(s.title) + '</span>'
           + '</button>';
@@ -1092,11 +1151,11 @@ RC.renderScheduleList = function() {
       var cs = (RC.data.cases || []).filter(function(x){ return x.id === s.case_id; })[0];
       if (cs) relCase = '📊 ' + RC.esc(cs.customer) + ' / ' + RC.esc(cs.type);
     }
-    html += '<div class="schedule-card ' + RC.typeClass(s.type) + '">' +
+    html += '<div class="schedule-card ' + RC.typeClass(s.type) + '"' + RC.scheduleStyle(s,'card') + '>' +
       '<button class="schedule-check' + (s.done ? ' done' : '') + '" onclick="event.stopPropagation();RC.toggleScheduleDone(' + s.id + ')">' + (s.done ? '✓' : '') + '</button>' +
       '<div class="schedule-card-body" onclick="RC.editSchedule(' + s.id + ')">' +
         '<div class="schedule-card-head">' +
-          '<span class="schedule-type-badge ' + RC.typeClass(s.type) + '">' + RC.typeIcon(s.type) + ' ' + RC.esc(s.type) + '</span>' +
+          '<span class="schedule-type-badge ' + RC.typeClass(s.type) + '"' + RC.scheduleStyle(s,'badge') + '>' + RC.typeIcon(s.type) + ' ' + RC.esc(s.type) + '</span>' +
           '<span class="chip ' + RC.priorityChipClass(s.priority) + '" style="font-size:10px;padding:2px 8px">' + RC.esc(s.priority) + '</span>' +
         '</div>' +
         '<div class="schedule-card-title' + (s.done ? ' done' : '') + '">' + RC.esc(s.title) + '</div>' +
@@ -1106,7 +1165,10 @@ RC.renderScheduleList = function() {
         (relCase ? '<div class="schedule-card-meta">' + relCase + '</div>' : '') +
         (s.memo ? '<div class="schedule-card-memo">📝 ' + RC.esc(s.memo) + '</div>' : '') +
         (s.remind !== 'none' && s.remind ? '<div class="schedule-card-meta" style="color:#FF7A45">🔔 ' + RC.remindLabel(s.remind) + '</div>' : '') +
-        '<button class="schedule-cal-btn" onclick="event.stopPropagation();RC.openCalMenu(' + s.id + ')">📅 カレンダーに追加</button>' +
+        '<div class="schedule-inline-actions">' +
+          (s.place ? '<button class="schedule-map-btn" onclick="event.stopPropagation();RC.openPlaceMap(' + JSON.stringify('__PLACE__') + ')">📍 地図</button>'.replace('__PLACE__', RC.esc(s.place).replace(/"/g,'&quot;')) : '') +
+          '<button class="schedule-cal-btn" onclick="event.stopPropagation();RC.openCalMenu(' + s.id + ')">📅 カレンダーに追加</button>' +
+        '</div>' +
       '</div>' +
       '<button class="schedule-del" onclick="event.stopPropagation();RC.delSchedule(' + s.id + ')">削除</button>' +
     '</div>';
@@ -1132,6 +1194,8 @@ RC.newSchedule = function(prefillDate) {
     document.getElementById('sc-start').value = '';
     document.getElementById('sc-end').value = '';
     document.getElementById('sc-place').value = '';
+    document.getElementById('sc-color').value = RC.defaultScheduleColor('内見');
+    RC.updateScheduleColorLabel(RC.defaultScheduleColor('内見'));
     document.getElementById('sc-priority').value = '中';
     document.getElementById('sc-remind').value = 'none';
     document.getElementById('sc-memo').value = '';
@@ -1156,6 +1220,8 @@ RC.editSchedule = function(id) {
     document.getElementById('sc-start').value = s.start || '';
     document.getElementById('sc-end').value = s.end || '';
     document.getElementById('sc-place').value = s.place || '';
+    document.getElementById('sc-color').value = s.color || RC.defaultScheduleColor(s.type || '内見');
+    RC.updateScheduleColorLabel(document.getElementById('sc-color').value);
     document.getElementById('sc-priority').value = s.priority || '中';
     document.getElementById('sc-remind').value = s.remind || 'none';
     document.getElementById('sc-memo').value = s.memo || '';
@@ -1191,6 +1257,7 @@ RC.saveSchedule = function(ev) {
     start: form.start.value,
     end: form.end.value,
     place: form.place.value.trim(),
+    color: form.color && form.color.value ? form.color.value : RC.defaultScheduleColor(form.type.value),
     customer_id: form.customer_id.value ? Number(form.customer_id.value) : '',
     case_id: form.case_id.value ? Number(form.case_id.value) : '',
     priority: form.priority.value,

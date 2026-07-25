@@ -1059,7 +1059,7 @@ RC.renderMonthCalendar = function(list, baseDateStr) {
       html += '<div class="month-cal-events">';
       items.slice(0,3).forEach(function(s){
         var time = s.start || '未定';
-        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '"' + RC.scheduleStyle(s,'event') + ' onclick="event.stopPropagation();RC.editSchedule(' + s.id + ')">'
+        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '"' + RC.scheduleStyle(s,'event') + ' onclick="event.stopPropagation();RC.openScheduleDay(\'' + dateStr + '\')">'
           + '<span class="month-cal-event-time">' + RC.esc(time) + '</span>'
           + '<span class="month-cal-event-title">' + RC.esc(s.title) + '</span>'
           + '</button>';

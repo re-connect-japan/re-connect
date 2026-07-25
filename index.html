@@ -2505,78 +2505,87 @@ RC.handleCasePdfInput = function(input) {
 RC.collectCaseSheetData = function(form) {
   form = form || document.getElementById('form-case');
   if (!form) return null;
-  var tradeKind = form.trade_kind ? String(form.trade_kind.value || 'rent') : 'rent';
-  var trafficLine = form.traffic_line ? form.traffic_line.value.trim() : '';
-  var trafficStation = form.traffic_station ? form.traffic_station.value.trim() : '';
-  var walkMinutes = form.walk_minutes ? form.walk_minutes.value.trim() : '';
-  var busMinutes = form.bus_minutes ? form.bus_minutes.value.trim() : '';
-  var layoutCount = form.layout_count ? form.layout_count.value.trim() : '';
-  var layoutKind = form.layout_kind ? form.layout_kind.value : '';
-  var layoutOther = form.layout_other ? form.layout_other.value.trim() : '';
-  var builtYm = form.built_ym ? form.built_ym.value.trim() : '';
-  var structureKind = form.structure_kind ? form.structure_kind.value : '';
-  var structureOther = form.structure_other ? form.structure_other.value.trim() : '';
-  var totalFloors = form.total_floors ? form.total_floors.value : '';
-  var currentFloor = form.current_floor ? form.current_floor.value : '';
-  var roomNumber = form.room_number ? form.room_number.value.trim() : '';
-  var moveInText = form.move_in ? form.move_in.value.trim() : '';
-  if (moveInText === '期日指定' && form.move_in_note && form.move_in_note.value.trim()) moveInText = '期日指定 ' + form.move_in_note.value.trim();
+  var getField = function(name) {
+    if (form.elements && form.elements[name]) return form.elements[name];
+    return form.querySelector('[name="' + name + '"]');
+  };
+  var val = function(name) {
+    var el = getField(name);
+    return el ? String(el.value || '').trim() : '';
+  };
+  var tradeKind = val('trade_kind') || 'rent';
+  var trafficLine = val('traffic_line');
+  var trafficStation = val('traffic_station');
+  var walkMinutes = val('walk_minutes');
+  var busMinutes = val('bus_minutes');
+  var layoutCount = val('layout_count');
+  var layoutKind = val('layout_kind');
+  var layoutOther = val('layout_other');
+  var builtYm = val('built_ym');
+  var structureKind = val('structure_kind');
+  var structureOther = val('structure_other');
+  var totalFloors = val('total_floors');
+  var currentFloor = val('current_floor');
+  var roomNumber = val('room_number');
+  var moveInText = val('move_in');
+  if (moveInText === '期日指定' && val('move_in_note')) moveInText = '期日指定 ' + val('move_in_note');
   return {
     created_at: (new Date()).toLocaleString('ja-JP'),
-    customer: form.customer ? form.customer.value.trim() : '',
+    customer: val('customer'),
     trade_kind: tradeKind,
     trade_kind_label: tradeKind === 'sale' ? '売買' : '賃貸',
-    status: form.status ? form.status.value.trim() : '',
-    property_name: form.property_name ? form.property_name.value.trim() : '',
-    type: form.type ? form.type.value.trim() : '',
-    area: form.area ? form.area.value.trim() : '',
-    address: form.address ? form.address.value.trim() : '',
+    status: val('status'),
+    property_name: val('property_name'),
+    type: val('type'),
+    area: val('area'),
+    address: val('address'),
     traffic: RC.composeTrafficValue(trafficLine, trafficStation, walkMinutes, busMinutes, ''),
     layout: RC.composeLayoutValue(layoutCount, layoutKind, layoutOther),
     built_ym: RC.formatBuiltYmDisplay(builtYm),
     structure: RC.composeStructureValue(structureKind, structureOther),
     floor_info: RC.composeFloorInfo(totalFloors, currentFloor),
     room_number: roomNumber,
-    memo: form.memo ? form.memo.value.trim() : '',
-    price: form.price ? form.price.value.trim() : '',
-    mgmt: form.mgmt ? form.mgmt.value.trim() : '',
-    repair: form.repair ? form.repair.value.trim() : '',
-    exclusive_area: form.exclusive_area ? RC.formatAreaDisplay(form.exclusive_area.value.trim()) : '',
-    land_area: form.land_area ? RC.formatAreaDisplay(form.land_area.value.trim()) : '',
-    building_area: form.building_area ? RC.formatAreaDisplay(form.building_area.value.trim()) : '',
-    sale_balcony_dir: form.sale_balcony_dir ? form.sale_balcony_dir.value.trim() : '',
-    sale_total_units: form.sale_total_units ? form.sale_total_units.value.trim() : '',
-    sale_parking_status: form.sale_parking_status ? form.sale_parking_status.value.trim() : '',
-    sale_parking_fee: form.sale_parking_fee ? form.sale_parking_fee.value.trim() : '',
-    sale_topography: form.sale_topography ? form.sale_topography.value.trim() : '',
-    zoning: form.zoning ? form.zoning.value.trim() : '',
-    building_coverage_ratio: form.building_coverage_ratio ? form.building_coverage_ratio.value.trim() : '',
-    floor_area_ratio: form.floor_area_ratio ? form.floor_area_ratio.value.trim() : '',
-    sale_occupancy: form.sale_occupancy ? form.sale_occupancy.value.trim() : '',
-    sale_handover: form.sale_handover ? form.sale_handover.value.trim() : '',
-    sale_equipment: form.sale_equipment ? form.sale_equipment.value.trim() : '',
-    owner_change: form.owner_change ? form.owner_change.value.trim() : '',
-    rent: form.rent ? form.rent.value.trim() : '',
-    rent_mgmt: form.rent_mgmt ? form.rent_mgmt.value.trim() : '',
-    deposit_guarantee: form.deposit_guarantee ? form.deposit_guarantee.value.trim() : '',
-    right_money: form.right_money ? form.right_money.value.trim() : '',
-    key_money: form.key_money ? form.key_money.value.trim() : '',
-    security_deposit: form.security_deposit ? form.security_deposit.value.trim() : '',
-    cancellation_fee: form.cancellation_fee ? form.cancellation_fee.value.trim() : '',
+    memo: val('memo'),
+    price: val('price'),
+    mgmt: val('mgmt'),
+    repair: val('repair'),
+    exclusive_area: RC.formatAreaDisplay(val('exclusive_area')),
+    land_area: RC.formatAreaDisplay(val('land_area')),
+    building_area: RC.formatAreaDisplay(val('building_area')),
+    sale_balcony_dir: val('sale_balcony_dir'),
+    sale_total_units: val('sale_total_units'),
+    sale_parking_status: val('sale_parking_status'),
+    sale_parking_fee: val('sale_parking_fee'),
+    sale_topography: val('sale_topography'),
+    zoning: val('zoning'),
+    building_coverage_ratio: val('building_coverage_ratio'),
+    floor_area_ratio: val('floor_area_ratio'),
+    sale_occupancy: val('sale_occupancy'),
+    sale_handover: val('sale_handover'),
+    sale_equipment: val('sale_equipment'),
+    owner_change: val('owner_change'),
+    rent: val('rent'),
+    rent_mgmt: val('rent_mgmt'),
+    deposit_guarantee: val('deposit_guarantee'),
+    right_money: val('right_money'),
+    key_money: val('key_money'),
+    security_deposit: val('security_deposit'),
+    cancellation_fee: val('cancellation_fee'),
     move_in: moveInText,
-    usage_area: form.usage_area ? form.usage_area.value.trim() : '',
-    partial_area: form.partial_area ? form.partial_area.value.trim() : '',
-    room_count: form.room_count ? form.room_count.value.trim() : '',
-    balcony_dir: form.balcony_dir ? form.balcony_dir.value.trim() : '',
-    parking_status: form.parking_status ? form.parking_status.value.trim() : '',
-    parking_fee: form.parking_fee ? form.parking_fee.value.trim() : '',
-    occupancy: form.occupancy ? form.occupancy.value.trim() : '',
-    equipment: form.equipment ? form.equipment.value.trim() : '',
-    rent_notes: form.rent_notes ? form.rent_notes.value.trim() : '',
+    usage_area: val('usage_area'),
+    partial_area: val('partial_area'),
+    room_count: val('room_count'),
+    balcony_dir: val('balcony_dir'),
+    parking_status: val('parking_status'),
+    parking_fee: val('parking_fee'),
+    occupancy: val('occupancy'),
+    equipment: val('equipment'),
+    rent_notes: val('rent_notes'),
     images: (RC._caseAttachDraft && RC._caseAttachDraft.images) ? RC._caseAttachDraft.images.slice() : [],
     pdfs: (RC._caseAttachDraft && RC._caseAttachDraft.pdfs) ? RC._caseAttachDraft.pdfs.slice() : []
   };
 };
+
 RC.caseSheetRowHtml = function(label, value) {
   value = String(value || '').trim();
   if (!value) return '';

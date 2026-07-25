@@ -181,6 +181,14 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .page-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:8px}
 .page-title-row h1{margin:0;padding:0}
 .count-label{font-size:12px;color:#64748B;font-weight:400}
+#page-schedule{position:relative}
+.schedule-toolbar{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:18;background:rgba(245,247,250,0.98);backdrop-filter:blur(8px);padding:2px 0 10px;margin-bottom:8px;border-bottom:1px solid #E5E7EB}
+.schedule-toolbar .page-title-row{margin-bottom:10px;padding-top:0}
+.schedule-toolbar .btn-block{margin-bottom:10px}
+#schedule-filter-bar{margin-bottom:8px !important}
+#schedule-range-label{font-size:12px;color:#64748B;margin-bottom:0 !important}
+#schedule-list{padding-bottom:14px}
+@media (max-width:640px){.schedule-toolbar{top:calc(58px + env(safe-area-inset-top));padding-bottom:8px}}
 
 .schedule-card.t-内見{border-left:4px solid #2563EB;background:linear-gradient(90deg,#EFF6FF 0,#FFFFFF 22%)}
 .schedule-card.t-商談{border-left:4px solid #D97706;background:linear-gradient(90deg,#FFF7ED 0,#FFFFFF 22%)}
@@ -417,18 +425,20 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
 <!-- スケジュール一覧 -->
 <div class="page" id="page-schedule">
-  <div class="page-title-row">
-    <h1>📅 予定一覧</h1>
-    <span class="count-label" id="schedule-count"></span>
+  <div class="schedule-toolbar">
+    <div class="page-title-row">
+      <h1>📅 予定一覧</h1>
+      <span class="count-label" id="schedule-count"></span>
+    </div>
+    <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.newSchedule()">➕ 新規予定を登録</button>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="schedule-filter-bar">
+      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('month')" id="filter-month">1ヶ月</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
+    </div>
+    <div id="schedule-range-label"></div>
   </div>
-  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.newSchedule()">➕ 新規予定を登録</button>
-  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="schedule-filter-bar">
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('month')" id="filter-month">1ヶ月</button>
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
-  </div>
-  <div id="schedule-range-label" style="font-size:12px;color:#64748B;margin-bottom:10px"></div>
   <div id="schedule-list"></div>
 </div>
 

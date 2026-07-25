@@ -487,23 +487,53 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
         </div>
         <div class="form-grid-2">
           <div class="form-row"><label>解約引</label><input name="cancellation_fee" placeholder="例: 0万円"></div>
-          <div class="form-row"><label>入居時期</label><input name="move_in" placeholder="例: 即時 / 相談 / 期日指定"></div>
+          <div class="form-row"><label>入居時期</label>
+            <select name="move_in" id="rent-move-in" onchange="RC.toggleRentMoveInNote(this.value)">
+              <option value="">選択してください</option><option>即時</option><option>相談</option><option>期日指定</option>
+            </select>
+            <input name="move_in_note" id="rent-move-in-note" placeholder="例: 令和8年8月上旬" style="margin-top:8px;display:none">
+          </div>
         </div>
         <div class="form-grid-2">
           <div class="form-row"><label>建物使用面積</label><input name="usage_area" placeholder="例: 75㎡"></div>
           <div class="form-row"><label>部分面積</label><input name="partial_area" placeholder="例: 12㎡"></div>
         </div>
         <div class="form-grid-2">
-          <div class="form-row"><label>部屋数</label><input name="room_count" placeholder="例: 3"></div>
-          <div class="form-row"><label>バルコニー方向</label><input name="balcony_dir" placeholder="例: 南 / 南東"></div>
+          <div class="form-row"><label>部屋数</label>
+            <select name="room_count"><option value="">選択してください</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select>
+          </div>
+          <div class="form-row"><label>バルコニー方向</label>
+            <select name="balcony_dir"><option value="">選択してください</option><option>北</option><option>北東</option><option>東</option><option>南東</option><option>南</option><option>南西</option><option>西</option><option>北西</option></select>
+          </div>
         </div>
         <div class="form-grid-2">
-          <div class="form-row"><label>駐車場</label><input name="parking_status" placeholder="例: 空有 / 空無 / 近隣確保"></div>
+          <div class="form-row"><label>駐車場</label>
+            <select name="parking_status"><option value="">選択してください</option><option>空有</option><option>空無</option><option>近隣確保</option><option>無</option></select>
+          </div>
           <div class="form-row"><label>駐車場月額</label><input name="parking_fee" inputmode="numeric" placeholder="例: 15000円"></div>
         </div>
         <div class="form-grid-2">
-          <div class="form-row"><label>現況</label><input name="occupancy" placeholder="例: 空家 / 賃貸中 / 所有者居住中"></div>
-          <div class="form-row"><label>設備</label><input name="equipment" placeholder="例: 電気・上水道・都市ガス"></div>
+          <div class="form-row"><label>現況</label>
+            <select name="occupancy"><option value="">選択してください</option><option>所有者居住中</option><option>空家</option><option>賃貸中</option><option>未完成</option></select>
+          </div>
+          <div class="form-row"><label>設備</label>
+            <input type="hidden" name="equipment" id="rent-equipment-hidden">
+            <div class="check-grid" id="rent-equipment-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px">
+              <label class="check-item"><input type="checkbox" value="電気" onchange="RC.syncRentEquipment()"> 電気</label>
+              <label class="check-item"><input type="checkbox" value="上水道" onchange="RC.syncRentEquipment()"> 上水道</label>
+              <label class="check-item"><input type="checkbox" value="下水道" onchange="RC.syncRentEquipment()"> 下水道</label>
+              <label class="check-item"><input type="checkbox" value="浄化槽" onchange="RC.syncRentEquipment()"> 浄化槽</label>
+              <label class="check-item"><input type="checkbox" value="側溝" onchange="RC.syncRentEquipment()"> 側溝</label>
+              <label class="check-item"><input type="checkbox" value="都市ガス" onchange="RC.syncRentEquipment()"> 都市ガス</label>
+              <label class="check-item"><input type="checkbox" value="プロパンガス" onchange="RC.syncRentEquipment()"> プロパンガス</label>
+              <label class="check-item"><input type="checkbox" value="電話" onchange="RC.syncRentEquipment()"> 電話</label>
+              <label class="check-item"><input type="checkbox" value="冷房" onchange="RC.syncRentEquipment()"> 冷房</label>
+              <label class="check-item"><input type="checkbox" value="暖房" onchange="RC.syncRentEquipment()"> 暖房</label>
+              <label class="check-item"><input type="checkbox" value="給湯" onchange="RC.syncRentEquipment()"> 給湯</label>
+              <label class="check-item"><input type="checkbox" value="その他" onchange="RC.syncRentEquipment()"> その他</label>
+            </div>
+            <input name="equipment_other" id="rent-equipment-other" placeholder="その他の設備を入力" style="margin-top:8px;display:none" oninput="RC.syncRentEquipment()">
+          </div>
         </div>
         <div class="form-row"><label>賃貸備考</label><textarea name="rent_notes" placeholder="例: ペット可、短期解約違約金、保証会社条件など" style="min-height:80px;resize:vertical"></textarea></div>
       </div>
@@ -2005,6 +2035,35 @@ RC.renderProfile = function() {
   }
 };
 
+RC.toggleRentMoveInNote = function(value) {
+  var el = document.getElementById('rent-move-in-note');
+  if (!el) return;
+  el.style.display = (value === '期日指定') ? 'block' : 'none';
+  if (value !== '期日指定') el.value = '';
+};
+RC.syncRentEquipment = function() {
+  var grid = document.getElementById('rent-equipment-grid');
+  var hidden = document.getElementById('rent-equipment-hidden');
+  var other = document.getElementById('rent-equipment-other');
+  if (!grid || !hidden) return;
+  var checked = Array.prototype.slice.call(grid.querySelectorAll('input[type="checkbox"]:checked')).map(function(el){ return el.value; });
+  var hasOther = checked.indexOf('その他') >= 0;
+  if (other) {
+    other.style.display = hasOther ? 'block' : 'none';
+    if (!hasOther) other.value = '';
+  }
+  var list = checked.filter(function(v){ return v !== 'その他'; });
+  if (hasOther && other && other.value.trim()) list.push(other.value.trim());
+  hidden.value = list.join('・');
+};
+RC.resetRentEquipment = function() {
+  var grid = document.getElementById('rent-equipment-grid');
+  var hidden = document.getElementById('rent-equipment-hidden');
+  var other = document.getElementById('rent-equipment-other');
+  if (grid) Array.prototype.forEach.call(grid.querySelectorAll('input[type="checkbox"]'), function(el){ el.checked = false; });
+  if (hidden) hidden.value = '';
+  if (other) { other.value = ''; other.style.display = 'none'; }
+};
 RC.CASE_STATUS_OPTIONS = {
   sale: ['見込み','販売中','商談中','買付','ローン審査中','内見予定','契約予定','成約','販売中止'],
   rent: ['募集中','申込有','保証会社審査中','成約','引渡','入居']
@@ -2037,6 +2096,8 @@ RC.openNewCase = function() {
     RC.toggleCaseFields('rent');
     RC.toggleCaseLayoutOther('');
     RC.toggleCaseStructureOther('');
+    RC.toggleRentMoveInNote('');
+    RC.resetRentEquipment();
     RC.updateCaseBuiltYmPreview('');
     RC.updateAreaPreview('exclusive_area', '');
     RC.updateAreaPreview('land_area', '');
@@ -2119,7 +2180,7 @@ RC.saveCase = function(ev) {
     key_money: form.key_money ? form.key_money.value.trim() : '',
     security_deposit: form.security_deposit ? form.security_deposit.value.trim() : '',
     cancellation_fee: form.cancellation_fee ? form.cancellation_fee.value.trim() : '',
-    move_in: form.move_in ? form.move_in.value.trim() : '',
+    move_in: ((form.move_in ? form.move_in.value.trim() : '') === '期日指定' && form.move_in_note && form.move_in_note.value.trim()) ? ('期日指定 ' + form.move_in_note.value.trim()) : (form.move_in ? form.move_in.value.trim() : ''),
     usage_area: form.usage_area ? form.usage_area.value.trim() : '',
     partial_area: form.partial_area ? form.partial_area.value.trim() : '',
     room_count: form.room_count ? form.room_count.value.trim() : '',

@@ -96,7 +96,17 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .case-attach-thumb .pdf-icon{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#92400E;background:#FEF3C7;flex-direction:column;gap:4px;padding:4px;text-align:center;word-break:break-all}
 .case-attach-thumb .pdf-icon .pdf-name{font-size:9px;font-weight:600;color:#78350F;line-height:1.1;max-height:2.2em;overflow:hidden}
 .case-attach-remove{position:absolute;top:2px;right:2px;background:rgba(220,38,38,0.92);color:#fff;border:none;border-radius:999px;width:22px;height:22px;font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0}
-.case-attach-thumb a.pdf-open{position:absolute;bottom:2px;left:2px;background:rgba(30,58,138,0.9);color:#fff;text-decoration:none;padding:2px 6px;border-radius:6px;font-size:10px}
+.case-attach-thumb .pdf-open{position:absolute;bottom:2px;left:2px;background:rgba(30,58,138,0.9);color:#fff;text-decoration:none;padding:2px 6px;border-radius:6px;font-size:10px;border:none;cursor:pointer}
+.case-detail-media button.thumb{border:none;padding:0;cursor:pointer}
+.pdf-viewer{position:fixed;inset:0;background:rgba(15,23,42,0.75);z-index:120;display:none;align-items:center;justify-content:center;padding:16px}
+.pdf-viewer.active{display:flex}
+.pdf-viewer-box{width:min(960px,100%);height:min(88dvh,920px);background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25)}
+.pdf-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid #E5E7EB;background:#F8FAFC}
+.pdf-viewer-title{font-size:14px;font-weight:800;color:#1E3A8A;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdf-viewer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pdf-viewer-frame{width:100%;height:100%;border:none;background:#fff;flex:1}
+.pdf-viewer-note{padding:8px 14px;border-top:1px solid #E5E7EB;font-size:11px;color:#64748B;background:#fff}
+@media(max-width:640px){.pdf-viewer{padding:8px}.pdf-viewer-box{height:min(92dvh,92dvh);border-radius:12px}.pdf-viewer-head{padding:10px}.pdf-viewer-title{font-size:13px}.pdf-viewer-actions{gap:6px}}
 .case-detail-media{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .case-detail-media .thumb{width:56px;height:56px;border-radius:6px;overflow:hidden;background:#F1F5F9;position:relative}
 .case-detail-media .thumb img{width:100%;height:100%;object-fit:cover}
@@ -830,6 +840,20 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <button class="nav-btn" data-view="community" onclick="RC.go('community')"><span class="nav-icon">💬</span>SNS</button>
   <button class="nav-btn" data-view="mypage" onclick="RC.go('mypage')"><span class="nav-icon">👤</span>マイページ</button>
 </nav>
+
+<div id="case-pdf-viewer" class="pdf-viewer" onclick="if(event.target===this)RC.closeCasePdfViewer()">
+  <div class="pdf-viewer-box">
+    <div class="pdf-viewer-head">
+      <div class="pdf-viewer-title" id="case-pdf-viewer-title">PDFプレビュー</div>
+      <div class="pdf-viewer-actions">
+        <a id="case-pdf-viewer-download" class="btn btn-secondary" href="#" download="document.pdf">保存</a>
+        <button type="button" class="btn btn-primary" onclick="RC.closeCasePdfViewer()">閉じる</button>
+      </div>
+    </div>
+    <iframe id="case-pdf-viewer-frame" class="pdf-viewer-frame" title="PDF Viewer"></iframe>
+    <div class="pdf-viewer-note">PDFが表示されない場合は「保存」をタップしてください。</div>
+  </div>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -1992,11 +2016,18 @@ RC.renderCases = function() {
           parts.push('<div class="thumb"><img src="' + RC.esc(src) + '" alt="img"></div>');
         }
         for (var j = 0; j < pdfs.length && shown < 4; j++, shown++) {
-          parts.push('<div class="thumb"><div class="pdf-mini">📄 PDF</div></div>');
+          parts.push('<button type="button" class="thumb" onclick="return RC.openSavedCasePdf(' + c.id + ',' + j + ')"><div class="pdf-mini">📄 PDF</div></button>');
         }
         var totalExtra = imgs.length + pdfs.length - shown;
         if (totalExtra > 0) parts.push('<div class="more">+' + totalExtra + '</div>');
-        return '<div class="case-detail-media">' + parts.join('') + '</div><div class="list-item-meta" style="margin-top:2px">🖼️ ' + imgs.length + ' 枚 / 📄 ' + pdfs.length + ' 枚</div>';
+        var pdfButtons = '';
+        if (pdfs.length) {
+          pdfButtons = '<div class="list-item-meta" style="margin-top:4px">' + pdfs.slice(0,3).map(function(item, pdfIdx){
+            var nm = item && item.name ? item.name : ('PDF-' + (pdfIdx + 1));
+            return '<button type="button" class="btn btn-secondary" style="min-height:auto;padding:4px 8px;font-size:11px;margin:0 6px 6px 0" onclick="return RC.openSavedCasePdf(' + c.id + ',' + pdfIdx + ')">📄 ' + RC.esc(nm) + '</button>';
+          }).join('') + '</div>';
+        }
+        return '<div class="case-detail-media">' + parts.join('') + '</div><div class="list-item-meta" style="margin-top:2px">🖼️ ' + imgs.length + ' 枚 / 📄 ' + pdfs.length + ' 枚</div>' + pdfButtons;
       })() +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
       '<div class="list-item-actions">' +
@@ -2328,6 +2359,76 @@ RC.loadCaseAttachments = function(caseData) {
   RC._caseAttachDraft = { images: imgs, pdfs: pdfs };
   RC.renderCaseAttachments();
 };
+RC._casePdfBlobUrl = '';
+RC.dataUrlToBlobUrl = function(dataUrl) {
+  var m = String(dataUrl || '').match(/^data:([^;,]+)?(;base64)?,(.*)$/);
+  if (!m) return '';
+  var mime = m[1] || 'application/octet-stream';
+  var isBase64 = !!m[2];
+  var payload = m[3] || '';
+  var binary = isBase64 ? atob(payload) : decodeURIComponent(payload);
+  var len = binary.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  var blob = new Blob([bytes], { type: mime });
+  if (window.URL && typeof window.URL.createObjectURL === 'function') return window.URL.createObjectURL(blob);
+  return '';
+};
+RC.closeCasePdfViewer = function() {
+  var viewer = document.getElementById('case-pdf-viewer');
+  var frame = document.getElementById('case-pdf-viewer-frame');
+  var dl = document.getElementById('case-pdf-viewer-download');
+  if (viewer) viewer.classList.remove('active');
+  if (frame) frame.src = 'about:blank';
+  if (dl) { dl.href = '#'; dl.setAttribute('download', 'document.pdf'); }
+  if (RC._casePdfBlobUrl && window.URL && typeof window.URL.revokeObjectURL === 'function') {
+    try { window.URL.revokeObjectURL(RC._casePdfBlobUrl); } catch(e){}
+  }
+  RC._casePdfBlobUrl = '';
+  document.body.style.overflow = '';
+};
+RC.openCasePdfData = function(dataUrl, fileName) {
+  if (!dataUrl) { RC.toast('PDFデータが見つかりません'); return false; }
+  try {
+    RC.closeCasePdfViewer();
+    var resolvedUrl = String(dataUrl).indexOf('blob:') === 0 ? dataUrl : (RC.dataUrlToBlobUrl(dataUrl) || dataUrl);
+    var viewer = document.getElementById('case-pdf-viewer');
+    var frame = document.getElementById('case-pdf-viewer-frame');
+    var title = document.getElementById('case-pdf-viewer-title');
+    var dl = document.getElementById('case-pdf-viewer-download');
+    if (title) title.textContent = fileName || 'PDFプレビュー';
+    if (frame) frame.src = resolvedUrl;
+    if (dl) { dl.href = resolvedUrl; dl.setAttribute('download', fileName || 'document.pdf'); }
+    if (String(resolvedUrl).indexOf('blob:') === 0) RC._casePdfBlobUrl = resolvedUrl;
+    if (viewer) viewer.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    return false;
+  } catch (e) {
+    try { window.open(dataUrl, '_blank'); } catch(_e){}
+    return false;
+  }
+};
+RC.openDraftPdf = function(index) {
+  var item = (RC._caseAttachDraft.pdfs || [])[index];
+  if (!item) { RC.toast('PDFが見つかりません'); return false; }
+  var src = item && item.data ? item.data : (typeof item === 'string' ? item : '');
+  var name = item && item.name ? item.name : ('document-' + (index + 1) + '.pdf');
+  return RC.openCasePdfData(src, name);
+};
+RC.openSavedCasePdf = function(caseId, index) {
+  var item = null;
+  var cases = RC.data.cases || [];
+  for (var i = 0; i < cases.length; i++) {
+    if (String(cases[i].id) === String(caseId)) {
+      item = ((cases[i].pdfs || [])[index]) || null;
+      break;
+    }
+  }
+  if (!item) { RC.toast('PDFが見つかりません'); return false; }
+  var src = item && item.data ? item.data : (typeof item === 'string' ? item : '');
+  var name = item && item.name ? item.name : ('document-' + (index + 1) + '.pdf');
+  return RC.openCasePdfData(src, name);
+};
 RC.renderCaseAttachments = function() {
   var imgWrap = document.getElementById('case-attach-image-preview');
   var pdfWrap = document.getElementById('case-attach-pdf-preview');
@@ -2347,7 +2448,7 @@ RC.renderCaseAttachments = function() {
   pdfWrap.innerHTML = pdfs.map(function(item, idx){
     var name = (item && item.name) ? item.name : ('PDF-' + (idx+1));
     var src = (item && item.data) ? item.data : (typeof item === 'string' ? item : '');
-    var openBtn = src ? '<a class="pdf-open" href="' + RC.esc(src) + '" target="_blank" rel="noopener">開く</a>' : '';
+    var openBtn = src ? '<button type="button" class="pdf-open" onclick="return RC.openDraftPdf(' + idx + ')">開く</button>' : '';
     return '<div class="case-attach-thumb"><div class="pdf-icon"><span>📄 PDF</span><span class="pdf-name">' + RC.esc(name) + '</span></div>' + openBtn + '<button type="button" class="case-attach-remove" onclick="RC.removeCaseAttachment(\'pdf\',' + idx + ')">×</button></div>';
   }).join('');
 };

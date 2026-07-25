@@ -82,6 +82,27 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .list-item-del-btn{background:#FEE2E2;color:#991B1B}
 .list-item-del-btn:active{background:#FECACA}
 .list-item-edit-hint{margin-top:6px;font-size:11px;color:#2563EB;font-weight:600}
+.case-attach-section{margin-top:12px}
+.case-attach-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.case-attach-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#EEF2FF;color:#1E3A8A;border:1px dashed #6366F1;border-radius:10px;padding:12px 10px;font-size:13px;font-weight:700;cursor:pointer;min-height:44px}
+.case-attach-btn.pdf{background:#FEF3C7;color:#92400E;border-color:#D97706}
+.case-attach-btn:active{opacity:.85}
+.case-attach-info{font-size:11px;color:#64748B;margin-top:2px}
+.case-attach-info.limit{color:#B91C1C}
+.case-attach-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+@media(max-width:640px){.case-attach-preview{grid-template-columns:repeat(3,1fr)}}
+.case-attach-thumb{position:relative;background:#F1F5F9;border-radius:8px;aspect-ratio:1/1;overflow:hidden}
+.case-attach-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.case-attach-thumb .pdf-icon{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#92400E;background:#FEF3C7;flex-direction:column;gap:4px;padding:4px;text-align:center;word-break:break-all}
+.case-attach-thumb .pdf-icon .pdf-name{font-size:9px;font-weight:600;color:#78350F;line-height:1.1;max-height:2.2em;overflow:hidden}
+.case-attach-remove{position:absolute;top:2px;right:2px;background:rgba(220,38,38,0.92);color:#fff;border:none;border-radius:999px;width:22px;height:22px;font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+.case-attach-thumb a.pdf-open{position:absolute;bottom:2px;left:2px;background:rgba(30,58,138,0.9);color:#fff;text-decoration:none;padding:2px 6px;border-radius:6px;font-size:10px}
+.case-detail-media{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.case-detail-media .thumb{width:56px;height:56px;border-radius:6px;overflow:hidden;background:#F1F5F9;position:relative}
+.case-detail-media .thumb img{width:100%;height:100%;object-fit:cover}
+.case-detail-media .thumb .pdf-mini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#92400E;background:#FEF3C7}
+.case-detail-media .more{width:56px;height:56px;border-radius:6px;background:#E5E7EB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#374151}
+
 
 .post{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative}
 .post-header{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
@@ -561,6 +582,21 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       </div>
 
       <div class="form-row"><label>共通メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
+
+      <div class="case-section case-attach-section">
+        <div class="case-section-title">📎 添付ファイル</div>
+        <div class="case-attach-row">
+          <button type="button" class="case-attach-btn" onclick="document.getElementById('case-attach-image-input').click()">🖼️ 画像/写真を追加</button>
+          <button type="button" class="case-attach-btn pdf" onclick="document.getElementById('case-attach-pdf-input').click()">📄 PDFを追加</button>
+        </div>
+        <input type="file" id="case-attach-image-input" accept="image/*" multiple style="display:none" onchange="RC.handleCaseImageInput(this)">
+        <input type="file" id="case-attach-pdf-input" accept="application/pdf,.pdf" multiple style="display:none" onchange="RC.handleCasePdfInput(this)">
+        <div class="case-attach-info" id="case-attach-image-info">画像/写真 0 / 50 枚</div>
+        <div class="case-attach-preview" id="case-attach-image-preview"></div>
+        <div class="case-attach-info" id="case-attach-pdf-info" style="margin-top:10px">PDF 0 / 30 枚</div>
+        <div class="case-attach-preview" id="case-attach-pdf-preview"></div>
+      </div>
+
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
         <button type="submit" class="btn btn-primary" id="case-save-btn">保存</button>
@@ -1946,6 +1982,22 @@ RC.renderCases = function() {
       (saleDetail ? '<div class="list-item-meta">' + RC.esc(saleDetail) + '</div>' : '') +
       (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
+      (function(){
+        var imgs = c.images || []; var pdfs = c.pdfs || [];
+        if (!imgs.length && !pdfs.length) return '';
+        var parts = [];
+        var shown = 0;
+        for (var i = 0; i < imgs.length && shown < 4; i++, shown++) {
+          var src = typeof imgs[i] === 'string' ? imgs[i] : (imgs[i] && imgs[i].data ? imgs[i].data : '');
+          parts.push('<div class="thumb"><img src="' + RC.esc(src) + '" alt="img"></div>');
+        }
+        for (var j = 0; j < pdfs.length && shown < 4; j++, shown++) {
+          parts.push('<div class="thumb"><div class="pdf-mini">📄 PDF</div></div>');
+        }
+        var totalExtra = imgs.length + pdfs.length - shown;
+        if (totalExtra > 0) parts.push('<div class="more">+' + totalExtra + '</div>');
+        return '<div class="case-detail-media">' + parts.join('') + '</div><div class="list-item-meta" style="margin-top:2px">🖼️ ' + imgs.length + ' 枚 / 📄 ' + pdfs.length + ' 枚</div>';
+      })() +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
       '<div class="list-item-actions">' +
         '<button type="button" class="list-item-edit-btn" onclick="return RC.handleCaseItemActivate(' + c.id + ', event)" ontouchend="return RC.handleCaseItemActivate(' + c.id + ', event)">編集</button>' +
@@ -2143,6 +2195,7 @@ RC.resetCaseForm = function(defaultKind) {
   RC.updateAreaPreview('exclusive_area', '');
   RC.updateAreaPreview('land_area', '');
   RC.updateAreaPreview('building_area', '');
+  RC.resetCaseAttachments();
   RC.renderCaseLookupOptions();
 };
 RC.editCase = function(id) {
@@ -2197,6 +2250,7 @@ RC.editCase = function(id) {
     RC.updateAreaPreview('exclusive_area', found.exclusive_area || '');
     RC.updateAreaPreview('land_area', found.land_area || '');
     RC.updateAreaPreview('building_area', found.building_area || '');
+    RC.loadCaseAttachments(found);
     RC.renderCaseLookupOptions();
     window.scrollTo(0, 0);
   }, 30);
@@ -2256,6 +2310,94 @@ RC.readFile = function(file, cb) {
   r.onload = function(e){ cb(String(e.target.result || '')); };
   r.onerror = function(){ cb(null); };
   r.readAsDataURL(file);
+};
+
+RC.CASE_ATTACH_LIMITS = { image: 50, pdf: 30 };
+RC._caseAttachDraft = { images: [], pdfs: [] };
+RC.resetCaseAttachments = function() {
+  RC._caseAttachDraft = { images: [], pdfs: [] };
+  var i1 = document.getElementById('case-attach-image-input');
+  var i2 = document.getElementById('case-attach-pdf-input');
+  if (i1) i1.value = '';
+  if (i2) i2.value = '';
+  RC.renderCaseAttachments();
+};
+RC.loadCaseAttachments = function(caseData) {
+  var imgs = (caseData && caseData.images) ? caseData.images.slice() : [];
+  var pdfs = (caseData && caseData.pdfs) ? caseData.pdfs.slice() : [];
+  RC._caseAttachDraft = { images: imgs, pdfs: pdfs };
+  RC.renderCaseAttachments();
+};
+RC.renderCaseAttachments = function() {
+  var imgWrap = document.getElementById('case-attach-image-preview');
+  var pdfWrap = document.getElementById('case-attach-pdf-preview');
+  var imgInfo = document.getElementById('case-attach-image-info');
+  var pdfInfo = document.getElementById('case-attach-pdf-info');
+  if (!imgWrap || !pdfWrap) return;
+  var imgs = RC._caseAttachDraft.images || [];
+  var pdfs = RC._caseAttachDraft.pdfs || [];
+  var maxImg = RC.CASE_ATTACH_LIMITS.image;
+  var maxPdf = RC.CASE_ATTACH_LIMITS.pdf;
+  if (imgInfo) { imgInfo.textContent = '画像/写真 ' + imgs.length + ' / ' + maxImg + ' 枚'; imgInfo.classList.toggle('limit', imgs.length >= maxImg); }
+  if (pdfInfo) { pdfInfo.textContent = 'PDF ' + pdfs.length + ' / ' + maxPdf + ' 枚'; pdfInfo.classList.toggle('limit', pdfs.length >= maxPdf); }
+  imgWrap.innerHTML = imgs.map(function(item, idx){
+    var src = typeof item === 'string' ? item : (item && item.data ? item.data : '');
+    return '<div class="case-attach-thumb"><img src="' + RC.esc(src) + '" alt="image"><button type="button" class="case-attach-remove" onclick="RC.removeCaseAttachment(\'image\',' + idx + ')">×</button></div>';
+  }).join('');
+  pdfWrap.innerHTML = pdfs.map(function(item, idx){
+    var name = (item && item.name) ? item.name : ('PDF-' + (idx+1));
+    var src = (item && item.data) ? item.data : (typeof item === 'string' ? item : '');
+    var openBtn = src ? '<a class="pdf-open" href="' + RC.esc(src) + '" target="_blank" rel="noopener">開く</a>' : '';
+    return '<div class="case-attach-thumb"><div class="pdf-icon"><span>📄 PDF</span><span class="pdf-name">' + RC.esc(name) + '</span></div>' + openBtn + '<button type="button" class="case-attach-remove" onclick="RC.removeCaseAttachment(\'pdf\',' + idx + ')">×</button></div>';
+  }).join('');
+};
+RC.removeCaseAttachment = function(kind, index) {
+  var arr = kind === 'pdf' ? RC._caseAttachDraft.pdfs : RC._caseAttachDraft.images;
+  if (!arr || index < 0 || index >= arr.length) return;
+  arr.splice(index, 1);
+  RC.renderCaseAttachments();
+};
+RC.handleCaseImageInput = function(input) {
+  if (!input || !input.files || !input.files.length) return;
+  var files = Array.prototype.slice.call(input.files);
+  var max = RC.CASE_ATTACH_LIMITS.image;
+  var current = RC._caseAttachDraft.images.length;
+  var canAdd = Math.max(0, max - current);
+  if (files.length > canAdd) {
+    RC.toast('画像は最大 ' + max + ' 枚までです（あと ' + canAdd + ' 枚追加可能）');
+    files = files.slice(0, canAdd);
+  }
+  var remaining = files.length;
+  if (remaining === 0) { input.value = ''; return; }
+  files.forEach(function(f){
+    RC.readFile(f, function(dataUrl){
+      if (dataUrl) RC._caseAttachDraft.images.push({ name: f.name || 'image', data: dataUrl });
+      remaining--;
+      if (remaining <= 0) { input.value = ''; RC.renderCaseAttachments(); }
+    });
+  });
+};
+RC.handleCasePdfInput = function(input) {
+  if (!input || !input.files || !input.files.length) return;
+  var files = Array.prototype.slice.call(input.files).filter(function(f){
+    return f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''));
+  });
+  var max = RC.CASE_ATTACH_LIMITS.pdf;
+  var current = RC._caseAttachDraft.pdfs.length;
+  var canAdd = Math.max(0, max - current);
+  if (files.length > canAdd) {
+    RC.toast('PDFは最大 ' + max + ' 枚までです（あと ' + canAdd + ' 枚追加可能）');
+    files = files.slice(0, canAdd);
+  }
+  var remaining = files.length;
+  if (remaining === 0) { input.value = ''; return; }
+  files.forEach(function(f){
+    RC.readFile(f, function(dataUrl){
+      if (dataUrl) RC._caseAttachDraft.pdfs.push({ name: f.name || 'document.pdf', data: dataUrl });
+      remaining--;
+      if (remaining <= 0) { input.value = ''; RC.renderCaseAttachments(); }
+    });
+  });
 };
 
 RC.saveCase = function(ev) {
@@ -2327,6 +2469,8 @@ RC.saveCase = function(ev) {
     memo: form.memo.value.trim(), date: dateStr
   };
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
+  newCase.images = (RC._caseAttachDraft && RC._caseAttachDraft.images) ? RC._caseAttachDraft.images.slice() : [];
+  newCase.pdfs = (RC._caseAttachDraft && RC._caseAttachDraft.pdfs) ? RC._caseAttachDraft.pdfs.slice() : [];
   var editId = form.case_id ? String(form.case_id.value || '') : '';
   var isEdit = !!editId;
   if (isEdit) {

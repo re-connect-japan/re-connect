@@ -2775,7 +2775,16 @@ RC.exportCaseSheetPdf = function() {
   var data = RC.collectCaseSheetData(form);
   if (!data) { RC.toast('資料化するデータがありません'); return false; }
   var html = RC.buildCaseSheetHtml(data);
-  RC.openFlyerHtml(html);
+  var win = RC.openFlyerHtml(html);
+  if (!win) return false;
+  var kick = function(retry){
+    try {
+      if (win.__downloadPdf) { win.__downloadPdf(); return; }
+    } catch (e) {}
+    if (retry > 0) setTimeout(function(){ kick(retry - 1); }, 500);
+    else RC.toast('資料タブで📥 PDFダウンロードを押してください');
+  };
+  setTimeout(function(){ kick(10); }, 900);
   return false;
 };
 RC.htmlToDataUrl = function(html) {
@@ -2902,26 +2911,35 @@ RC.saveCaseSheet = function() {
   var form = document.getElementById('form-case');
   if (!form) return false;
   var idField = document.getElementById('case-id');
-  var caseId = idField ? idField.value : '';
-  if (!caseId) {
-    RC.toast('先に案件を保存してから資料を保存してください');
-    return false;
-  }
+  var caseId = idField ? String(idField.value || '') : '';
   var data = RC.collectCaseSheetData(form);
   if (!data) { RC.toast('資料化するデータがありません'); return false; }
   var cases = RC.data.cases || [];
   var target = null;
-  for (var i = 0; i < cases.length; i++) {
-    if (String(cases[i].id) === String(caseId)) { target = cases[i]; break; }
+  if (caseId) {
+    for (var i = 0; i < cases.length; i++) {
+      if (String(cases[i].id) === caseId) { target = cases[i]; break; }
+    }
   }
-  if (!target) { RC.toast('案件データが見つかりません'); return false; }
+  if (!target) {
+    if (!String(data.customer || '').trim()) { RC.toast('顧客名は必須です'); return false; }
+    target = Object.assign({}, data);
+    target.id = Date.now();
+    target.date = data.date || target.date || (function(){ var d=new Date(); return d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0'); })();
+    target.images = (data.images || []).slice();
+    target.pdfs = (data.pdfs || []).slice();
+    target.flyers = [];
+    RC.data.cases.push(target);
+    if (idField) idField.value = String(target.id);
+    RC.refreshCaseLookup();
+  }
   if (!target.flyers) target.flyers = [];
   var now = new Date();
   var stamp = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   var label = (data.property_name || data.customer || '物件資料') + ' - ' + stamp;
   var html = RC.buildCaseSheetHtml(data);
   var flyer = {
-    id: Date.now(),
+    id: Date.now() + 1,
     label: label,
     created_at: stamp,
     trade_kind: data.trade_kind,

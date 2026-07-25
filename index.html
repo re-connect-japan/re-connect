@@ -3038,6 +3038,17 @@ RC.renderCaseSavedFlyers = function(caseData) {
 RC.saveCase = function(ev) {
   ev.preventDefault();
   var form = ev.target;
+  var fe = function(name) {
+    if (!form) return null;
+    if (form.elements && form.elements[name]) return form.elements[name];
+    if (typeof form[name] !== 'undefined' && form[name]) return form[name];
+    return document.querySelector('#form-case [name="' + name + '"]');
+  };
+  ['customer','trade_kind','property_name','type','status','price','rent','mgmt','repair','area','address','traffic_line','traffic_station','walk_minutes','bus_minutes','layout_count','layout_kind','layout_other','built_ym','structure_kind','structure_other','total_floors','current_floor','room_number','exclusive_area','land_area','building_area','sale_balcony_dir','sale_total_units','sale_parking_status','sale_parking_fee','sale_topography','zoning','building_coverage_ratio','floor_area_ratio','sale_occupancy','sale_handover','sale_equipment','owner_change','rent_mgmt','deposit_guarantee','right_money','key_money','security_deposit','cancellation_fee','move_in','move_in_note','usage_area','partial_area','room_count','balcony_dir','parking_status','parking_fee','occupancy','equipment','rent_notes','memo'].forEach(function(name){
+    if ((typeof form[name] === 'undefined' || form[name] == null) && fe(name)) {
+      try { form[name] = fe(name); } catch(e) {}
+    }
+  });
   var d = new Date();
   var dateStr = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0');
   var trafficLine = form.traffic_line ? form.traffic_line.value.trim() : '';

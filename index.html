@@ -407,7 +407,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
       <div class="case-section" id="case-sale-fields">
         <div class="case-section-title">💴 売買入力</div>
-        <div class="case-section-note">売買案件でよく使う項目を上段に集約</div>
+        <div class="case-section-note">アップロード済みExcel「レインズチラシ」の物件概要を参考に、売買で使う入力欄を追加</div>
         <div class="form-grid-2">
           <div class="form-row"><label>販売価格</label><input name="price" inputmode="numeric" placeholder="5000（万円）"></div>
           <div class="form-row"><label>管理費</label><input name="mgmt" inputmode="numeric" placeholder="0.8（万円）"></div>
@@ -420,6 +420,40 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
           <div class="form-row"><label>土地面積</label><input name="land_area" id="case-land-area" placeholder="例: 100㎡" oninput="RC.updateAreaPreview('land_area', this.value)"><div id="preview-land-area" class="form-note">㎡入力で坪を併記表示</div></div>
           <div class="form-row"><label>建物面積</label><input name="building_area" id="case-building-area" placeholder="例: 92㎡" oninput="RC.updateAreaPreview('building_area', this.value)"><div id="preview-building-area" class="form-note">㎡入力で坪を併記表示</div></div>
         </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>バルコニー方向</label>
+            <select name="sale_balcony_dir">
+              <option value="">選択してください</option><option>北</option><option>北東</option><option>東</option><option>南東</option><option>南</option><option>南西</option><option>西</option><option>北西</option>
+            </select>
+          </div>
+          <div class="form-row"><label>棟総戸数</label><input name="sale_total_units" inputmode="numeric" placeholder="例: 42戸"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>駐車場</label>
+            <select name="sale_parking_status"><option value="">選択してください</option><option>空有</option><option>空無</option><option>近隣確保</option><option>無</option></select>
+          </div>
+          <div class="form-row"><label>駐車場月額</label><input name="sale_parking_fee" inputmode="numeric" placeholder="例: 15000円"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>地勢</label>
+            <select name="sale_topography"><option value="">選択してください</option><option>平坦</option><option>高台</option><option>低地</option><option>ひな段</option><option>傾斜地</option><option>その他</option></select>
+          </div>
+          <div class="form-row"><label>用途地域</label>
+            <select name="zoning">
+              <option value="">選択してください</option>
+              <option>第一種低層住居専用地域</option><option>第二種低層住居専用地域</option><option>第一種中高層住居専用地域</option><option>第二種中高層住居専用地域</option><option>第一種住居地域</option><option>第二種住居地域</option><option>準住居地域</option><option>田園住居地域</option><option>近隣商業地域</option><option>商業地域</option><option>準工業地域</option><option>工業地域</option><option>工業専用地域</option><option>市街化調整区域</option><option>無指定</option><option>その他</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>現況</label>
+            <select name="sale_occupancy"><option value="">選択してください</option><option>所有者居住中</option><option>空家</option><option>賃貸中</option><option>未完成</option></select>
+          </div>
+          <div class="form-row"><label>引渡</label>
+            <select name="sale_handover"><option value="">選択してください</option><option>即時</option><option>相談</option><option>期日指定</option></select>
+          </div>
+        </div>
+        <div class="form-row"><label>設備</label><textarea name="sale_equipment" placeholder="例: 電気・上水道・下水道・都市ガス" style="min-height:72px;resize:vertical"></textarea></div>
         <div class="form-row">
           <label>オーナーチェンジ</label>
           <select name="owner_change"><option>該当なし</option><option>該当あり</option></select>
@@ -1833,6 +1867,7 @@ RC.renderCases = function() {
     var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
     var detail3 = [builtText, c.structure, c.floor_info, c.room_number].filter(function(x){return x;}).join(' / ');
     var areaDetail = [c.exclusive_area ? ('専有 ' + RC.formatAreaDisplay(c.exclusive_area)) : '', c.land_area ? ('土地 ' + RC.formatAreaDisplay(c.land_area)) : '', c.building_area ? ('建物 ' + RC.formatAreaDisplay(c.building_area)) : ''].filter(function(x){return x;}).join(' / ');
+    var saleDetail = [c.zoning ? ('用途地域 ' + c.zoning) : '', c.sale_topography ? ('地勢 ' + c.sale_topography) : '', c.sale_occupancy ? ('現況 ' + c.sale_occupancy) : ''].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
@@ -1840,6 +1875,7 @@ RC.renderCases = function() {
       (detail2 ? '<div class="list-item-meta">' + RC.esc(detail2) + '</div>' : '') +
       (detail3 ? '<div class="list-item-meta">' + RC.esc(detail3) + '</div>' : '') +
       (areaDetail ? '<div class="list-item-meta">' + RC.esc(areaDetail) + '</div>' : '') +
+      (saleDetail ? '<div class="list-item-meta">' + RC.esc(saleDetail) + '</div>' : '') +
       (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
@@ -2041,6 +2077,15 @@ RC.saveCase = function(ev) {
     exclusive_area: form.exclusive_area ? form.exclusive_area.value.trim() : '',
     land_area: form.land_area ? form.land_area.value.trim() : '',
     building_area: form.building_area ? form.building_area.value.trim() : '',
+    sale_balcony_dir: form.sale_balcony_dir ? form.sale_balcony_dir.value : '',
+    sale_total_units: form.sale_total_units ? form.sale_total_units.value.trim() : '',
+    sale_parking_status: form.sale_parking_status ? form.sale_parking_status.value : '',
+    sale_parking_fee: form.sale_parking_fee ? form.sale_parking_fee.value.trim() : '',
+    sale_topography: form.sale_topography ? form.sale_topography.value : '',
+    zoning: form.zoning ? form.zoning.value : '',
+    sale_occupancy: form.sale_occupancy ? form.sale_occupancy.value : '',
+    sale_handover: form.sale_handover ? form.sale_handover.value : '',
+    sale_equipment: form.sale_equipment ? form.sale_equipment.value.trim() : '',
     owner_change: form.owner_change ? form.owner_change.value : '',
     rent_mgmt: form.rent_mgmt ? form.rent_mgmt.value.trim() : '',
     deposit_guarantee: form.deposit_guarantee ? form.deposit_guarantee.value.trim() : '',

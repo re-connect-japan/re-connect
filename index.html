@@ -945,6 +945,19 @@ RC._postDraftImages = [];
 RC._avatarDraft = null;
 RC._bgDraft = null;
 
+RC.compactDataForStorage = function(data) {
+  var clone = JSON.parse(JSON.stringify(data || {}));
+  var cases = clone.cases || [];
+  for (var i = 0; i < cases.length; i++) {
+    var flyers = cases[i].flyers || [];
+    for (var j = 0; j < flyers.length; j++) {
+      delete flyers[j].html;
+      delete flyers[j].shareUrl;
+    }
+  }
+  return clone;
+};
+
 RC.load = function() {
   try {
     var raw = localStorage.getItem(RC.KEY);
@@ -956,10 +969,23 @@ RC.load = function() {
   if (!RC.data.posts) RC.data.posts = JSON.parse(JSON.stringify(RC.defaults.posts));
   if (!RC.data.schedules) RC.data.schedules = JSON.parse(JSON.stringify(RC.defaults.schedules));
   if (!RC.data.caseLookup) RC.data.caseLookup = JSON.parse(JSON.stringify(RC.defaults.caseLookup));
+  try {
+    var compacted = RC.compactDataForStorage(RC.data);
+    var before = JSON.stringify(RC.data);
+    var after = JSON.stringify(compacted);
+    if (after.length < before.length) {
+      RC.data = compacted;
+      localStorage.setItem(RC.KEY, after);
+    }
+  } catch (e) {}
 };
 
 RC.save = function() {
-  try { localStorage.setItem(RC.KEY, JSON.stringify(RC.data)); return true; }
+  try {
+    RC.data = RC.compactDataForStorage(RC.data);
+    localStorage.setItem(RC.KEY, JSON.stringify(RC.data));
+    return true;
+  }
   catch (e) { RC.toast('⚠️ 保存に失敗しました'); return false; }
 };
 
@@ -2827,7 +2853,8 @@ RC.mailFlyer = function(caseId, flyerId) {
   var flyer = RC.findSavedFlyer(caseId, flyerId);
   if (!flyer) { RC.toast('資料が見つかりません'); return false; }
   var subject = '【物件資料】' + (flyer.data && flyer.data.property_name ? flyer.data.property_name : '') + (flyer.data && flyer.data.customer ? ('（' + flyer.data.customer + '様）') : '');
-  var body = RC.buildFlyerMailBody(flyer.data || {}, flyer.shareUrl || '');
+  var shareUrl = flyer.shareUrl || RC.htmlToDataUrl(flyer.html || (flyer.data ? RC.buildCaseSheetHtml(flyer.data) : ''));
+  var body = RC.buildFlyerMailBody(flyer.data || {}, shareUrl || '');
   var href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   window.location.href = href;
   return false;
@@ -2953,9 +2980,7 @@ RC.saveCaseSheet = function() {
     label: label,
     created_at: stamp,
     trade_kind: data.trade_kind,
-    data: data,
-    html: html,
-    shareUrl: RC.htmlToDataUrl(html)
+    data: data
   };
   target.flyers.unshift(flyer);
   if (target.flyers.length > 20) target.flyers = target.flyers.slice(0, 20);

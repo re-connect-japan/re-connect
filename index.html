@@ -210,6 +210,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .schedule-card.t-訪問{border-left:4px solid #EA580C;background:linear-gradient(90deg,#FFF7ED 0,#FFFFFF 22%)}
 .schedule-card.t-会議{border-left:4px solid #7C3AED;background:linear-gradient(90deg,#F5F3FF 0,#FFFFFF 22%)}
 .schedule-card.t-その他{border-left:4px solid #6B7280;background:linear-gradient(90deg,#F9FAFB 0,#FFFFFF 22%)}
+.schedule-card.t-タスク{border-left:4px solid #0F766E;background:linear-gradient(90deg,#ECFEFF 0,#FFFFFF 22%)}
 .month-scroll-wrap{display:flex;flex-direction:column;gap:16px}
 .month-section{background:white;border-radius:14px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
 .month-section.current{border:2px solid #FF7A45;box-shadow:0 6px 20px rgba(255,122,69,0.14)}
@@ -441,12 +442,12 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       <h1>📅 予定一覧</h1>
       <span class="count-label" id="schedule-count"></span>
     </div>
-    <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.newSchedule()">➕ 新規予定を登録</button>
+    <div class="form-actions" style="margin-top:0;margin-bottom:12px"><button class="btn btn-orange" style="flex:1" onclick="RC.newSchedule()">➕ 新規予定</button><button class="btn btn-primary" style="flex:1" onclick="RC.newTask()">☑️ タスク入力</button></div>
     <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="schedule-filter-bar">
       <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
       <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
       <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('month')" id="filter-month">1ヶ月</button>
-      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('task')" id="filter-task">タスク</button>
     </div>
     <div id="schedule-range-label"></div>
   </div>
@@ -463,7 +464,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       <div class="form-row"><label>日付 <span style="color:#EF4444">*</span></label><input type="date" name="date" id="sc-date" required></div>
       <div class="form-row"><label>種別</label>
         <select name="type" id="sc-type">
-          <option>内見</option><option>商談</option><option>打合</option><option>契約</option><option>決済</option><option>電話</option><option>訪問</option><option>会議</option><option>その他</option>
+          <option>内見</option><option>商談</option><option>打合</option><option>契約</option><option>決済</option><option>電話</option><option>訪問</option><option>会議</option><option>その他</option><option>タスク</option>
         </select>
       </div>
       <div class="form-grid-2 time-grid">
@@ -891,15 +892,15 @@ RC.scrollToCurrentMonth = function() {
 };
 
 RC.typeIcon = function(t) {
-  var m = { '内見':'🏠','商談':'💼','打合':'🤝','契約':'📝','決済':'💰','電話':'📞','訪問':'🚗','会議':'👥','その他':'📌' };
+  var m = { '内見':'🏠','商談':'💼','打合':'🤝','契約':'📝','決済':'💰','電話':'📞','訪問':'🚗','会議':'👥','その他':'📌','タスク':'☑️' };
   return m[t] || '📌';
 };
 RC.typeClass = function(t) {
-  var allowed = { '内見':1,'商談':1,'打合':1,'契約':1,'決済':1,'電話':1,'訪問':1,'会議':1,'その他':1 };
+  var allowed = { '内見':1,'商談':1,'打合':1,'契約':1,'決済':1,'電話':1,'訪問':1,'会議':1,'その他':1,'タスク':1 };
   return allowed[t] ? ('t-' + t) : 't-その他';
 };
 RC.defaultScheduleColor = function(type) {
-  var m = { '内見':'#2563EB','商談':'#D97706','打合':'#4F46E5','契約':'#16A34A','決済':'#DB2777','電話':'#475569','訪問':'#EA580C','会議':'#7C3AED','その他':'#6B7280' };
+  var m = { '内見':'#2563EB','商談':'#D97706','打合':'#4F46E5','契約':'#16A34A','決済':'#DB2777','電話':'#475569','訪問':'#EA580C','会議':'#7C3AED','その他':'#6B7280','タスク':'#0F766E' };
   return m[type] || '#2563EB';
 };
 RC.hexToRgb = function(hex) {
@@ -1110,6 +1111,9 @@ RC.renderScheduleList = function() {
   } else if (RC._scheduleFilter === 'month') {
     filtered = all.filter(function(s){ return s.date >= monthScrollStartStr && s.date <= monthScrollEndStr; });
     if (rangeLabel) rangeLabel.textContent = '表示範囲: 過去6ヶ月〜未来6ヶ月（月間カレンダー）';
+  } else if (RC._scheduleFilter === 'task') {
+    filtered = all.filter(function(s){ return s.type === 'タスク'; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: タスク';
   } else {
     filtered = all.slice();
     if (rangeLabel) rangeLabel.textContent = '表示範囲: すべての予定';
@@ -1120,7 +1124,7 @@ RC.renderScheduleList = function() {
     return da.localeCompare(db);
   });
   if (count) count.textContent = '(' + filtered.length + '件)';
-  var btns = ['today','week','month','all'];
+  var btns = ['today','week','month','task'];
   btns.forEach(function(k){
     var b = document.getElementById('filter-' + k);
     if (!b) return;
@@ -1208,6 +1212,7 @@ RC.newSchedule = function(prefillDate) {
     if (f) f.reset();
     document.getElementById('sc-id').value = '';
     document.getElementById('sc-title').value = '';
+    document.getElementById('sc-title').placeholder = '例: 山田様と物件内見';
     document.getElementById('sc-date').value = prefillDate || RC.todayStr();
     document.getElementById('sc-type').value = '内見';
     document.getElementById('sc-start').value = '';
@@ -1219,6 +1224,30 @@ RC.newSchedule = function(prefillDate) {
     document.getElementById('sc-remind').value = 'none';
     document.getElementById('sc-memo').value = '';
     document.getElementById('schedule-form-title').textContent = '➕ 新規予定登録';
+    RC.populateScheduleSelects('','');
+  }, 50);
+};
+
+RC.newTask = function(prefillDate) {
+  RC._editingScheduleId = null;
+  RC.go('new-schedule');
+  setTimeout(function(){
+    var f = document.getElementById('form-schedule');
+    if (f) f.reset();
+    document.getElementById('sc-id').value = '';
+    document.getElementById('sc-title').value = '';
+    document.getElementById('sc-title').placeholder = '例: 売主へ折り返し連絡';
+    document.getElementById('sc-date').value = prefillDate || RC.todayStr();
+    document.getElementById('sc-type').value = 'タスク';
+    document.getElementById('sc-start').value = '';
+    document.getElementById('sc-end').value = '';
+    document.getElementById('sc-place').value = '';
+    document.getElementById('sc-color').value = RC.defaultScheduleColor('タスク');
+    RC.updateScheduleColorLabel(RC.defaultScheduleColor('タスク'));
+    document.getElementById('sc-priority').value = '中';
+    document.getElementById('sc-remind').value = 'none';
+    document.getElementById('sc-memo').value = '';
+    document.getElementById('schedule-form-title').textContent = '☑️ 新規タスク入力';
     RC.populateScheduleSelects('','');
   }, 50);
 };
@@ -1236,6 +1265,7 @@ RC.editSchedule = function(id) {
     document.getElementById('sc-title').value = s.title || '';
     document.getElementById('sc-date').value = s.date || '';
     document.getElementById('sc-type').value = s.type || '内見';
+    document.getElementById('sc-title').placeholder = (s.type === 'タスク') ? '例: 売主へ折り返し連絡' : '例: 山田様と物件内見';
     document.getElementById('sc-start').value = s.start || '';
     document.getElementById('sc-end').value = s.end || '';
     document.getElementById('sc-place').value = s.place || '';
@@ -1244,7 +1274,7 @@ RC.editSchedule = function(id) {
     document.getElementById('sc-priority').value = s.priority || '中';
     document.getElementById('sc-remind').value = s.remind || 'none';
     document.getElementById('sc-memo').value = s.memo || '';
-    document.getElementById('schedule-form-title').textContent = '✏️ 予定を編集';
+    document.getElementById('schedule-form-title').textContent = (s.type === 'タスク') ? '✏️ タスクを編集' : '✏️ 予定を編集';
     RC.populateScheduleSelects(s.customer_id, s.case_id);
   }, 50);
 };

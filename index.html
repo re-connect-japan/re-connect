@@ -342,9 +342,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
           </select>
         </div>
         <div class="form-row"><label>ステータス</label>
-          <select name="status">
-            <option>見込み</option><option>販売中</option><option>商談中</option><option>買付</option><option>ローン審査中</option><option>内見予定</option><option>契約予定</option><option>成約</option><option>販売中止</option>
-          </select>
+          <select name="status" id="case-status"></select>
         </div>
       </div>
 
@@ -939,7 +937,7 @@ RC.go = function(view) {
 };
 
 RC.statusChipClass = function(s) {
-  var m = { '見込み':'chip-gray','販売中':'chip-info','商談中':'chip-orange','買付':'chip-orange','ローン審査中':'chip-info','内見予定':'chip-info','契約予定':'chip-info','成約':'chip-success','販売中止':'chip-red' };
+  var m = { '見込み':'chip-gray','販売中':'chip-info','商談中':'chip-orange','買付':'chip-orange','ローン審査中':'chip-info','内見予定':'chip-info','契約予定':'chip-info','成約':'chip-success','販売中止':'chip-red','募集中':'chip-info','申込有':'chip-orange','保証会社審査中':'chip-info','引渡':'chip-orange','入居':'chip-success' };
   return m[s] || 'chip-gray';
 };
 RC.tagChipClass = function(t) {
@@ -2007,6 +2005,19 @@ RC.renderProfile = function() {
   }
 };
 
+RC.CASE_STATUS_OPTIONS = {
+  sale: ['見込み','販売中','商談中','買付','ローン審査中','内見予定','契約予定','成約','販売中止'],
+  rent: ['募集中','申込有','保証会社審査中','成約','引渡','入居']
+};
+RC.updateCaseStatusOptions = function(kind, selected) {
+  var sel = document.getElementById('case-status');
+  if (!sel) return;
+  var options = RC.CASE_STATUS_OPTIONS[kind] || RC.CASE_STATUS_OPTIONS.sale;
+  var current = selected || sel.value || options[0] || '';
+  sel.innerHTML = options.map(function(v){ return '<option>' + v + '</option>'; }).join('');
+  if (options.indexOf(current) >= 0) sel.value = current;
+  else if (options.length) sel.value = options[0];
+};
 RC.toggleCaseFields = function(kind) {
   var sale = document.getElementById('case-sale-fields');
   var rent = document.getElementById('case-rent-fields');
@@ -2015,6 +2026,7 @@ RC.toggleCaseFields = function(kind) {
   if (kindSel && kind) kindSel.value = kind;
   if (sale) sale.style.display = (kind === 'sale') ? 'block' : 'none';
   if (rent) rent.style.display = (kind === 'rent') ? 'block' : 'none';
+  RC.updateCaseStatusOptions(kind || (kindSel ? kindSel.value : 'sale'));
 };
 
 RC.openNewCase = function() {

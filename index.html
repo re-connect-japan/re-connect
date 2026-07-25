@@ -26,10 +26,15 @@ summary::-webkit-details-marker{display:none}
 .header-avatar img{width:100%;height:100%;object-fit:cover}
 
 main{padding:12px;max-width:900px;margin:0 auto;width:100%;overflow-x:hidden}
+.case-fixed-bar{position:fixed;left:0;right:0;bottom:calc(56px + env(safe-area-inset-bottom));z-index:55;display:flex;justify-content:center;pointer-events:none}
+.case-fixed-bar-inner{width:min(900px,100%);padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;pointer-events:auto}
+.case-fixed-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 14px;border:none;border-radius:12px;font-size:14px;font-weight:800;box-shadow:0 8px 24px rgba(15,23,42,0.14);cursor:pointer}
+.case-fixed-btn.list{background:#1E3A8A;color:#fff}
+.case-fixed-btn.new{background:#FF7A45;color:#fff}
 /* 各ページは独立表示。デフォルトすべて非表示、activeのみ表示 */
 .page{display:none;width:100%;max-width:100%;overflow-x:hidden}
 .page.active{display:block;min-height:calc(100dvh - 132px)}
-@media (max-width:640px){main{padding:10px 10px calc(96px + env(safe-area-inset-bottom))}.card{padding:14px;border-radius:10px}.page.active{min-height:calc(100dvh - 124px)}}
+@media (max-width:640px){main{padding:10px 10px calc(150px + env(safe-area-inset-bottom))}.card{padding:14px;border-radius:10px}.page.active{min-height:calc(100dvh - 124px)}.case-fixed-bar-inner{padding:0 10px 8px}.case-fixed-btn{min-height:42px;font-size:13px;border-radius:10px}}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:white;border-top:1px solid #E5E7EB;display:flex;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto}
 .nav-btn{flex:1 0 auto;min-width:60px;padding:8px 4px;font-size:10px;color:#64748B;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px;justify-content:center;text-align:center;background:none;border:none}
@@ -61,11 +66,22 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .chip-red{background:#FEE2E2;color:#991B1B}
 
 .list-item{background:white;border-radius:12px;padding:14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative}
-.list-item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.list-item-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
 .list-item strong{font-size:14px}
 .list-item-meta{font-size:12px;color:#64748B}
 .list-item-sub{font-size:11px;color:#9CA3AF;margin-top:4px}
-.list-item-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none}
+.list-item-del{position:absolute;top:8px;right:8px;background:#FEE2E2;color:#991B1B;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;border:none;z-index:2}
+.list-item.case-editable{cursor:pointer;padding-right:56px}
+.list-item.case-editable:active{background:#F8FAFC}
+.list-item-head-main{min-width:0;flex:1}
+.list-item-head-actions{display:flex;align-items:center;gap:6px;padding-right:48px;flex-shrink:0}
+.list-item-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.list-item-edit-btn,.list-item-del-btn{appearance:none;border:none;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;min-height:40px}
+.list-item-edit-btn{background:#DBEAFE;color:#1D4ED8}
+.list-item-edit-btn:active{background:#BFDBFE}
+.list-item-del-btn{background:#FEE2E2;color:#991B1B}
+.list-item-del-btn:active{background:#FECACA}
+.list-item-edit-hint{margin-top:6px;font-size:11px;color:#2563EB;font-weight:600}
 
 .post{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative}
 .post-header{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
@@ -197,6 +213,9 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .empty-state{text-align:center;padding:30px 20px;color:#94A3B8;font-size:13px}
 
 .page-title-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:8px}
+.case-page-toolbar{position:sticky;top:0;z-index:18;background:rgba(245,247,250,0.98);backdrop-filter:blur(8px);padding:2px 0 10px;margin-bottom:10px;border-bottom:1px solid #E5E7EB}
+.case-page-toolbar .page-title-row{margin-bottom:10px;padding-top:0}
+.case-page-toolbar .btn-block{margin-bottom:0}
 .page-title-row h1{margin:0;padding:0}
 .count-label{font-size:12px;color:#64748B;font-weight:400}
 #page-schedule{position:relative}
@@ -311,7 +330,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <div class="card">
     <h2>⚡ クイックアクション</h2>
     <div class="btn-grid">
-      <button class="btn btn-orange" onclick="RC.go('new-case')">➕ 案件登録</button>
+      <button class="btn btn-orange" onclick="RC.openNewCase()">➕ 案件登録</button>
       <button class="btn btn-orange" onclick="RC.go('new-customer')">➕ 顧客登録</button>
       <button class="btn btn-primary" onclick="RC.go('community')">💬 SNS投稿</button>
       <button class="btn btn-secondary" onclick="RC.go('mypage')">👤 マイページ</button>
@@ -321,19 +340,22 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
 <!-- 案件一覧 -->
 <div class="page" id="page-cases">
-  <div class="page-title-row">
-    <h1>案件一覧</h1>
-    <span class="count-label" id="cases-count"></span>
+  <div class="case-page-toolbar">
+    <div class="page-title-row">
+      <h1>案件一覧</h1>
+      <span class="count-label" id="cases-count"></span>
+    </div>
+    <button class="btn btn-orange btn-block" onclick="RC.openNewCase()">➕ 新規案件を登録</button>
   </div>
-  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.openNewCase()">➕ 新規案件を登録</button>
   <div id="cases-list"></div>
 </div>
 
 <!-- 新規案件登録 -->
 <div class="page" id="page-new-case">
-  <h1>➕ 新規案件登録</h1>
+  <h1 id="case-form-title">➕ 新規案件登録</h1>
   <div class="card">
     <form id="form-case" onsubmit="return RC.saveCase(event)">
+      <input type="hidden" name="case_id" id="case-id">
       <div class="case-mode-grid">
         <div class="form-row"><label>取引区分</label>
           <select name="trade_kind" id="case-trade-kind" onchange="RC.toggleCaseFields(this.value)">
@@ -541,7 +563,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       <div class="form-row"><label>共通メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
-        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="submit" class="btn btn-primary" id="case-save-btn">保存</button>
       </div>
     </form>
   </div>
@@ -756,6 +778,13 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 </div>
 
 </main>
+
+<div class="case-fixed-bar">
+  <div class="case-fixed-bar-inner">
+    <button class="case-fixed-btn list" type="button" onclick="RC.go('cases')">📊 案件一覧</button>
+    <button class="case-fixed-btn new" type="button" onclick="RC.openNewCase()">➕ 新規案件作成</button>
+  </div>
+</div>
 
 <nav class="bottom-nav">
   <button class="nav-btn" data-view="home" onclick="RC.go('home')"><span class="nav-icon">🏠</span>ホーム</button>
@@ -1908,9 +1937,8 @@ RC.renderCases = function() {
     var detail3 = [builtText, c.structure, c.floor_info, c.room_number].filter(function(x){return x;}).join(' / ');
     var areaDetail = [c.exclusive_area ? ('専有 ' + RC.formatAreaDisplay(c.exclusive_area)) : '', c.land_area ? ('土地 ' + RC.formatAreaDisplay(c.land_area)) : '', c.building_area ? ('建物 ' + RC.formatAreaDisplay(c.building_area)) : ''].filter(function(x){return x;}).join(' / ');
     var saleDetail = [c.zoning ? ('用途地域 ' + c.zoning) : '', c.building_coverage_ratio ? ('建ぺい率 ' + c.building_coverage_ratio) : '', c.floor_area_ratio ? ('容積率 ' + c.floor_area_ratio) : '', c.sale_topography ? ('地勢 ' + c.sale_topography) : '', c.sale_occupancy ? ('現況 ' + c.sale_occupancy) : ''].filter(function(x){return x;}).join(' / ');
-    return '<div class="list-item">' +
-      '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
-      '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
+    return '<div class="list-item" data-case-id="' + c.id + '">' +
+      '<div class="list-item-head"><div class="list-item-head-main"><strong>' + RC.esc(c.customer) + '</strong></div><div class="list-item-head-actions"><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div></div>' +
       '<div class="list-item-meta">' + RC.esc(meta) + '</div>' +
       (detail2 ? '<div class="list-item-meta">' + RC.esc(detail2) + '</div>' : '') +
       (detail3 ? '<div class="list-item-meta">' + RC.esc(detail3) + '</div>' : '') +
@@ -1919,6 +1947,10 @@ RC.renderCases = function() {
       (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
+      '<div class="list-item-actions">' +
+        '<button type="button" class="list-item-edit-btn" onclick="return RC.handleCaseItemActivate(' + c.id + ', event)" ontouchend="return RC.handleCaseItemActivate(' + c.id + ', event)">編集</button>' +
+        '<button type="button" class="list-item-del-btn" onclick="RC.delCase(' + c.id + ', event)">削除</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 };
@@ -2064,6 +2096,119 @@ RC.resetRentEquipment = function() {
   if (hidden) hidden.value = '';
   if (other) { other.value = ''; other.style.display = 'none'; }
 };
+
+RC.applyRentEquipment = function(value) {
+  RC.resetRentEquipment();
+  var raw = String(value || '').trim();
+  if (!raw) return;
+  var grid = document.getElementById('rent-equipment-grid');
+  var hidden = document.getElementById('rent-equipment-hidden');
+  var other = document.getElementById('rent-equipment-other');
+  if (!grid || !hidden) return;
+  var values = raw.split(/[・,，\/]+/).map(function(v){ return v.trim(); }).filter(function(v){ return v; });
+  var boxes = Array.prototype.slice.call(grid.querySelectorAll('input[type="checkbox"]'));
+  var known = boxes.map(function(el){ return el.value; }).filter(function(v){ return v !== 'その他'; });
+  var others = [];
+  boxes.forEach(function(el){
+    if (el.value !== 'その他' && values.indexOf(el.value) >= 0) el.checked = true;
+  });
+  values.forEach(function(v){
+    if (known.indexOf(v) === -1) others.push(v);
+  });
+  if (others.length) {
+    boxes.forEach(function(el){ if (el.value === 'その他') el.checked = true; });
+    if (other) other.value = others.join('・');
+  }
+  RC.syncRentEquipment();
+};
+RC.setCaseFormMode = function(isEdit) {
+  var title = document.getElementById('case-form-title');
+  var btn = document.getElementById('case-save-btn');
+  if (title) title.textContent = isEdit ? '✏️ 案件編集' : '➕ 新規案件登録';
+  if (btn) btn.textContent = isEdit ? '更新' : '保存';
+};
+RC.resetCaseForm = function(defaultKind) {
+  var form = document.getElementById('form-case');
+  if (form) form.reset();
+  var idField = document.getElementById('case-id');
+  if (idField) idField.value = '';
+  RC.setCaseFormMode(false);
+  var kind = defaultKind || 'rent';
+  RC.toggleCaseFields(kind);
+  RC.toggleCaseLayoutOther('');
+  RC.toggleCaseStructureOther('');
+  RC.toggleRentMoveInNote('');
+  RC.resetRentEquipment();
+  RC.updateCaseBuiltYmPreview('');
+  RC.updateAreaPreview('exclusive_area', '');
+  RC.updateAreaPreview('land_area', '');
+  RC.updateAreaPreview('building_area', '');
+  RC.renderCaseLookupOptions();
+};
+RC.editCase = function(id) {
+  var cases = RC.data.cases || [];
+  var found = null;
+  for (var i = 0; i < cases.length; i++) {
+    if (String(cases[i].id) === String(id)) { found = cases[i]; break; }
+  }
+  if (!found) { RC.toast('案件データが見つかりません'); return false; }
+  RC.go('new-case');
+  setTimeout(function(){
+    var form = document.getElementById('form-case');
+    var idField = document.getElementById('case-id');
+    if (!form || !idField) return;
+    RC.resetCaseForm(found.trade_kind || (found.rent ? 'rent' : 'sale'));
+    RC.setCaseFormMode(true);
+    idField.value = found.id;
+    Array.prototype.forEach.call(form.elements, function(el) {
+      if (!el || !el.name || el.type === 'hidden' || el.type === 'file') return;
+      if (!Object.prototype.hasOwnProperty.call(found, el.name)) return;
+      el.value = found[el.name] == null ? '' : String(found[el.name]);
+    });
+    var tradeKind = found.trade_kind || (found.rent ? 'rent' : 'sale');
+    if (form.trade_kind) form.trade_kind.value = tradeKind;
+    RC.toggleCaseFields(tradeKind);
+    RC.updateCaseStatusOptions(tradeKind, found.status || '');
+    if (form.status && found.status) form.status.value = found.status;
+    if (form.layout_count) form.layout_count.value = found.layout_count || '';
+    if (form.layout_kind) form.layout_kind.value = found.layout_kind || '';
+    if (form.layout_other) form.layout_other.value = found.layout_other || '';
+    RC.toggleCaseLayoutOther(found.layout_kind || '');
+    if (form.built_ym) form.built_ym.value = found.built_ym || '';
+    RC.updateCaseBuiltYmPreview(found.built_ym || '');
+    if (form.structure_kind) form.structure_kind.value = found.structure_kind || '';
+    if (form.structure_other) form.structure_other.value = found.structure_other || '';
+    RC.toggleCaseStructureOther(found.structure_kind || '');
+    if (form.total_floors) form.total_floors.value = found.total_floors || '';
+    if (form.current_floor) form.current_floor.value = found.current_floor || '';
+    if (form.room_number) form.room_number.value = found.room_number || '';
+    var moveIn = found.move_in || '';
+    if (form.move_in) {
+      if (moveIn.indexOf('期日指定 ') === 0) {
+        form.move_in.value = '期日指定';
+        if (form.move_in_note) form.move_in_note.value = moveIn.replace(/^期日指定\s*/, '');
+      } else {
+        form.move_in.value = moveIn;
+        if (form.move_in_note) form.move_in_note.value = '';
+      }
+      RC.toggleRentMoveInNote(form.move_in.value);
+    }
+    RC.applyRentEquipment(found.equipment || '');
+    RC.updateAreaPreview('exclusive_area', found.exclusive_area || '');
+    RC.updateAreaPreview('land_area', found.land_area || '');
+    RC.updateAreaPreview('building_area', found.building_area || '');
+    RC.renderCaseLookupOptions();
+    window.scrollTo(0, 0);
+  }, 30);
+  return false;
+};
+RC.handleCaseItemActivate = function(id, ev) {
+  if (ev) {
+    if (ev.preventDefault) ev.preventDefault();
+    if (ev.stopPropagation) ev.stopPropagation();
+  }
+  return RC.editCase(id);
+};
 RC.CASE_STATUS_OPTIONS = {
   sale: ['見込み','販売中','商談中','買付','ローン審査中','内見予定','契約予定','成約','販売中止'],
   rent: ['募集中','申込有','保証会社審査中','成約','引渡','入居']
@@ -2091,18 +2236,7 @@ RC.toggleCaseFields = function(kind) {
 RC.openNewCase = function() {
   RC.go('new-case');
   setTimeout(function(){
-    var form = document.getElementById('form-case');
-    if (form) form.reset();
-    RC.toggleCaseFields('rent');
-    RC.toggleCaseLayoutOther('');
-    RC.toggleCaseStructureOther('');
-    RC.toggleRentMoveInNote('');
-    RC.resetRentEquipment();
-    RC.updateCaseBuiltYmPreview('');
-    RC.updateAreaPreview('exclusive_area', '');
-    RC.updateAreaPreview('land_area', '');
-    RC.updateAreaPreview('building_area', '');
-    RC.renderCaseLookupOptions();
+    RC.resetCaseForm('rent');
   }, 30);
 };
 
@@ -2193,18 +2327,29 @@ RC.saveCase = function(ev) {
     memo: form.memo.value.trim(), date: dateStr
   };
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
-  RC.data.cases.push(newCase);
+  var editId = form.case_id ? String(form.case_id.value || '') : '';
+  var isEdit = !!editId;
+  if (isEdit) {
+    newCase.id = Number(editId) || editId;
+    newCase.date = (RC.data.cases || []).reduce(function(foundDate, item){
+      return String(item.id) === editId ? (item.date || foundDate) : foundDate;
+    }, dateStr);
+    RC.data.cases = (RC.data.cases || []).map(function(item){
+      return String(item.id) === editId ? newCase : item;
+    });
+  } else {
+    RC.data.cases.push(newCase);
+  }
   RC.refreshCaseLookup();
   RC.save();
-  form.reset();
-  RC.toggleCaseFields('rent');
-  RC.renderCaseLookupOptions();
-  RC.toast('✓ 案件を登録しました');
+  RC.resetCaseForm('rent');
+  RC.toast(isEdit ? '✓ 案件を更新しました' : '✓ 案件を登録しました');
   RC.go('cases');
   return false;
 };
 
-RC.delCase = function(id) {
+RC.delCase = function(id, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
   if (!confirm('この案件を削除しますか？')) return;
   RC.data.cases = RC.data.cases.filter(function(c){ return c.id !== id; });
   RC.save();

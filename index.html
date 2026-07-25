@@ -182,21 +182,48 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 .page-title-row h1{margin:0;padding:0}
 .count-label{font-size:12px;color:#64748B;font-weight:400}
 
+.schedule-card.t-内見{border-left:4px solid #2563EB;background:linear-gradient(90deg,#EFF6FF 0,#FFFFFF 22%)}
+.schedule-card.t-商談{border-left:4px solid #D97706;background:linear-gradient(90deg,#FFF7ED 0,#FFFFFF 22%)}
+.schedule-card.t-打合{border-left:4px solid #4F46E5;background:linear-gradient(90deg,#EEF2FF 0,#FFFFFF 22%)}
+.schedule-card.t-契約{border-left:4px solid #16A34A;background:linear-gradient(90deg,#F0FDF4 0,#FFFFFF 22%)}
+.schedule-card.t-決済{border-left:4px solid #DB2777;background:linear-gradient(90deg,#FDF2F8 0,#FFFFFF 22%)}
+.schedule-card.t-電話{border-left:4px solid #475569;background:linear-gradient(90deg,#F8FAFC 0,#FFFFFF 22%)}
+.schedule-card.t-訪問{border-left:4px solid #EA580C;background:linear-gradient(90deg,#FFF7ED 0,#FFFFFF 22%)}
+.schedule-card.t-会議{border-left:4px solid #7C3AED;background:linear-gradient(90deg,#F5F3FF 0,#FFFFFF 22%)}
+.schedule-card.t-その他{border-left:4px solid #6B7280;background:linear-gradient(90deg,#F9FAFB 0,#FFFFFF 22%)}
+.month-scroll-wrap{display:flex;flex-direction:column;gap:16px}
+.month-section{background:white;border-radius:14px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.month-section.current{border:2px solid #FF7A45;box-shadow:0 6px 20px rgba(255,122,69,0.14)}
+.month-section-title{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(245,247,250,0.96);backdrop-filter:blur(6px);padding:8px 4px 10px;margin-bottom:6px;border-radius:10px}
+.month-section-label{font-size:15px;font-weight:800;color:#1E3A8A}
+.month-section-sub{font-size:11px;color:#64748B}
+.month-section-add{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:#FF7A45;color:white;border-radius:999px;padding:7px 12px;font-size:11px;font-weight:700;white-space:nowrap}
 .month-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .month-cal-dow{background:#EAF1FF;color:#1E3A8A;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:700}
-.month-cal-cell{background:white;border:1px solid #E5E7EB;border-radius:10px;min-height:108px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.month-cal-cell{background:white;border:1px solid #E5E7EB;border-radius:10px;min-height:116px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
 .month-cal-cell.is-other{background:#F8FAFC;color:#94A3B8}
 .month-cal-cell.is-today{border:2px solid #FF7A45;box-shadow:0 2px 8px rgba(255,122,69,0.18)}
-.month-cal-date{font-size:12px;font-weight:700;color:#1E3A8A;display:flex;align-items:center;justify-content:space-between}
+.month-cal-date{font-size:12px;font-weight:700;color:#1E3A8A;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .month-cal-cell.is-other .month-cal-date{color:#94A3B8}
+.month-cal-date-right{display:flex;align-items:center;gap:4px}
 .month-cal-count{font-size:10px;color:#64748B}
+.month-cal-add{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:#FFEDD5;color:#C2410C;font-size:14px;font-weight:800;flex-shrink:0}
 .month-cal-events{display:flex;flex-direction:column;gap:4px;min-width:0}
-.month-cal-event{display:block;width:100%;text-align:left;background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:4px 5px;font-size:10px;line-height:1.35;color:#1F2937;overflow:hidden}
+.month-cal-event{display:block;width:100%;text-align:left;border-radius:8px;padding:4px 5px;font-size:10px;line-height:1.35;color:#1F2937;overflow:hidden;border:1px solid #E5E7EB;background:#F8FAFC}
+.month-cal-event.t-内見{background:#DBEAFE;border-color:#93C5FD;color:#1E3A8A}
+.month-cal-event.t-商談{background:#FEF3C7;border-color:#FCD34D;color:#92400E}
+.month-cal-event.t-打合{background:#E0E7FF;border-color:#A5B4FC;color:#3730A3}
+.month-cal-event.t-契約{background:#DCFCE7;border-color:#86EFAC;color:#166534}
+.month-cal-event.t-決済{background:#FCE7F3;border-color:#F9A8D4;color:#9D174D}
+.month-cal-event.t-電話{background:#E2E8F0;border-color:#CBD5E1;color:#0F172A}
+.month-cal-event.t-訪問{background:#FFEDD5;border-color:#FDBA74;color:#9A3412}
+.month-cal-event.t-会議{background:#EDE9FE;border-color:#C4B5FD;color:#5B21B6}
+.month-cal-event.t-その他{background:#F3F4F6;border-color:#D1D5DB;color:#374151}
 .month-cal-event.done{opacity:0.65;text-decoration:line-through}
-.month-cal-event-time{font-weight:700;color:#1E3A8A;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.month-cal-event-time{font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .month-cal-event-title{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .month-cal-more{font-size:10px;color:#64748B;padding:2px 4px}
-@media (max-width:640px){.month-calendar{gap:4px}.month-cal-dow{font-size:10px;padding:6px 2px}.month-cal-cell{min-height:88px;padding:5px;border-radius:8px}.month-cal-date{font-size:11px}.month-cal-event{padding:3px 4px;font-size:9px;border-radius:6px}.month-cal-count,.month-cal-more{font-size:9px}}
+@media (max-width:640px){.month-scroll-wrap{gap:12px}.month-section{padding:8px;border-radius:12px}.month-section-title{padding:6px 2px 8px}.month-section-label{font-size:14px}.month-section-sub{font-size:10px}.month-section-add{padding:6px 10px;font-size:10px}.month-calendar{gap:4px}.month-cal-dow{font-size:10px;padding:6px 2px}.month-cal-cell{min-height:92px;padding:5px;border-radius:8px}.month-cal-date{font-size:11px}.month-cal-add{width:18px;height:18px;font-size:12px}.month-cal-event{padding:3px 4px;font-size:9px;border-radius:6px}.month-cal-count,.month-cal-more{font-size:9px}}
 
 @media (min-width:768px){.kpi-grid{grid-template-columns:repeat(4,1fr)}.nav-btn{font-size:12px}.nav-icon{font-size:22px}}
 </style>
@@ -733,12 +760,6 @@ RC.setScheduleFilter = function(f) {
 
 RC.renderMonthCalendar = function(list, baseDateStr) {
   var base = new Date(baseDateStr + 'T00:00:00');
-  var year = base.getFullYear();
-  var month = base.getMonth();
-  var first = new Date(year, month, 1);
-  var firstDow = first.getDay();
-  var lastDate = new Date(year, month + 1, 0).getDate();
-  var prevLastDate = new Date(year, month, 0).getDate();
   var today = RC.todayStr();
   var map = {};
   list.forEach(function(s){
@@ -749,39 +770,60 @@ RC.renderMonthCalendar = function(list, baseDateStr) {
     map[k].sort(function(a,b){ return (a.start || '99:99').localeCompare(b.start || '99:99'); });
   });
   var dows = ['日','月','火','水','木','金','土'];
-  var html = '<div class="month-calendar">' + dows.map(function(d){ return '<div class="month-cal-dow">' + d + '</div>'; }).join('');
-  for (var i = 0; i < 42; i++) {
-    var cellDay = i - firstDow + 1;
-    var cellDate;
-    var label;
-    var other = false;
-    if (cellDay < 1) {
-      label = prevLastDate + cellDay;
-      cellDate = new Date(year, month - 1, label);
-      other = true;
-    } else if (cellDay > lastDate) {
-      label = cellDay - lastDate;
-      cellDate = new Date(year, month + 1, label);
-      other = true;
-    } else {
-      label = cellDay;
-      cellDate = new Date(year, month, cellDay);
+  var html = '<div class="month-scroll-wrap">';
+  for (var offset = -6; offset <= 6; offset++) {
+    var target = new Date(base.getFullYear(), base.getMonth() + offset, 1);
+    var year = target.getFullYear();
+    var month = target.getMonth();
+    var first = new Date(year, month, 1);
+    var firstDow = first.getDay();
+    var lastDate = new Date(year, month + 1, 0).getDate();
+    var prevLastDate = new Date(year, month, 0).getDate();
+    var sectionId = offset === 0 ? 'month-current-anchor' : '';
+    var sectionCls = 'month-section' + (offset === 0 ? ' current' : '');
+    html += '<section class="' + sectionCls + '"' + (sectionId ? ' id="' + sectionId + '"' : '') + '>';
+    html += '<div class="month-section-title">'
+      + '<div><div class="month-section-label">' + year + '年' + (month + 1) + '月</div><div class="month-section-sub">月間カレンダー</div></div>'
+      + '<button class="month-section-add" onclick="RC.newSchedule(\'' + year + '-' + String(month+1).padStart(2,'0') + '-01\')">＋ 予定追加</button>'
+      + '</div>';
+    html += '<div class="month-calendar">' + dows.map(function(d){ return '<div class="month-cal-dow">' + d + '</div>'; }).join('');
+    for (var i = 0; i < 42; i++) {
+      var cellDay = i - firstDow + 1;
+      var cellDate;
+      var label;
+      var other = false;
+      if (cellDay < 1) {
+        label = prevLastDate + cellDay;
+        cellDate = new Date(year, month - 1, label);
+        other = true;
+      } else if (cellDay > lastDate) {
+        label = cellDay - lastDate;
+        cellDate = new Date(year, month + 1, label);
+        other = true;
+      } else {
+        label = cellDay;
+        cellDate = new Date(year, month, cellDay);
+      }
+      var dateStr = cellDate.getFullYear() + '-' + String(cellDate.getMonth()+1).padStart(2,'0') + '-' + String(cellDate.getDate()).padStart(2,'0');
+      var items = map[dateStr] || [];
+      var cls = 'month-cal-cell' + (other ? ' is-other' : '') + (dateStr === today ? ' is-today' : '');
+      html += '<div class="' + cls + '">';
+      html += '<div class="month-cal-date"><span>' + label + '</span><span class="month-cal-date-right">'
+        + (items.length ? '<span class="month-cal-count">' + items.length + '件</span>' : '')
+        + '<button class="month-cal-add" onclick="event.stopPropagation();RC.newSchedule(\'' + dateStr + '\')">＋</button>'
+        + '</span></div>';
+      html += '<div class="month-cal-events">';
+      items.slice(0,3).forEach(function(s){
+        var time = s.start || '未定';
+        html += '<button class="month-cal-event ' + RC.typeClass(s.type) + (s.done ? ' done' : '') + '" onclick="RC.editSchedule(' + s.id + ')">'
+          + '<span class="month-cal-event-time">' + RC.esc(time) + '</span>'
+          + '<span class="month-cal-event-title">' + RC.esc(s.title) + '</span>'
+          + '</button>';
+      });
+      if (items.length > 3) html += '<div class="month-cal-more">+' + (items.length - 3) + '件</div>';
+      html += '</div></div>';
     }
-    var dateStr = cellDate.getFullYear() + '-' + String(cellDate.getMonth()+1).padStart(2,'0') + '-' + String(cellDate.getDate()).padStart(2,'0');
-    var items = map[dateStr] || [];
-    var cls = 'month-cal-cell' + (other ? ' is-other' : '') + (dateStr === today ? ' is-today' : '');
-    html += '<div class="' + cls + '">';
-    html += '<div class="month-cal-date"><span>' + label + '</span>' + (items.length ? '<span class="month-cal-count">' + items.length + '件</span>' : '') + '</div>';
-    html += '<div class="month-cal-events">';
-    items.slice(0,3).forEach(function(s){
-      var time = s.start || '未定';
-      html += '<button class="month-cal-event' + (s.done ? ' done' : '') + '" onclick="RC.editSchedule(' + s.id + ')">'
-        + '<span class="month-cal-event-time">' + RC.esc(time) + '</span>'
-        + '<span class="month-cal-event-title">' + RC.esc(s.title) + '</span>'
-        + '</button>';
-    });
-    if (items.length > 3) html += '<div class="month-cal-more">+' + (items.length - 3) + '件</div>';
-    html += '</div></div>';
+    html += '</div></section>';
   }
   html += '</div>';
   return html;
@@ -798,9 +840,13 @@ RC.renderScheduleList = function() {
   var weekLater = new Date(todayDate.getTime() + 6*24*3600*1000);
   var monthStart = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
   var monthEnd = new Date(todayDate.getFullYear(), todayDate.getMonth() + 1, 0);
+  var monthScrollStart = new Date(todayDate.getFullYear(), todayDate.getMonth() - 6, 1);
+  var monthScrollEnd = new Date(todayDate.getFullYear(), todayDate.getMonth() + 7, 0);
   var weekLaterStr = weekLater.getFullYear() + '-' + String(weekLater.getMonth()+1).padStart(2,'0') + '-' + String(weekLater.getDate()).padStart(2,'0');
   var monthStartStr = monthStart.getFullYear() + '-' + String(monthStart.getMonth()+1).padStart(2,'0') + '-' + String(monthStart.getDate()).padStart(2,'0');
   var monthEndStr = monthEnd.getFullYear() + '-' + String(monthEnd.getMonth()+1).padStart(2,'0') + '-' + String(monthEnd.getDate()).padStart(2,'0');
+  var monthScrollStartStr = monthScrollStart.getFullYear() + '-' + String(monthScrollStart.getMonth()+1).padStart(2,'0') + '-' + String(monthScrollStart.getDate()).padStart(2,'0');
+  var monthScrollEndStr = monthScrollEnd.getFullYear() + '-' + String(monthScrollEnd.getMonth()+1).padStart(2,'0') + '-' + String(monthScrollEnd.getDate()).padStart(2,'0');
   var filtered;
   if (RC._scheduleFilter === 'today') {
     filtered = all.filter(function(s){ return s.date === today; });
@@ -809,8 +855,8 @@ RC.renderScheduleList = function() {
     filtered = all.filter(function(s){ return s.date >= today && s.date <= weekLaterStr; });
     if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日から1週間';
   } else if (RC._scheduleFilter === 'month') {
-    filtered = all.filter(function(s){ return s.date >= monthStartStr && s.date <= monthEndStr; });
-    if (rangeLabel) rangeLabel.textContent = '表示範囲: ' + monthStart.getFullYear() + '年' + (monthStart.getMonth()+1) + '月カレンダー';
+    filtered = all.filter(function(s){ return s.date >= monthScrollStartStr && s.date <= monthScrollEndStr; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: 過去6ヶ月〜未来6ヶ月（月間カレンダー）';
   } else {
     filtered = all.slice();
     if (rangeLabel) rangeLabel.textContent = '表示範囲: すべての予定';
@@ -839,6 +885,10 @@ RC.renderScheduleList = function() {
   }
   if (RC._scheduleFilter === 'month') {
     list.innerHTML = RC.renderMonthCalendar(filtered, today);
+    setTimeout(function(){
+      var anchor = document.getElementById('month-current-anchor');
+      if (anchor && anchor.scrollIntoView) anchor.scrollIntoView({block:'start'});
+    }, 30);
     return;
   }
   if (filtered.length === 0) {
@@ -867,7 +917,7 @@ RC.renderScheduleList = function() {
       var cs = (RC.data.cases || []).filter(function(x){ return x.id === s.case_id; })[0];
       if (cs) relCase = '📊 ' + RC.esc(cs.customer) + ' / ' + RC.esc(cs.type);
     }
-    html += '<div class="schedule-card">' +
+    html += '<div class="schedule-card ' + RC.typeClass(s.type) + '">' +
       '<button class="schedule-check' + (s.done ? ' done' : '') + '" onclick="event.stopPropagation();RC.toggleScheduleDone(' + s.id + ')">' + (s.done ? '✓' : '') + '</button>' +
       '<div class="schedule-card-body" onclick="RC.editSchedule(' + s.id + ')">' +
         '<div class="schedule-card-head">' +
@@ -894,7 +944,7 @@ RC.remindLabel = function(v) {
   return m[v] || '';
 };
 
-RC.newSchedule = function() {
+RC.newSchedule = function(prefillDate) {
   RC._editingScheduleId = null;
   RC.go('new-schedule');
   setTimeout(function(){
@@ -902,10 +952,13 @@ RC.newSchedule = function() {
     if (f) f.reset();
     document.getElementById('sc-id').value = '';
     document.getElementById('sc-title').value = '';
-    document.getElementById('sc-date').value = RC.todayStr();
+    document.getElementById('sc-date').value = prefillDate || RC.todayStr();
+    document.getElementById('sc-type').value = '内見';
     document.getElementById('sc-start').value = '';
     document.getElementById('sc-end').value = '';
     document.getElementById('sc-place').value = '';
+    document.getElementById('sc-priority').value = '中';
+    document.getElementById('sc-remind').value = 'none';
     document.getElementById('sc-memo').value = '';
     document.getElementById('schedule-form-title').textContent = '➕ 新規予定登録';
     RC.populateScheduleSelects('','');

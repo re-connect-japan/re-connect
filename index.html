@@ -349,7 +349,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
       </div>
 
       <div class="case-section">
-        <div class="case-section-title">🏢 共通情報</div>
+        <div class="case-section-title">🏢 共通情報（売買・賃貸共通）</div>
         <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
         <div class="form-grid-2">
           <div class="form-row"><label>物件名</label><input name="property_name" placeholder="例: Re-Home南青山"></div>
@@ -384,10 +384,16 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
             <input name="layout_other" id="case-layout-other" placeholder="その他の間取りを入力" style="margin-top:8px;display:none">
             <div class="form-note">例: 3 + LDK → 3LDK / ワンルームは選択のみでも登録できます</div>
           </div>
-          <div class="form-row"><label>築年月</label><input name="built_ym" placeholder="例: 2021/06"></div>
+          <div class="form-row"><label>築年月</label><input name="built_ym" id="case-built-ym" placeholder="例: 2026/7" oninput="RC.updateCaseBuiltYmPreview(this.value)"><div id="case-built-ym-preview" class="form-note">西暦入力で和暦を併記表示</div></div>
         </div>
         <div class="form-grid-2">
-          <div class="form-row"><label>建物構造</label><input name="structure" placeholder="例: RC / 木造"></div>
+          <div class="form-row"><label>建物構造</label>
+            <select name="structure_kind" id="case-structure-kind" onchange="RC.toggleCaseStructureOther(this.value)">
+              <option value="">選択してください</option>
+              <option>RC造</option><option>SRC造</option><option>鉄骨造</option><option>軽量鉄骨造</option><option>木造</option><option>ブロック造</option><option>ALC造</option><option>PC造</option><option>HPC造</option><option>その他</option>
+            </select>
+            <input name="structure_other" id="case-structure-other" placeholder="その他の建物構造を入力" style="margin-top:8px;display:none">
+          </div>
           <div class="form-row"><label>階数・所在階</label><input name="floor_info" placeholder="例: 地上10階 / 3階部分"></div>
         </div>
       </div>
@@ -1083,6 +1089,52 @@ RC.composeLayoutValue = function(count, kind, other) {
   if (kind) return (count || '') + kind;
   return count;
 };
+RC.formatWarekiYm = function(value) {
+  value = String(value || '').trim();
+  var m = value.match(/^(\d{4})\s*[\/.-]\s*(\d{1,2})$/);
+  if (!m) return '';
+  var y = parseInt(m[1], 10);
+  var mo = parseInt(m[2], 10);
+  if (!y || mo < 1 || mo > 12) return '';
+  var eras = [
+    { name: '令和', startY: 2019, startM: 5 },
+    { name: '平成', startY: 1989, startM: 1 },
+    { name: '昭和', startY: 1926, startM: 12 },
+    { name: '大正', startY: 1912, startM: 7 },
+    { name: '明治', startY: 1868, startM: 1 }
+  ];
+  for (var i = 0; i < eras.length; i++) {
+    var e = eras[i];
+    if (y > e.startY || (y === e.startY && mo >= e.startM)) {
+      var year = y - e.startY + 1;
+      return e.name + (year === 1 ? '元' : year) + '年' + mo + '月';
+    }
+  }
+  return '';
+};
+RC.formatBuiltYmDisplay = function(value) {
+  value = String(value || '').trim();
+  if (!value) return '';
+  var jp = RC.formatWarekiYm(value);
+  return jp ? (value + '（' + jp + '）') : value;
+};
+RC.updateCaseBuiltYmPreview = function(value) {
+  var el = document.getElementById('case-built-ym-preview');
+  if (!el) return;
+  var txt = RC.formatBuiltYmDisplay(value);
+  el.textContent = txt || '西暦入力で和暦を併記表示';
+};
+RC.toggleCaseStructureOther = function(kind) {
+  var other = document.getElementById('case-structure-other');
+  if (!other) return;
+  other.style.display = (kind === 'その他') ? 'block' : 'none';
+  if (kind !== 'その他') other.value = '';
+};
+RC.composeStructureValue = function(kind, other) {
+  kind = String(kind || '').trim();
+  other = String(other || '').trim();
+  return kind === 'その他' ? (other || kind) : kind;
+};
 RC.refreshCaseLookup = function() {
   if (!RC.data.caseLookup) RC.data.caseLookup = { areas: [], lines: [], stations: [] };
   var areas = (RC.data.caseLookup.areas || []).slice();
@@ -1737,12 +1789,15 @@ RC.renderCases = function() {
     var subCost = deal === '売買' ? (c.mgmt ? '管理費 ' + c.mgmt : '') : (c.rent_mgmt ? '管理費 ' + c.rent_mgmt : '');
     var meta = [deal, c.type, price, c.area].filter(function(x){return x;}).join(' ・ ');
     var trafficText = RC.composeTrafficValue(c.traffic_line, c.traffic_station, c.walk_minutes, c.bus_minutes, c.traffic);
+    var builtText = RC.formatBuiltYmDisplay(c.built_ym || '');
     var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
+    var detail3 = [builtText, c.structure, c.floor_info].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
       '<div class="list-item-meta">' + RC.esc(meta) + '</div>' +
       (detail2 ? '<div class="list-item-meta">' + RC.esc(detail2) + '</div>' : '') +
+      (detail3 ? '<div class="list-item-meta">' + RC.esc(detail3) + '</div>' : '') +
       (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
@@ -1879,6 +1934,8 @@ RC.openNewCase = function() {
     if (form) form.reset();
     RC.toggleCaseFields('rent');
     RC.toggleCaseLayoutOther('');
+    RC.toggleCaseStructureOther('');
+    RC.updateCaseBuiltYmPreview('');
     RC.renderCaseLookupOptions();
   }, 30);
 };
@@ -1913,6 +1970,9 @@ RC.saveCase = function(ev) {
   var layoutCount = form.layout_count ? form.layout_count.value.trim() : '';
   var layoutKind = form.layout_kind ? form.layout_kind.value : '';
   var layoutOther = form.layout_other ? form.layout_other.value.trim() : '';
+  var builtYm = form.built_ym ? form.built_ym.value.trim() : '';
+  var structureKind = form.structure_kind ? form.structure_kind.value : '';
+  var structureOther = form.structure_other ? form.structure_other.value.trim() : '';
   var newCase = {
     id: Date.now(),
     customer: form.customer.value.trim(),
@@ -1925,8 +1985,9 @@ RC.saveCase = function(ev) {
     traffic_line: trafficLine, traffic_station: trafficStation, walk_minutes: walkMinutes, bus_minutes: busMinutes,
     traffic: RC.composeTrafficValue(trafficLine, trafficStation, walkMinutes, busMinutes, ''),
     layout_count: layoutCount, layout_kind: layoutKind, layout_other: layoutOther,
-    layout: RC.composeLayoutValue(layoutCount, layoutKind, layoutOther), built_ym: form.built_ym.value.trim(),
-    structure: form.structure.value.trim(), floor_info: form.floor_info.value.trim(),
+    layout: RC.composeLayoutValue(layoutCount, layoutKind, layoutOther), built_ym: builtYm, built_ym_jp: RC.formatWarekiYm(builtYm),
+    structure_kind: structureKind, structure_other: structureOther,
+    structure: RC.composeStructureValue(structureKind, structureOther), floor_info: form.floor_info.value.trim(),
     exclusive_area: form.exclusive_area ? form.exclusive_area.value.trim() : '',
     land_area: form.land_area ? form.land_area.value.trim() : '',
     building_area: form.building_area ? form.building_area.value.trim() : '',

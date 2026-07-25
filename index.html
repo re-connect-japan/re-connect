@@ -127,6 +127,12 @@ h1{font-size:22px;margin-bottom:12px;color:#1E3A8A;padding-top:8px}
 .color-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .color-preset{width:26px;height:26px;border-radius:999px;border:2px solid white;box-shadow:0 0 0 1px #D1D5DB inset, 0 1px 3px rgba(0,0,0,.08)}
 .place-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.case-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+@media (max-width:420px){.case-mode-grid{grid-template-columns:1fr}}
+.case-section{border:1px solid #E5E7EB;border-radius:12px;padding:12px;margin-bottom:12px;background:#F8FAFC}
+.case-section-title{font-size:13px;font-weight:800;color:#1E3A8A;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.case-section-note{font-size:11px;color:#64748B;margin:-4px 0 10px}
+.case-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#DBEAFE;color:#1E40AF;font-size:11px;font-weight:700}
 .place-actions .btn{flex:1;min-width:0}
 .schedule-inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .schedule-map-btn{display:inline-flex;align-items:center;gap:4px;background:#EEF2FF;color:#3730A3;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;border:none;cursor:pointer}
@@ -317,7 +323,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
     <h1>案件一覧</h1>
     <span class="count-label" id="cases-count"></span>
   </div>
-  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.go('new-case')">➕ 新規案件を登録</button>
+  <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.openNewCase()">➕ 新規案件を登録</button>
   <div id="cases-list"></div>
 </div>
 
@@ -326,11 +332,11 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
   <h1>➕ 新規案件登録</h1>
   <div class="card">
     <form id="form-case" onsubmit="return RC.saveCase(event)">
-      <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
-      <div class="form-grid-2">
-        <div class="form-row"><label>物件種別</label>
-          <select name="type">
-            <option>マンション</option><option>戸建て</option><option>土地</option><option>投資用</option><option>店舗・事務所</option>
+      <div class="case-mode-grid">
+        <div class="form-row"><label>取引区分</label>
+          <select name="trade_kind" id="case-trade-kind" onchange="RC.toggleCaseFields(this.value)">
+            <option value="sale">売買</option>
+            <option value="rent" selected>賃貸</option>
           </select>
         </div>
         <div class="form-row"><label>ステータス</label>
@@ -339,22 +345,91 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
           </select>
         </div>
       </div>
-      <div class="form-grid-2">
-        <div class="form-row"><label>販売価格</label><input name="price" inputmode="numeric" placeholder="5000（万円）"></div>
-        <div class="form-row"><label>賃料</label><input name="rent" inputmode="numeric" placeholder="15（万円/月）"></div>
+
+      <div class="case-section">
+        <div class="case-section-title">🏢 共通情報</div>
+        <div class="form-row"><label>顧客名 <span style="color:#EF4444">*</span></label><input name="customer" placeholder="例: 山田 太郎" required></div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>物件名</label><input name="property_name" placeholder="例: Re-Home南青山」></div>
+          <div class="form-row"><label>物件種別</label>
+            <select name="type">
+              <option>マンション</option><option>戸建て</option><option>土地</option><option>投資用</option><option>店舗・事務所</option><option>貸戸建</option><option>テラスハウス</option><option>アパート</option><option>貸マンション</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row"><label>エリア</label><input name="area" placeholder="例: 東京都港区南青山"></div>
+        <div class="form-row"><label>物件所在地</label><input name="address" placeholder="例: 大阪府堺市北区..."></div>
+        <div class="form-row"><label>交通状況</label><input name="traffic" placeholder="例: ○○線 ○○駅 徒歩5分 / バス10分"></div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>間取り</label><input name="layout" placeholder="例: 3LDK"></div>
+          <div class="form-row"><label>築年月</label><input name="built_ym" placeholder="例: 2021/06"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>建物構造</label><input name="structure" placeholder="例: RC / 木造"></div>
+          <div class="form-row"><label>階数・所在階</label><input name="floor_info" placeholder="例: 地上10階 / 3階部分"></div>
+        </div>
       </div>
-      <div class="form-grid-2">
-        <div class="form-row"><label>管理費</label><input name="mgmt" inputmode="numeric" placeholder="0.8（万円）"></div>
-        <div class="form-row"><label>修繕積立金</label><input name="repair" inputmode="numeric" placeholder="1.2（万円）"></div>
+
+      <div class="case-section" id="case-sale-fields">
+        <div class="case-section-title">💴 売買入力</div>
+        <div class="case-section-note">売買案件でよく使う項目を上段に集約</div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>販売価格</label><input name="price" inputmode="numeric" placeholder="5000（万円）"></div>
+          <div class="form-row"><label>管理費</label><input name="mgmt" inputmode="numeric" placeholder="0.8（万円）"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>修繕積立金</label><input name="repair" inputmode="numeric" placeholder="1.2（万円）"></div>
+          <div class="form-row"><label>専有面積</label><input name="exclusive_area" placeholder="例: 75㎡"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>土地面積</label><input name="land_area" placeholder="例: 100㎡"></div>
+          <div class="form-row"><label>建物面積</label><input name="building_area" placeholder="例: 92㎡"></div>
+        </div>
+        <div class="form-row">
+          <label>オーナーチェンジ</label>
+          <select name="owner_change"><option>該当なし</option><option>該当あり</option></select>
+        </div>
       </div>
-      <div class="form-row"><label>エリア</label><input name="area" placeholder="例: 東京都港区南青山"></div>
-      <div class="form-row"><label>間取り・広さ</label><input name="layout" placeholder="例: 3LDK / 75㎡"></div>
-      <div class="form-row"><label>築年数</label><input name="age" inputmode="numeric" placeholder="例: 5"></div>
-      <div class="form-row">
-        <label>オーナーチェンジ</label>
-        <select name="owner_change"><option>該当なし</option><option>該当あり</option></select>
+
+      <div class="case-section" id="case-rent-fields">
+        <div class="case-section-title">🏠 賃貸入力 <span class="case-chip">レインズ賃貸資料の物件概要ベース</span></div>
+        <div class="case-section-note">アップロードされた「レインズ賃貸資料」の項目に合わせて追加</div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>賃料</label><input name="rent" inputmode="numeric" placeholder="15（万円/月）"></div>
+          <div class="form-row"><label>管理費</label><input name="rent_mgmt" inputmode="numeric" placeholder="0.11（万円/月）"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>保証金</label><input name="deposit_guarantee" placeholder="例: 0ヶ月 / 10万円"></div>
+          <div class="form-row"><label>権利金</label><input name="right_money" placeholder="例: 0ヶ月 / 0万円"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>礼金</label><input name="key_money" placeholder="例: 1ヶ月 / 10万円"></div>
+          <div class="form-row"><label>敷金</label><input name="security_deposit" placeholder="例: 0ヶ月 / 0万円"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>解約引</label><input name="cancellation_fee" placeholder="例: 0万円"></div>
+          <div class="form-row"><label>入居時期</label><input name="move_in" placeholder="例: 即時 / 相談 / 期日指定"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>建物使用面積</label><input name="usage_area" placeholder="例: 75㎡"></div>
+          <div class="form-row"><label>部分面積</label><input name="partial_area" placeholder="例: 12㎡"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>部屋数</label><input name="room_count" placeholder="例: 3"></div>
+          <div class="form-row"><label>バルコニー方向</label><input name="balcony_dir" placeholder="例: 南 / 南東"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>駐車場</label><input name="parking_status" placeholder="例: 空有 / 空無 / 近隣確保"></div>
+          <div class="form-row"><label>駐車場月額</label><input name="parking_fee" inputmode="numeric" placeholder="例: 15000円"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row"><label>現況</label><input name="occupancy" placeholder="例: 空家 / 賃貸中 / 所有者居住中"></div>
+          <div class="form-row"><label>設備</label><input name="equipment" placeholder="例: 電気・上水道・都市ガス"></div>
+        </div>
+        <div class="form-row"><label>賃貸備考</label><textarea name="rent_notes" placeholder="例: ペット可、短期解約違約金、保証会社条件など" style="min-height:80px;resize:vertical"></textarea></div>
       </div>
-      <div class="form-row"><label>メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
+
+      <div class="form-row"><label>共通メモ</label><textarea name="memo" placeholder="内見希望日、条件、備考など" style="min-height:80px;resize:vertical"></textarea></div>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
         <button type="submit" class="btn btn-primary">保存</button>
@@ -770,6 +845,7 @@ RC.go = function(view) {
     }
     RC.fixViewport();
     RC.renderAll();
+    if (view === 'new-case') setTimeout(function(){ RC.toggleCaseFields((document.getElementById('case-trade-kind') || {}).value || 'rent'); }, 0);
     setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 0);
     setTimeout(function(){ RC.fixViewport(); RC.updateScheduleLayout(); }, 80);
   } catch (e) {
@@ -1551,13 +1627,17 @@ RC.renderCases = function() {
     return;
   }
   list.innerHTML = cases.slice().reverse().map(function(c) {
-    var price = c.price ? c.price + '万円' : (c.rent ? c.rent + '万円/月' : '');
-    var meta = [c.type, price, c.area].filter(function(x){return x;}).join(' ・ ');
+    var deal = c.trade_kind === 'sale' ? '売買' : (c.trade_kind === 'rent' ? '賃貸' : (c.rent ? '賃貸' : '売買'));
+    var price = deal === '売買' ? (c.price ? c.price + '万円' : '') : (c.rent ? c.rent + '万円/月' : '');
+    var subCost = deal === '売買' ? (c.mgmt ? '管理費 ' + c.mgmt : '') : (c.rent_mgmt ? '管理費 ' + c.rent_mgmt : '');
+    var meta = [deal, c.type, price, c.area].filter(function(x){return x;}).join(' ・ ');
+    var detail2 = [c.property_name, c.layout, c.traffic].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
       '<div class="list-item-meta">' + RC.esc(meta) + '</div>' +
-      (c.layout ? '<div class="list-item-meta">' + RC.esc(c.layout) + '</div>' : '') +
+      (detail2 ? '<div class="list-item-meta">' + RC.esc(detail2) + '</div>' : '') +
+      (subCost ? '<div class="list-item-meta">' + RC.esc(subCost) + '</div>' : '') +
       (c.memo ? '<div class="list-item-meta" style="margin-top:4px;color:#374151">📝 ' + RC.esc(c.memo) + '</div>' : '') +
       '<div class="list-item-sub">登録: ' + RC.esc(c.date) + '</div>' +
     '</div>';
@@ -1676,6 +1756,25 @@ RC.renderProfile = function() {
   }
 };
 
+RC.toggleCaseFields = function(kind) {
+  var sale = document.getElementById('case-sale-fields');
+  var rent = document.getElementById('case-rent-fields');
+  var kindSel = document.getElementById('case-trade-kind');
+  var mgmt = document.querySelector('#case-sale-fields input[name="mgmt"]');
+  if (kindSel && kind) kindSel.value = kind;
+  if (sale) sale.style.display = (kind === 'sale') ? 'block' : 'none';
+  if (rent) rent.style.display = (kind === 'rent') ? 'block' : 'none';
+};
+
+RC.openNewCase = function() {
+  RC.go('new-case');
+  setTimeout(function(){
+    var form = document.getElementById('form-case');
+    if (form) form.reset();
+    RC.toggleCaseFields('rent');
+  }, 30);
+};
+
 RC.renderAll = function() {
   try {
     RC.renderHome();
@@ -1702,17 +1801,41 @@ RC.saveCase = function(ev) {
   var newCase = {
     id: Date.now(),
     customer: form.customer.value.trim(),
+    trade_kind: form.trade_kind.value,
+    property_name: form.property_name.value.trim(),
     type: form.type.value, status: form.status.value,
     price: form.price.value.trim(), rent: form.rent.value.trim(),
-    mgmt: form.mgmt.value.trim(), repair: form.repair.value.trim(),
-    area: form.area.value.trim(), layout: form.layout.value.trim(),
-    age: form.age.value.trim(), owner_change: form.owner_change.value,
+    mgmt: form.mgmt ? form.mgmt.value.trim() : '', repair: form.repair ? form.repair.value.trim() : '',
+    area: form.area.value.trim(), address: form.address.value.trim(), traffic: form.traffic.value.trim(),
+    layout: form.layout.value.trim(), built_ym: form.built_ym.value.trim(),
+    structure: form.structure.value.trim(), floor_info: form.floor_info.value.trim(),
+    exclusive_area: form.exclusive_area ? form.exclusive_area.value.trim() : '',
+    land_area: form.land_area ? form.land_area.value.trim() : '',
+    building_area: form.building_area ? form.building_area.value.trim() : '',
+    owner_change: form.owner_change ? form.owner_change.value : '',
+    rent_mgmt: form.rent_mgmt ? form.rent_mgmt.value.trim() : '',
+    deposit_guarantee: form.deposit_guarantee ? form.deposit_guarantee.value.trim() : '',
+    right_money: form.right_money ? form.right_money.value.trim() : '',
+    key_money: form.key_money ? form.key_money.value.trim() : '',
+    security_deposit: form.security_deposit ? form.security_deposit.value.trim() : '',
+    cancellation_fee: form.cancellation_fee ? form.cancellation_fee.value.trim() : '',
+    move_in: form.move_in ? form.move_in.value.trim() : '',
+    usage_area: form.usage_area ? form.usage_area.value.trim() : '',
+    partial_area: form.partial_area ? form.partial_area.value.trim() : '',
+    room_count: form.room_count ? form.room_count.value.trim() : '',
+    balcony_dir: form.balcony_dir ? form.balcony_dir.value.trim() : '',
+    parking_status: form.parking_status ? form.parking_status.value.trim() : '',
+    parking_fee: form.parking_fee ? form.parking_fee.value.trim() : '',
+    occupancy: form.occupancy ? form.occupancy.value.trim() : '',
+    equipment: form.equipment ? form.equipment.value.trim() : '',
+    rent_notes: form.rent_notes ? form.rent_notes.value.trim() : '',
     memo: form.memo.value.trim(), date: dateStr
   };
   if (!newCase.customer) { RC.toast('顧客名は必須です'); return false; }
   RC.data.cases.push(newCase);
   RC.save();
   form.reset();
+  RC.toggleCaseFields('rent');
   RC.toast('✓ 案件を登録しました');
   RC.go('cases');
   return false;

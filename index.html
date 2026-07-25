@@ -2707,7 +2707,7 @@ RC.buildCaseSheetHtml = function(c) {
     '<div class="lux-chip-row">' + (featureChips || '<span class="lux-chip">特徴未設定</span>') + '</div>'+
     '<div class="lux-main"><div class="lux-photo"><div class="lux-photo-main">' + (mainImage ? ('<img src="' + RC.esc(mainImage) + '" alt="main">') : '<div class="lux-noimage">画像はまだ添付されていません</div>') + '</div>' + (thumbHtml ? ('<div class="lux-thumbs">' + thumbHtml + '</div>') : '') + '</div><div class="lux-panel"><h2>物件概要</h2><div class="lux-grid">' + leftRows + '</div></div></div>'+
     '<div class="lux-bottom"><div class="lux-panel"><h2>' + RC.esc(isSale ? '売買条件' : '賃貸条件') + '</h2><div class="lux-grid">' + rightRows + '</div></div><div class="lux-contact">'+
-      '<div class="lux-panel lux-note"><h2>担当メモ</h2><div class="lux-grid" style="grid-template-columns:1fr">' + (RC.caseSheetRowHtml('メモ', c.memo || c.rent_notes || '訴求ポイント・補足なし')) + '</div></div>'+
+      '<div class="lux-panel lux-note"><h2>お客様・備考</h2><div class="lux-grid" style="grid-template-columns:1fr">' + RC.caseSheetRowHtml('顧客名', c.customer) + RC.caseSheetRowHtml('ステータス', c.status) + (RC.caseSheetRowHtml('メモ', c.memo || c.rent_notes || '訴求ポイント・補足なし')) + '</div></div>'+
       '<div class="lux-contact-card"><div class="lux-contact-title">担当者情報</div><div class="lux-contact-name">' + RC.esc(c.agent_name || c.company_name || '担当者未設定') + '</div><div class="lux-contact-meta">' + RC.esc([c.agent_role, c.company_name].filter(function(x){ return String(x || '').trim(); }).join(' / ')) + '<br>📞 ' + RC.esc(c.agent_phone || '-') + '<br>✉️ ' + RC.esc(c.agent_email || '-') + '<br>📍 ' + RC.esc(c.agent_area || '-') + '</div></div>'+
       '<div class="lux-contact-card"><div class="lux-contact-title">添付資料</div>' + pdfHtml + '</div>'+
     '</div></div>'+

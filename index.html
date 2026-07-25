@@ -609,6 +609,7 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
 
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" onclick="RC.go('cases')">キャンセル</button>
+        <button type="button" class="btn btn-orange" id="case-sheet-btn" onclick="return RC.exportCaseSheetPdf()">📄 資料化（PDF）</button>
         <button type="submit" class="btn btn-primary" id="case-save-btn">保存</button>
       </div>
     </form>
@@ -2499,6 +2500,189 @@ RC.handleCasePdfInput = function(input) {
       if (remaining <= 0) { input.value = ''; RC.renderCaseAttachments(); }
     });
   });
+};
+
+RC.collectCaseSheetData = function(form) {
+  form = form || document.getElementById('form-case');
+  if (!form) return null;
+  var tradeKind = form.trade_kind ? String(form.trade_kind.value || 'rent') : 'rent';
+  var trafficLine = form.traffic_line ? form.traffic_line.value.trim() : '';
+  var trafficStation = form.traffic_station ? form.traffic_station.value.trim() : '';
+  var walkMinutes = form.walk_minutes ? form.walk_minutes.value.trim() : '';
+  var busMinutes = form.bus_minutes ? form.bus_minutes.value.trim() : '';
+  var layoutCount = form.layout_count ? form.layout_count.value.trim() : '';
+  var layoutKind = form.layout_kind ? form.layout_kind.value : '';
+  var layoutOther = form.layout_other ? form.layout_other.value.trim() : '';
+  var builtYm = form.built_ym ? form.built_ym.value.trim() : '';
+  var structureKind = form.structure_kind ? form.structure_kind.value : '';
+  var structureOther = form.structure_other ? form.structure_other.value.trim() : '';
+  var totalFloors = form.total_floors ? form.total_floors.value : '';
+  var currentFloor = form.current_floor ? form.current_floor.value : '';
+  var roomNumber = form.room_number ? form.room_number.value.trim() : '';
+  var moveInText = form.move_in ? form.move_in.value.trim() : '';
+  if (moveInText === '期日指定' && form.move_in_note && form.move_in_note.value.trim()) moveInText = '期日指定 ' + form.move_in_note.value.trim();
+  return {
+    created_at: (new Date()).toLocaleString('ja-JP'),
+    customer: form.customer ? form.customer.value.trim() : '',
+    trade_kind: tradeKind,
+    trade_kind_label: tradeKind === 'sale' ? '売買' : '賃貸',
+    status: form.status ? form.status.value.trim() : '',
+    property_name: form.property_name ? form.property_name.value.trim() : '',
+    type: form.type ? form.type.value.trim() : '',
+    area: form.area ? form.area.value.trim() : '',
+    address: form.address ? form.address.value.trim() : '',
+    traffic: RC.composeTrafficValue(trafficLine, trafficStation, walkMinutes, busMinutes, ''),
+    layout: RC.composeLayoutValue(layoutCount, layoutKind, layoutOther),
+    built_ym: RC.formatBuiltYmDisplay(builtYm),
+    structure: RC.composeStructureValue(structureKind, structureOther),
+    floor_info: RC.composeFloorInfo(totalFloors, currentFloor),
+    room_number: roomNumber,
+    memo: form.memo ? form.memo.value.trim() : '',
+    price: form.price ? form.price.value.trim() : '',
+    mgmt: form.mgmt ? form.mgmt.value.trim() : '',
+    repair: form.repair ? form.repair.value.trim() : '',
+    exclusive_area: form.exclusive_area ? RC.formatAreaDisplay(form.exclusive_area.value.trim()) : '',
+    land_area: form.land_area ? RC.formatAreaDisplay(form.land_area.value.trim()) : '',
+    building_area: form.building_area ? RC.formatAreaDisplay(form.building_area.value.trim()) : '',
+    sale_balcony_dir: form.sale_balcony_dir ? form.sale_balcony_dir.value.trim() : '',
+    sale_total_units: form.sale_total_units ? form.sale_total_units.value.trim() : '',
+    sale_parking_status: form.sale_parking_status ? form.sale_parking_status.value.trim() : '',
+    sale_parking_fee: form.sale_parking_fee ? form.sale_parking_fee.value.trim() : '',
+    sale_topography: form.sale_topography ? form.sale_topography.value.trim() : '',
+    zoning: form.zoning ? form.zoning.value.trim() : '',
+    building_coverage_ratio: form.building_coverage_ratio ? form.building_coverage_ratio.value.trim() : '',
+    floor_area_ratio: form.floor_area_ratio ? form.floor_area_ratio.value.trim() : '',
+    sale_occupancy: form.sale_occupancy ? form.sale_occupancy.value.trim() : '',
+    sale_handover: form.sale_handover ? form.sale_handover.value.trim() : '',
+    sale_equipment: form.sale_equipment ? form.sale_equipment.value.trim() : '',
+    owner_change: form.owner_change ? form.owner_change.value.trim() : '',
+    rent: form.rent ? form.rent.value.trim() : '',
+    rent_mgmt: form.rent_mgmt ? form.rent_mgmt.value.trim() : '',
+    deposit_guarantee: form.deposit_guarantee ? form.deposit_guarantee.value.trim() : '',
+    right_money: form.right_money ? form.right_money.value.trim() : '',
+    key_money: form.key_money ? form.key_money.value.trim() : '',
+    security_deposit: form.security_deposit ? form.security_deposit.value.trim() : '',
+    cancellation_fee: form.cancellation_fee ? form.cancellation_fee.value.trim() : '',
+    move_in: moveInText,
+    usage_area: form.usage_area ? form.usage_area.value.trim() : '',
+    partial_area: form.partial_area ? form.partial_area.value.trim() : '',
+    room_count: form.room_count ? form.room_count.value.trim() : '',
+    balcony_dir: form.balcony_dir ? form.balcony_dir.value.trim() : '',
+    parking_status: form.parking_status ? form.parking_status.value.trim() : '',
+    parking_fee: form.parking_fee ? form.parking_fee.value.trim() : '',
+    occupancy: form.occupancy ? form.occupancy.value.trim() : '',
+    equipment: form.equipment ? form.equipment.value.trim() : '',
+    rent_notes: form.rent_notes ? form.rent_notes.value.trim() : '',
+    images: (RC._caseAttachDraft && RC._caseAttachDraft.images) ? RC._caseAttachDraft.images.slice() : [],
+    pdfs: (RC._caseAttachDraft && RC._caseAttachDraft.pdfs) ? RC._caseAttachDraft.pdfs.slice() : []
+  };
+};
+RC.caseSheetRowHtml = function(label, value) {
+  value = String(value || '').trim();
+  if (!value) return '';
+  return '<div class="sheet-row"><div class="sheet-label">' + RC.esc(label) + '</div><div class="sheet-value">' + RC.esc(value) + '</div></div>';
+};
+RC.buildCaseSheetHtml = function(c) {
+  var commonRows = [
+    RC.caseSheetRowHtml('顧客名', c.customer),
+    RC.caseSheetRowHtml('取引区分', c.trade_kind_label),
+    RC.caseSheetRowHtml('ステータス', c.status),
+    RC.caseSheetRowHtml('物件名', c.property_name),
+    RC.caseSheetRowHtml('物件種別', c.type),
+    RC.caseSheetRowHtml('エリア', c.area),
+    RC.caseSheetRowHtml('所在地', c.address),
+    RC.caseSheetRowHtml('交通', c.traffic),
+    RC.caseSheetRowHtml('間取り', c.layout),
+    RC.caseSheetRowHtml('築年月', c.built_ym),
+    RC.caseSheetRowHtml('建物構造', c.structure),
+    RC.caseSheetRowHtml('総階数・所在階', c.floor_info),
+    RC.caseSheetRowHtml('号室', c.room_number),
+    RC.caseSheetRowHtml('メモ', c.memo)
+  ].join('');
+  var saleRows = [
+    RC.caseSheetRowHtml('価格', c.price ? (c.price + '万円') : ''),
+    RC.caseSheetRowHtml('管理費', c.mgmt),
+    RC.caseSheetRowHtml('修繕積立金', c.repair),
+    RC.caseSheetRowHtml('専有面積', c.exclusive_area),
+    RC.caseSheetRowHtml('土地面積', c.land_area),
+    RC.caseSheetRowHtml('建物面積', c.building_area),
+    RC.caseSheetRowHtml('バルコニー方向', c.sale_balcony_dir),
+    RC.caseSheetRowHtml('棟総戸数', c.sale_total_units),
+    RC.caseSheetRowHtml('駐車場', c.sale_parking_status),
+    RC.caseSheetRowHtml('駐車場月額', c.sale_parking_fee),
+    RC.caseSheetRowHtml('地勢', c.sale_topography),
+    RC.caseSheetRowHtml('用途地域', c.zoning),
+    RC.caseSheetRowHtml('建ぺい率', c.building_coverage_ratio),
+    RC.caseSheetRowHtml('容積率', c.floor_area_ratio),
+    RC.caseSheetRowHtml('現況', c.sale_occupancy),
+    RC.caseSheetRowHtml('引渡', c.sale_handover),
+    RC.caseSheetRowHtml('設備', c.sale_equipment),
+    RC.caseSheetRowHtml('オーナーチェンジ', c.owner_change)
+  ].join('');
+  var rentRows = [
+    RC.caseSheetRowHtml('賃料', c.rent ? (c.rent + '万円/月') : ''),
+    RC.caseSheetRowHtml('管理費', c.rent_mgmt),
+    RC.caseSheetRowHtml('保証金', c.deposit_guarantee),
+    RC.caseSheetRowHtml('権利金', c.right_money),
+    RC.caseSheetRowHtml('礼金', c.key_money),
+    RC.caseSheetRowHtml('敷金', c.security_deposit),
+    RC.caseSheetRowHtml('解約引', c.cancellation_fee),
+    RC.caseSheetRowHtml('入居時期', c.move_in),
+    RC.caseSheetRowHtml('建物使用面積', c.usage_area),
+    RC.caseSheetRowHtml('部分面積', c.partial_area),
+    RC.caseSheetRowHtml('部屋数', c.room_count),
+    RC.caseSheetRowHtml('バルコニー方向', c.balcony_dir),
+    RC.caseSheetRowHtml('駐車場', c.parking_status),
+    RC.caseSheetRowHtml('駐車場月額', c.parking_fee),
+    RC.caseSheetRowHtml('現況', c.occupancy),
+    RC.caseSheetRowHtml('設備', c.equipment),
+    RC.caseSheetRowHtml('賃貸備考', c.rent_notes)
+  ].join('');
+  var imageHtml = (c.images || []).length ? (c.images || []).map(function(item){
+    var src = typeof item === 'string' ? item : (item && item.data ? item.data : '');
+    return '<div class="sheet-image"><img src="' + RC.esc(src) + '" alt="image"></div>';
+  }).join('') : '<div class="sheet-empty">画像はまだ添付されていません。</div>';
+  var pdfHtml = (c.pdfs || []).length ? '<div class="sheet-pdf-list">' + (c.pdfs || []).map(function(item, idx){
+    var name = item && item.name ? item.name : ('PDF-' + (idx + 1) + '.pdf');
+    return '<span class="sheet-pdf-chip">📄 ' + RC.esc(name) + '</span>';
+  }).join('') + '</div>' : '<div class="sheet-empty">添付PDFはありません。</div>';
+  return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>物件資料</title><style>' +
+    'body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Yu Gothic",sans-serif;background:#F3F6FB;color:#0F172A}'+
+    '.sheet-wrap{max-width:980px;margin:0 auto;padding:20px}'+
+    '.sheet-toolbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;justify-content:flex-end;background:rgba(243,246,251,.96);padding:12px 0 16px}'+
+    '.sheet-toolbar button{border:none;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}'+
+    '.sheet-toolbar .print{background:#1E3A8A;color:#fff}.sheet-toolbar .close{background:#E5E7EB;color:#1F2937}'+
+    '.sheet-card{background:#fff;border-radius:18px;box-shadow:0 16px 40px rgba(15,23,42,.08);padding:24px}'+
+    '.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:2px solid #DBEAFE;padding-bottom:16px;margin-bottom:16px}'+
+    '.sheet-title{font-size:28px;font-weight:900;color:#1E3A8A}.sheet-sub{font-size:13px;color:#64748B;margin-top:6px}'+
+    '.sheet-badge{display:inline-flex;background:#FFEDD5;color:#C2410C;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}'+
+    '.sheet-section{margin-top:22px}.sheet-section h2{margin:0 0 12px;font-size:18px;color:#1E3A8A}'+
+    '.sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.sheet-row{border:1px solid #E5E7EB;border-radius:12px;padding:12px;background:#F8FAFC;break-inside:avoid}'+
+    '.sheet-label{font-size:12px;font-weight:800;color:#475569;margin-bottom:6px}.sheet-value{font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word}'+
+    '.sheet-images{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.sheet-image{border:1px solid #E5E7EB;border-radius:14px;overflow:hidden;background:#fff;page-break-inside:avoid}.sheet-image img{width:100%;display:block;height:auto}'+
+    '.sheet-pdf-list{display:flex;gap:8px;flex-wrap:wrap}.sheet-pdf-chip{display:inline-flex;align-items:center;background:#FEF3C7;color:#92400E;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800}'+
+    '.sheet-empty{border:1px dashed #CBD5E1;border-radius:12px;padding:20px;text-align:center;color:#64748B;background:#F8FAFC}'+
+    '@media(max-width:720px){.sheet-wrap{padding:12px}.sheet-card{padding:16px}.sheet-grid{grid-template-columns:1fr}.sheet-images{grid-template-columns:1fr}.sheet-title{font-size:22px}}'+
+    '@media print{body{background:#fff}.sheet-wrap{padding:0}.sheet-toolbar{display:none}.sheet-card{box-shadow:none;border-radius:0;padding:18px}.sheet-section{page-break-inside:avoid}}'+
+    '</style></head><body><div class="sheet-wrap"><div class="sheet-toolbar"><button class="close" onclick="window.close()">閉じる</button><button class="print" onclick="window.print()">PDF保存 / 印刷</button></div><div class="sheet-card"><div class="sheet-head"><div><div class="sheet-title">物件資料</div><div class="sheet-sub">作成日時: ' + RC.esc(c.created_at) + '</div><div class="sheet-sub">印刷画面で「PDFに保存」を選択してください。</div></div><div class="sheet-badge">' + RC.esc(c.trade_kind_label) + '</div></div>'+
+    '<div class="sheet-section"><h2>基本情報</h2><div class="sheet-grid">' + commonRows + '</div></div>' +
+    '<div class="sheet-section"><h2>' + (c.trade_kind === 'sale' ? '売買情報' : '賃貸情報') + '</h2><div class="sheet-grid">' + (c.trade_kind === 'sale' ? saleRows : rentRows) + '</div></div>' +
+    '<div class="sheet-section"><h2>画像</h2><div class="sheet-images">' + imageHtml + '</div></div>' +
+    '<div class="sheet-section"><h2>添付PDF</h2>' + pdfHtml + '</div>' +
+    '</div></div>' + '<scr' + 'ipt>(function(){function done(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},500);}var imgs=[].slice.call(document.images||[]);if(!imgs.length){done();return;}var left=imgs.length;imgs.forEach(function(img){if(img.complete){left--;if(left<=0)done();}else{img.onload=img.onerror=function(){left--;if(left<=0)done();};}});})();<\/scr' + 'ipt></body></html>';
+};
+RC.exportCaseSheetPdf = function() {
+  var form = document.getElementById('form-case');
+  if (!form) return false;
+  var data = RC.collectCaseSheetData(form);
+  if (!data) { RC.toast('資料化するデータがありません'); return false; }
+  var win = window.open('', '_blank');
+  if (!win) { RC.toast('ポップアップを許可するとPDF化できます'); return false; }
+  var html = RC.buildCaseSheetHtml(data);
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  return false;
 };
 
 RC.saveCase = function(ev) {

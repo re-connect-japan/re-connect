@@ -367,11 +367,13 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
     <span class="count-label" id="schedule-count"></span>
   </div>
   <button class="btn btn-orange btn-block" style="margin-bottom:12px" onclick="RC.newSchedule()">➕ 新規予定を登録</button>
-  <div style="display:flex;gap:6px;margin-bottom:12px">
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
-    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
+  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap" id="schedule-filter-bar">
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('today')" id="filter-today">今日</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('week')" id="filter-week">1週間</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('month')" id="filter-month">1ヶ月</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:12px;padding:8px;min-width:72px" onclick="RC.setScheduleFilter('all')" id="filter-all">すべて</button>
   </div>
+  <div id="schedule-range-label" style="font-size:12px;color:#64748B;margin-bottom:10px"></div>
   <div id="schedule-list"></div>
 </div>
 
@@ -716,19 +718,28 @@ RC.setScheduleFilter = function(f) {
 RC.renderScheduleList = function() {
   var list = document.getElementById('schedule-list');
   var count = document.getElementById('schedule-count');
+  var rangeLabel = document.getElementById('schedule-range-label');
   if (!list) return;
   var all = RC.data.schedules || [];
   var today = RC.todayStr();
-  var todayDate = new Date();
-  var weekLater = new Date(todayDate.getTime() + 7*24*3600*1000);
+  var todayDate = new Date(today + 'T00:00:00');
+  var weekLater = new Date(todayDate.getTime() + 6*24*3600*1000);
+  var monthLater = new Date(todayDate.getTime() + 29*24*3600*1000);
   var weekLaterStr = weekLater.getFullYear() + '-' + String(weekLater.getMonth()+1).padStart(2,'0') + '-' + String(weekLater.getDate()).padStart(2,'0');
+  var monthLaterStr = monthLater.getFullYear() + '-' + String(monthLater.getMonth()+1).padStart(2,'0') + '-' + String(monthLater.getDate()).padStart(2,'0');
   var filtered;
   if (RC._scheduleFilter === 'today') {
     filtered = all.filter(function(s){ return s.date === today; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日';
   } else if (RC._scheduleFilter === 'week') {
     filtered = all.filter(function(s){ return s.date >= today && s.date <= weekLaterStr; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日から1週間';
+  } else if (RC._scheduleFilter === 'month') {
+    filtered = all.filter(function(s){ return s.date >= today && s.date <= monthLaterStr; });
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: 今日から1ヶ月';
   } else {
     filtered = all.slice();
+    if (rangeLabel) rangeLabel.textContent = '表示範囲: すべての予定';
   }
   filtered.sort(function(a,b){
     var da = a.date + ' ' + (a.start || '99:99');
@@ -736,7 +747,7 @@ RC.renderScheduleList = function() {
     return da.localeCompare(db);
   });
   if (count) count.textContent = '(' + filtered.length + '件)';
-  var btns = ['today','week','all'];
+  var btns = ['today','week','month','all'];
   btns.forEach(function(k){
     var b = document.getElementById('filter-' + k);
     if (!b) return;

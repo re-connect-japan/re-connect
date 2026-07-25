@@ -394,8 +394,15 @@ details.edit-details[open] summary .edit-toggle{border-radius:12px 12px 0 0;box-
             </select>
             <input name="structure_other" id="case-structure-other" placeholder="その他の建物構造を入力" style="margin-top:8px;display:none">
           </div>
-          <div class="form-row"><label>階数・所在階</label><input name="floor_info" placeholder="例: 地上10階 / 3階部分"></div>
-        </div>
+          <div class="form-row"><label>階数・所在階</label>
+            <div class="form-grid-2" style="margin-top:6px">
+              <select name="total_floors" id="case-total-floors"><option value="">選択してください</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option></select>
+              <select name="current_floor" id="case-current-floor"><option value="">選択してください</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option></select>
+            </div>
+            <div class="form-note">左: 総階数 / 右: 所在階</div>
+          </div>
+        
+        <div class="form-row"><label>号室</label><input name="room_number" placeholder="例: 305号室 / A-102"></div>
       </div>
 
       <div class="case-section" id="case-sale-fields">
@@ -1135,6 +1142,14 @@ RC.composeStructureValue = function(kind, other) {
   other = String(other || '').trim();
   return kind === 'その他' ? (other || kind) : kind;
 };
+RC.composeFloorInfo = function(total, current) {
+  total = String(total || '').trim();
+  current = String(current || '').trim();
+  var parts = [];
+  if (total) parts.push('地上' + total + '階');
+  if (current) parts.push(current + '階部分');
+  return parts.join(' / ');
+};
 RC.refreshCaseLookup = function() {
   if (!RC.data.caseLookup) RC.data.caseLookup = { areas: [], lines: [], stations: [] };
   var areas = (RC.data.caseLookup.areas || []).slice();
@@ -1791,7 +1806,7 @@ RC.renderCases = function() {
     var trafficText = RC.composeTrafficValue(c.traffic_line, c.traffic_station, c.walk_minutes, c.bus_minutes, c.traffic);
     var builtText = RC.formatBuiltYmDisplay(c.built_ym || '');
     var detail2 = [c.property_name, c.layout, trafficText].filter(function(x){return x;}).join(' / ');
-    var detail3 = [builtText, c.structure, c.floor_info].filter(function(x){return x;}).join(' / ');
+    var detail3 = [builtText, c.structure, c.floor_info, c.room_number].filter(function(x){return x;}).join(' / ');
     return '<div class="list-item">' +
       '<button class="list-item-del" onclick="RC.delCase(' + c.id + ')">削除</button>' +
       '<div class="list-item-head"><strong>' + RC.esc(c.customer) + '</strong><span class="chip ' + RC.statusChipClass(c.status) + '">' + RC.esc(c.status) + '</span></div>' +
@@ -1973,6 +1988,9 @@ RC.saveCase = function(ev) {
   var builtYm = form.built_ym ? form.built_ym.value.trim() : '';
   var structureKind = form.structure_kind ? form.structure_kind.value : '';
   var structureOther = form.structure_other ? form.structure_other.value.trim() : '';
+  var totalFloors = form.total_floors ? form.total_floors.value : '';
+  var currentFloor = form.current_floor ? form.current_floor.value : '';
+  var roomNumber = form.room_number ? form.room_number.value.trim() : '';
   var newCase = {
     id: Date.now(),
     customer: form.customer.value.trim(),
@@ -1987,7 +2005,9 @@ RC.saveCase = function(ev) {
     layout_count: layoutCount, layout_kind: layoutKind, layout_other: layoutOther,
     layout: RC.composeLayoutValue(layoutCount, layoutKind, layoutOther), built_ym: builtYm, built_ym_jp: RC.formatWarekiYm(builtYm),
     structure_kind: structureKind, structure_other: structureOther,
-    structure: RC.composeStructureValue(structureKind, structureOther), floor_info: form.floor_info.value.trim(),
+    structure: RC.composeStructureValue(structureKind, structureOther),
+    total_floors: totalFloors, current_floor: currentFloor, room_number: roomNumber,
+    floor_info: RC.composeFloorInfo(totalFloors, currentFloor),
     exclusive_area: form.exclusive_area ? form.exclusive_area.value.trim() : '',
     land_area: form.land_area ? form.land_area.value.trim() : '',
     building_area: form.building_area ? form.building_area.value.trim() : '',

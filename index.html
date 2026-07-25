@@ -1241,6 +1241,16 @@ RC.setScheduleColor = function(color) {
 RC.mapUrl = function(place) {
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place || '');
 };
+RC.isIphoneChrome = function() {
+  var ua = navigator.userAgent || '';
+  return /iPhone/i.test(ua) && /CriOS/i.test(ua);
+};
+RC.getPdfActionLabel = function() {
+  return RC.isIphoneChrome() ? 'PDFを開く / ファイルに保存' : '📥 PDFダウンロード';
+};
+RC.getPdfConfirmMessage = function() {
+  return RC.isIphoneChrome() ? '保存した資料を開いて「ファイルに保存」しますか？' : '保存した資料をPDFでダウンロードしますか？';
+};
 RC.openPlaceMapInput = function() {
   var el = document.getElementById('sc-place');
   var place = el ? el.value.trim() : '';
@@ -2747,7 +2757,7 @@ RC.buildCaseSheetHtml = function(c) {
     '.lux-footer{display:flex;justify-content:space-between;gap:10px;align-items:flex-end;margin-top:10px;padding-top:8px;border-top:1px solid #E5E7EB;font-size:9.5px;color:#6B7280}.lux-footer strong{color:#111827}'+
     '@media screen and (max-width:900px){.lux-toolbar,.lux-wrap{width:100%;max-width:100%}.lux-page{min-height:auto}.lux-main,.lux-bottom,.lux-grid{grid-template-columns:1fr}.lux-photo-main{height:42vh;max-height:94mm}}'+
     '@media print{body{background:#fff}.lux-toolbar{display:none}.lux-wrap{width:auto;max-width:none}.lux-page{border:none;min-height:auto;padding:0}}'+
-    '</style></head><body><div class="lux-toolbar"><button class="close" type="button" id="btn-close">閉じる</button><button class="save-pdf" type="button" id="btn-pdf">📥 PDFダウンロード</button><button class="cloud" type="button" id="btn-cloud">☁️ クラウド保存</button><button class="print" type="button" id="btn-print">🖨 印刷</button><button class="mail" type="button" id="btn-mail">✉️ メール送信</button><button class="share" type="button" id="btn-share">🔗 共有</button><button class="copy" type="button" id="btn-copy">📋 URLコピー</button></div><div class="lux-wrap"><div class="lux-page">'+
+    '</style></head><body><div class="lux-toolbar"><button class="close" type="button" id="btn-close">閉じる</button><button class="save-pdf" type="button" id="btn-pdf">' + RC.esc(RC.getPdfActionLabel()) + '</button><button class="cloud" type="button" id="btn-cloud">☁️ クラウド保存</button><button class="print" type="button" id="btn-print">🖨 印刷</button><button class="mail" type="button" id="btn-mail">✉️ メール送信</button><button class="share" type="button" id="btn-share">🔗 共有</button><button class="copy" type="button" id="btn-copy">📋 URLコピー</button></div><div class="lux-wrap"><div class="lux-page">'+
     '<div class="lux-header">' + logoHtml + '<div><div class="lux-company">PREMIUM PROPERTY SHEET</div><div class="lux-title">' + RC.esc(c.property_name || '物件資料') + '</div><div class="lux-sub">' + RC.esc(headerSub || '所在地・交通情報を入力してください') + '</div></div><div class="lux-badge">' + RC.esc(isSale ? 'FOR SALE' : 'FOR RENT') + ' / ' + RC.esc(c.status || '募集中') + '</div></div>'+
     '<div class="lux-pricebar"><div><div class="lux-price-label">' + RC.esc(priceLabel) + '</div><div class="lux-price">' + RC.esc(priceValue) + '</div></div><div class="lux-hero-meta">' + RC.esc(heroMeta || '主要条件未入力') + '<br>作成日時: ' + RC.esc(c.created_at) + '</div></div>'+
     '<div class="lux-chip-row">' + (featureChips || '<span class="lux-chip">特徴未設定</span>') + '</div>'+
@@ -2954,7 +2964,7 @@ RC.saveCaseSheet = function() {
   RC.renderCases();
   RC.toast('✓ 資料を保存しました');
   setTimeout(function(){
-    if (confirm('保存した資料をPDFでダウンロードしますか？')) {
+    if (confirm(RC.getPdfConfirmMessage())) {
       RC.downloadSavedFlyerPdf(target.id, flyer.id);
     }
   }, 200);
@@ -2994,6 +3004,14 @@ RC.deleteSavedFlyer = function(caseId, flyerId, ev) {
   }
   return false;
 };
+RC.updatePdfActionButtons = function() {
+  var label = RC.getPdfActionLabel();
+  var sheetBtn = document.getElementById('case-sheet-btn');
+  if (sheetBtn && RC.isIphoneChrome()) sheetBtn.textContent = '📄 ' + label;
+  var saveBtn = document.getElementById('case-sheet-save-btn');
+  if (saveBtn && RC.isIphoneChrome()) saveBtn.title = '保存後にPDFを開いてファイルに保存できます';
+};
+
 RC.renderCaseSavedFlyers = function(caseData) {
   var wrap = document.getElementById('case-saved-flyers');
   if (!wrap) return;
@@ -3006,7 +3024,7 @@ RC.renderCaseSavedFlyers = function(caseData) {
   wrap.innerHTML = '<div style="font-size:11px;color:#64748B;font-weight:700;margin-bottom:6px">保存済み資料 ' + flyers.length + ' 件</div><div class="flyer-saved-list">' + flyers.map(function(f){
     return '<div class="flyer-saved-card"><div class="flyer-saved-title">📄 ' + RC.esc(f.label || '物件資料') + '</div><div class="flyer-saved-actions">'
       + '<button type="button" class="flyer-act view" onclick="return RC.openSavedFlyer(' + caseId + ',' + f.id + ')">開く</button>'
-      + '<button type="button" class="flyer-act pdf" onclick="return RC.downloadSavedFlyerPdf(' + caseId + ',' + f.id + ', event)">📥 PDFダウンロード</button>'
+      + '<button type="button" class="flyer-act pdf" onclick="return RC.downloadSavedFlyerPdf(' + caseId + ',' + f.id + ', event)">' + RC.esc(RC.getPdfActionLabel()) + '</button>'
       + '<button type="button" class="flyer-act cloud" onclick="return RC.cloudSaveFlyer(' + caseId + ',' + f.id + ', event)">☁️ クラウド保存</button>'
       + '<button type="button" class="flyer-act print" onclick="return RC.printSavedFlyer(' + caseId + ',' + f.id + ', event)">🖨 印刷</button>'
       + '<button type="button" class="flyer-act mail" onclick="return RC.mailFlyer(' + caseId + ',' + f.id + ')">✉️ メール</button>'

@@ -53,54 +53,28 @@ function loadState() {
     return createInitialState();
   }
 }
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function resetState() {
-  state = createInitialState();
-  saveState();
-}
-
-function uid(prefix, list) {
-  return `${prefix}_${String(list.length + 1).padStart(3, '0')}`;
-}
-
-function getCustomer(id) {
-  return state.customers.find((x) => x.id === id) || null;
-}
-
-function getProperty(id) {
-  return state.properties.find((x) => x.id === id) || null;
-}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function resetState() { state = createInitialState(); saveState(); }
+function uid(prefix, list) { return `${prefix}_${String(list.length + 1).padStart(3, '0')}`; }
+function getCustomer(id) { return state.customers.find((x) => x.id === id) || null; }
+function getProperty(id) { return state.properties.find((x) => x.id === id) || null; }
 
 function visibilityLabel(code) {
-  return ({
-    store_only: '店舗内',
-    internal_only: '社内のみ',
-    broker_group_only: 'グループ業者のみ',
-    public: '一般公開'
-  })[code] || code;
+  return ({ store_only: '店舗内', internal_only: '社内のみ', broker_group_only: 'グループ業者のみ', public: '一般公開' })[code] || code;
 }
-
 function roleLabel(role) {
   return ({ admin: '管理者', manager: '管理職', sales: '営業', office: '事務' })[role] || role;
 }
-
 function can(action) {
-  const role = state.role;
   const rules = {
-    viewAll: ['admin', 'manager'],
     createPublicPost: ['admin'],
     reassignTask: ['admin', 'manager'],
-    saveCloud: ['admin', 'manager', 'sales', 'office'],
     addCustomer: ['admin', 'manager', 'sales', 'office'],
     addProperty: ['admin', 'manager', 'sales'],
     exportDocument: ['admin', 'manager', 'sales'],
     markResult: ['admin', 'manager', 'sales']
   };
-  return (rules[action] || []).includes(role);
+  return (rules[action] || []).includes(state.role);
 }
 
 function showNotice(message, type = 'success') {
@@ -113,18 +87,29 @@ function showNotice(message, type = 'success') {
   el.style.color = type === 'error' ? '#991b1b' : '#166534';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function requirePermission(action, message) {
   if (can(action)) return true;
   showNotice(message, 'error');
   return false;
 }
 
+const PRIMARY_TABS = ['home', 'customers', 'properties', 'sns', 'tasks'];
+
 function go(screenId) {
   document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
   const target = document.getElementById(`screen-${screenId}`);
   if (target) target.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.screen === screenId));
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    if (btn.dataset.screen) {
+      btn.classList.toggle('active', btn.dataset.screen === screenId);
+    } else if (btn.id === 'moreTabBtn') {
+      btn.classList.toggle('active', !PRIMARY_TABS.includes(screenId));
+    }
+  });
+  closeMoreSheet();
+  closeTopbarMenu();
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 
 function updateUserSummary() {
@@ -159,9 +144,12 @@ function populateLinkedSelects() {
   fillSelect('candidateASelect', state.properties, (p) => `${p.title} / ${p.price}`);
   fillSelect('candidateBSelect', state.properties, (p) => `${p.title} / ${p.price}`);
   fillSelect('resultScheduleSelect', state.schedules, (s) => `${s.when} / ${s.title}`);
-  document.getElementById('candidateASelect').value = state.properties[1]?.id || state.properties[0]?.id || '';
-  document.getElementById('candidateBSelect').value = state.properties[2]?.id || state.properties[0]?.id || '';
-  document.getElementById('documentBasePropertySelect').value = state.properties[0]?.id || '';
+  const candA = document.getElementById('candidateASelect');
+  const candB = document.getElementById('candidateBSelect');
+  const base = document.getElementById('documentBasePropertySelect');
+  if (candA) candA.value = state.properties[1]?.id || state.properties[0]?.id || '';
+  if (candB) candB.value = state.properties[2]?.id || state.properties[0]?.id || '';
+  if (base) base.value = state.properties[0]?.id || '';
 }
 
 function renderHome() {
@@ -169,7 +157,7 @@ function renderHome() {
   const highHeat = state.customers.filter((c) => c.heat === 'high').length;
   document.getElementById('homeKpis').innerHTML = [
     { label: '本日予定', value: state.schedules.length, sub: '結果未入力を含む' },
-    { label: '今日期限タスク', value: state.tasks.length, sub: '主導線を維持' },
+    { label: '今日期限', value: state.tasks.length, sub: '主導線を維持' },
     { label: 'SNS未読', value: unreadCount, sub: 'コメント / メンション' },
     { label: '優先顧客', value: highHeat, sub: '再提案含む' }
   ].map((kpi) => `
@@ -334,11 +322,7 @@ function renderNotifications() {
   `).join('');
 }
 
-function selectTask(id) {
-  state.selectedTaskId = id;
-  saveState();
-  renderTasks();
-}
+function selectTask(id) { state.selectedTaskId = id; saveState(); renderTasks(); }
 window.selectTask = selectTask;
 
 function createTaskFromPost(postId) {
@@ -359,8 +343,7 @@ function createTaskFromPost(postId) {
   state.tasks.unshift(newTask);
   state.selectedTaskId = newTask.id;
   state.notifications.unshift({ id: uid('nt', state.notifications), type: 'task_assigned', title: 'タスク作成', body: 'SNS投稿からタスクを作成しました', unread: true, priority: 'medium' });
-  saveState();
-  rerenderAll();
+  saveState(); rerenderAll();
   showNotice('投稿からタスクを作成しました。顧客・物件を自動引継ぎしています。');
   go('tasks');
 }
@@ -370,8 +353,7 @@ function markTaskDone(taskId) {
   const task = state.tasks.find((t) => t.id === taskId);
   if (!task) return;
   task.status = 'done';
-  saveState();
-  rerenderAll();
+  saveState(); rerenderAll();
   showNotice('タスクを完了にしました。');
 }
 window.markTaskDone = markTaskDone;
@@ -392,8 +374,7 @@ function createScheduleFromTask(taskId) {
   };
   state.schedules.unshift(newSchedule);
   state.notifications.unshift({ id: uid('nt', state.notifications), type: 'schedule_reminder', title: '予定作成', body: 'タスクから予定を作成しました', unread: true, priority: 'medium' });
-  saveState();
-  rerenderAll();
+  saveState(); rerenderAll();
   showNotice('予定を作成しました。Google / iPhone 同期待ちです。');
   go('calendar');
 }
@@ -402,15 +383,13 @@ window.createScheduleFromTask = createScheduleFromTask;
 function markRead(id) {
   const item = state.notifications.find((n) => n.id === id);
   if (item) item.unread = false;
-  saveState();
-  rerenderAll();
+  saveState(); rerenderAll();
 }
 window.markRead = markRead;
 
 function markAllRead() {
   state.notifications.forEach((n) => { n.unread = false; });
-  saveState();
-  rerenderAll();
+  saveState(); rerenderAll();
   showNotice('通知を一括既読にしました。');
 }
 
@@ -446,10 +425,9 @@ function login(role) {
   saveState();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
-  updateUserSummary();
-  applyPermissionUI();
-  rerenderAll();
+  updateUserSummary(); applyPermissionUI(); rerenderAll();
   showNotice(`${roleLabel(role)}としてログインしました。`);
+  go('home');
 }
 
 function logout() {
@@ -483,32 +461,33 @@ function createDocumentPreview({ customer, base, candidateA, candidateB, comment
 
 function printDocument() {
   if (!requirePermission('exportDocument', 'このロールではPDF出力できません。')) return;
-  if (!state.lastDocumentHtml) {
-    showNotice('先に資料を生成してください。', 'error');
-    return;
-  }
+  if (!state.lastDocumentHtml) { showNotice('先に資料を生成してください。', 'error'); return; }
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>比較資料</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:24px;color:#111827}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #d1d5db;padding:8px;text-align:left;vertical-align:top}th{background:#eff6ff}</style></head><body>${state.lastDocumentHtml}</body></html>`);
-  win.document.close();
-  win.focus();
-  win.print();
+  win.document.close(); win.focus(); win.print();
 }
+
+function openMoreSheet() { document.getElementById('moreSheet').classList.remove('hidden'); }
+function closeMoreSheet() { document.getElementById('moreSheet').classList.add('hidden'); }
+function toggleTopbarMenu() { document.getElementById('topbarActions').classList.toggle('open'); }
+function closeTopbarMenu() { document.getElementById('topbarActions').classList.remove('open'); }
 
 function rerenderAll() {
   populateLinkedSelects();
-  renderHome();
-  renderCustomers();
-  renderProperties();
-  renderPosts();
-  renderTasks();
-  renderSchedules();
-  renderDocumentPreview();
-  renderNotifications();
+  renderHome(); renderCustomers(); renderProperties(); renderPosts();
+  renderTasks(); renderSchedules(); renderDocumentPreview(); renderNotifications();
 }
 
 function initEvents() {
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
+  document.querySelectorAll('.tab-btn[data-screen]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
   document.querySelectorAll('[data-screen-link]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screenLink)));
+  document.querySelectorAll('.more-btn[data-screen]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
+
+  document.getElementById('moreTabBtn').addEventListener('click', openMoreSheet);
+  document.getElementById('moreCloseBtn').addEventListener('click', closeMoreSheet);
+  document.getElementById('moreSheetBackdrop').addEventListener('click', closeMoreSheet);
+  document.getElementById('topbarMenuBtn').addEventListener('click', toggleTopbarMenu);
 
   document.getElementById('demoAccount').addEventListener('change', (e) => {
     const user = DEMO_USERS[e.target.value];
@@ -517,8 +496,7 @@ function initEvents() {
 
   document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const role = document.getElementById('demoAccount').value;
-    login(role);
+    login(document.getElementById('demoAccount').value);
   });
 
   document.getElementById('resetDataBtn').addEventListener('click', () => {
@@ -538,16 +516,11 @@ function initEvents() {
     const form = new FormData(e.target);
     state.customers.unshift({
       id: uid('cu', state.customers),
-      name: form.get('name'),
-      owner: form.get('owner'),
-      budget: form.get('budget'),
-      needs: form.get('needs'),
-      nextAction: '初回追客',
-      heat: 'medium'
+      name: form.get('name'), owner: form.get('owner'),
+      budget: form.get('budget'), needs: form.get('needs'),
+      nextAction: '初回追客', heat: 'medium'
     });
-    saveState();
-    e.target.reset();
-    rerenderAll();
+    saveState(); e.target.reset(); rerenderAll();
     showNotice('顧客を追加しました。');
   });
 
@@ -557,15 +530,11 @@ function initEvents() {
     const form = new FormData(e.target);
     state.properties.unshift({
       id: uid('pr', state.properties),
-      title: form.get('title'),
-      price: form.get('price'),
-      layout: form.get('layout'),
-      features: form.get('features'),
+      title: form.get('title'), price: form.get('price'),
+      layout: form.get('layout'), features: form.get('features'),
       status: '新規登録'
     });
-    saveState();
-    e.target.reset();
-    rerenderAll();
+    saveState(); e.target.reset(); rerenderAll();
     showNotice('物件を追加しました。');
   });
 
@@ -580,13 +549,10 @@ function initEvents() {
       visibility: visibilityLabel(visibilityCode),
       visibilityCode,
       author: state.session?.name || '田中',
-      unread: 0,
-      body: form.get('body'),
-      customerId: form.get('customerId'),
-      propertyId: form.get('propertyId')
+      unread: 0, body: form.get('body'),
+      customerId: form.get('customerId'), propertyId: form.get('propertyId')
     });
-    saveState();
-    rerenderAll();
+    saveState(); rerenderAll();
     showNotice('SNS投稿を保存しました。');
   });
 
@@ -605,8 +571,7 @@ function initEvents() {
       customer.heat = form.get('resultStatus') === 'positive' ? 'high' : 'medium';
     }
     state.notifications.unshift({ id: uid('nt', state.notifications), type: 'result_registered', title: '結果登録完了', body: '予定結果を登録しました', unread: true, priority: 'medium' });
-    saveState();
-    rerenderAll();
+    saveState(); rerenderAll();
     showNotice('結果を登録しました。次回対応へ進めます。');
   });
 
@@ -622,16 +587,11 @@ function initEvents() {
       return;
     }
     state.lastDocumentHtml = createDocumentPreview({
-      customer,
-      base,
-      candidateA,
-      candidateB,
-      comment: form.get('comment'),
-      destination: form.get('destination')
+      customer, base, candidateA, candidateB,
+      comment: form.get('comment'), destination: form.get('destination')
     });
     state.notifications.unshift({ id: uid('nt', state.notifications), type: 'document_ready', title: '資料作成完了', body: '比較資料プレビューを生成しました', unread: true, priority: 'medium' });
-    saveState();
-    rerenderAll();
+    saveState(); rerenderAll();
     showNotice('比較資料を生成しました。ブラウザ印刷からPDF保存できます。');
   });
 }
@@ -641,9 +601,7 @@ function init() {
   if (state.session) {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
-    updateUserSummary();
-    applyPermissionUI();
-    rerenderAll();
+    updateUserSummary(); applyPermissionUI(); rerenderAll();
   } else {
     document.getElementById('loginEmail').value = DEMO_USERS.sales.email;
   }

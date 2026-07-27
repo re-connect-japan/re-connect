@@ -135,8 +135,10 @@
             <button class="feed-tab" data-feed="internal_only">社内</button>
           </div>
           <div id="snsFeed" class="feed-stack"></div>
-          <details class="panel mobile-panel" id="snsComposer">
-            <summary>新規投稿を書く</summary>
+          <section class="panel mobile-panel composer-panel" id="snsComposer">
+            <div class="composer-header">
+              <h3>新規投稿を書く</h3>
+            </div>
             <form id="snsForm" class="form compact-form">
               <label><span>投稿種別</span><select name="postType"><option value="property_share">物件共有</option><option value="report">報告</option><option value="question">質問</option></select></label>
               <label><span>公開範囲</span><select name="visibility"><option value="store_only">店舗内</option><option value="internal_only">社内のみ</option><option value="broker_group_only">グループ業者のみ</option><option value="public">一般公開</option></select></label>
@@ -151,7 +153,7 @@
               <div id="snsImagePreview" class="image-preview"></div>
               <div class="sns-submit-spacer"></div>
             </form>
-          </details>
+          </section>
           <div class="sns-submit-bar" id="snsSubmitBar">
             <button type="button" id="snsCancelEditBtn" class="secondary-btn hidden">キャンセル</button>
             <button type="submit" form="snsForm" id="snsSubmitBtn" class="primary-btn full">投稿を保存</button>

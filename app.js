@@ -1,11 +1,6 @@
 const STORAGE_KEY = 'reconnect_mvp_state_v4';
 
-const DEMO_USERS = {
-  admin: { id: 'u_admin', name: '鈴木', role: 'admin', email: 'admin@reconnect.local' },
-  manager: { id: 'u_manager', name: '佐藤', role: 'manager', email: 'manager@reconnect.local' },
-  sales: { id: 'u_sales', name: '田中', role: 'sales', email: 'sales@reconnect.local' },
-  office: { id: 'u_office', name: '高橋', role: 'office', email: 'office@reconnect.local' }
-};
+const DEFAULT_USER = { id: 'u_me', name: '田中' };
 
 function createInitialState() {
   return {
@@ -251,9 +246,7 @@ function getProperty(id) { return state.properties.find((x) => x.id === id) || n
 function visibilityLabel(code) {
   return ({ store_only: '店舗内', internal_only: '社内のみ', broker_group_only: 'グループ業者のみ', public: '一般公開' })[code] || code;
 }
-function roleLabel(role) {
-  return ({ admin: '管理者', manager: '管理職', sales: '営業', office: '事務' })[role] || role;
-}
+function roleLabel(_role) { return ''; }
 function dealTypeLabel(type) { return type === 'rental' ? '賃貸' : '売買'; }
 function propertyPrimaryValue(property) {
   return property.dealType === 'rental' ? property.rent : property.salePrice;
@@ -262,17 +255,7 @@ function propertyAreaValue(property) {
   if (property.dealType === 'rental') return property.buildingUsageArea || property.partialArea || '-';
   return property.exclusiveArea || property.landArea || property.buildingArea || '-';
 }
-function can(action) {
-  const rules = {
-    createPublicPost: ['admin'],
-    reassignTask: ['admin', 'manager'],
-    addCustomer: ['admin', 'manager', 'sales', 'office'],
-    addProperty: ['admin', 'manager', 'sales'],
-    exportDocument: ['admin', 'manager', 'sales'],
-    markResult: ['admin', 'manager', 'sales']
-  };
-  return (rules[action] || []).includes(state.role);
-}
+function can(_action) { return true; }
 function showNotice(message, type = 'success') {
   const el = document.getElementById('globalNotice');
   if (!el) return;
@@ -299,9 +282,10 @@ function go(screenId) {
 }
 
 function updateUserSummary() {
-  const session = state.session || DEMO_USERS[state.role];
-  document.getElementById('userSummary').textContent = `${session.name} / ${roleLabel(state.role)}`;
-  document.getElementById('roleSelect').value = state.role;
+  const session = state.session || DEFAULT_USER;
+  const el = document.getElementById('userSummary');
+  if (!el) return;
+  el.textContent = session.email ? `${session.name || 'ユーザー'} / ${session.email}` : (session.name || 'ユーザー');
 }
 
 function fillSelect(selectId, items, formatter, includeBlank = false) {
@@ -814,42 +798,21 @@ function markAllRead() {
   showNotice('通知を一括既読にしました。');
 }
 
-function applyRole(role) {
-  state.role = role;
-  if (state.session) state.session.role = role;
-  updateUserSummary();
-  applyPermissionUI();
-  saveState();
-  showNotice(`ロールを「${roleLabel(role)}」に切り替えました。`);
-}
+function applyRole(_role) { /* no-op: roles removed */ }
 
-function applyPermissionUI() {
-  const visibility = document.querySelector('#snsForm select[name="visibility"]');
-  if (visibility) {
-    Array.from(visibility.options).forEach((opt) => { opt.hidden = false; });
-    const publicOpt = Array.from(visibility.options).find((o) => o.value === 'public');
-    if (publicOpt && !can('createPublicPost')) {
-      publicOpt.hidden = true;
-      if (visibility.value === 'public') visibility.value = 'internal_only';
-    }
-  }
-  const propertyFormBtn = document.querySelector('#propertyForm button[type="submit"]');
-  if (propertyFormBtn) propertyFormBtn.disabled = !can('addProperty');
-  const docPrint = document.getElementById('printDocumentBtn');
-  if (docPrint) docPrint.disabled = !can('exportDocument');
-}
+function applyPermissionUI() { /* no-op: everyone can do everything */ }
 
-function login(role) {
-  const user = { ...DEMO_USERS[role] };
-  state.session = user;
-  state.role = role;
+function login({ name, email } = {}) {
+  const displayName = (name || '').trim() || DEFAULT_USER.name;
+  const displayEmail = (email || '').trim();
+  state.session = { id: 'u_me', name: displayName, email: displayEmail };
   saveState();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
   updateUserSummary();
   applyPermissionUI();
   rerenderAll();
-  showNotice(`${roleLabel(role)}としてログインしました。`);
+  showNotice(`${displayName} さんとしてログインしました。`);
   go('home');
 }
 
@@ -892,13 +855,11 @@ function initEvents() {
 
   document.getElementById('dealTypeSelect').addEventListener('change', updatePropertyMode);
 
-  document.getElementById('demoAccount').addEventListener('change', (e) => {
-    const user = DEMO_USERS[e.target.value];
-    document.getElementById('loginEmail').value = user.email;
-  });
   document.getElementById('loginForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    login(document.getElementById('demoAccount').value);
+    const name = document.getElementById('loginName').value;
+    const email = document.getElementById('loginEmail').value;
+    login({ name, email });
   });
   document.getElementById('resetDataBtn').addEventListener('click', () => {
     resetState();
@@ -906,7 +867,6 @@ function initEvents() {
     if (state.session) rerenderAll();
   });
   document.getElementById('logoutBtn').addEventListener('click', logout);
-  document.getElementById('roleSelect').addEventListener('change', (e) => applyRole(e.target.value));
   document.getElementById('markAllReadBtn').addEventListener('click', markAllRead);
   document.getElementById('printDocumentBtn').addEventListener('click', printDocument);
 
@@ -1125,7 +1085,6 @@ function init() {
     applyPermissionUI();
     rerenderAll();
   } else {
-    document.getElementById('loginEmail').value = DEMO_USERS.sales.email;
     updatePropertyMode();
   }
 }

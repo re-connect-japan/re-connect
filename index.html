@@ -17,21 +17,16 @@
       </div>
       <form id="loginForm" class="form compact-form">
         <label>
-          <span>デモアカウント</span>
-          <select id="demoAccount">
-            <option value="sales">営業 / 田中</option>
-            <option value="manager">管理職 / 佐藤</option>
-            <option value="admin">管理者 / 鈴木</option>
-            <option value="office">事務 / 高橋</option>
-          </select>
+          <span>お名前</span>
+          <input id="loginName" placeholder="例: 田中" autocomplete="name" />
         </label>
         <label>
           <span>メール</span>
-          <input id="loginEmail" value="sales@reconnect.local" />
+          <input id="loginEmail" type="email" placeholder="例: taro@example.com" autocomplete="email" />
         </label>
         <label>
           <span>パスワード</span>
-          <input id="loginPassword" type="password" value="demo1234" />
+          <input id="loginPassword" type="password" value="demo1234" autocomplete="current-password" />
         </label>
         <div class="login-actions">
           <button type="submit" class="primary-btn">ログイン</button>
@@ -58,12 +53,6 @@
         <p id="userSummary">ログイン中ユーザー</p>
       </div>
       <div class="topbar-actions">
-        <select id="roleSelect" class="role-inline" aria-label="ロール切替">
-          <option value="admin">管理者</option>
-          <option value="manager">管理職</option>
-          <option value="sales">営業</option>
-          <option value="office">事務</option>
-        </select>
         <button id="logoutBtn" class="icon-btn" aria-label="ログアウト">⎋</button>
       </div>
     </header>

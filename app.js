@@ -102,6 +102,7 @@ let state = loadState();
 let homeCalendarView = 'today';
 let homeCalendarCursor = null;
 let homeCalendarSelected = null;
+let editorReturnScreen = 'home';
 let snsAttachedImages = [];
 
 function readFileAsDataUrl(file) {
@@ -382,6 +383,21 @@ function renderHome() {
   }
   const todayList = document.getElementById('homeScheduleToday');
   if (todayList) todayList.innerHTML = state.schedules.map((s) => {
+    const c = getCustomer(s.customerId);
+    const p = getProperty(s.propertyId);
+    return `
+      <div class="item clickable" onclick="openScheduleEditor('${s.id}')">
+        <div class="item-title">${s.when} ${s.title}</div>
+        <div class="item-sub">${c?.name || '-'} / ${p?.title || '-'}</div>
+        <div class="top-meta">
+          ${p ? `<span class="chip ${p.dealType}">${dealTypeLabel(p.dealType)}</span>` : ''}
+          <span class="chip">${s.sync || ''}</span>
+        </div>
+      </div>
+    `;
+  }).join('') || '<div class="empty-state">予定はありません</div>';
+  const legacyList = document.getElementById('homeSchedules');
+  if (legacyList) legacyList.innerHTML = state.schedules.map((s) => {
     const c = getCustomer(s.customerId); const p = getProperty(s.propertyId);
     return `
       <div class="item">
@@ -400,7 +416,7 @@ function renderHome() {
   document.getElementById('homeTasks').innerHTML = state.tasks.map((t) => {
     const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
     return `
-      <div class="item">
+      <div class="item clickable" onclick="openTaskEditor('${t.id}')">
         <div class="item-title">${t.due} ${t.title}</div>
         <div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div>
         <div class="top-meta">
@@ -523,19 +539,25 @@ function renderHomeCalendarDayDetail(scheduleByDate, taskByDate) {
   const scheds = scheduleByDate[key] || [];
   const tks = taskByDate[key] || [];
   const label = `${target.getFullYear()}年${target.getMonth()+1}月${target.getDate()}日`;
+  const addBar = `
+    <div class="cal-day-add">
+      <button type="button" class="secondary-btn small" onclick="openScheduleEditor('', '${key}')">＋ 予定を追加</button>
+      <button type="button" class="secondary-btn small" onclick="openTaskEditor('', '${key}')">＋ タスクを追加</button>
+    </div>`;
   if (!scheds.length && !tks.length) {
-    root.innerHTML = `<div class="cal-day-title">${label}</div><div class="empty-state">予定とタスクはありません</div>`;
+    root.innerHTML = `<div class="cal-day-title">${label}</div>${addBar}<div class="empty-state">予定とタスクはありません</div>`;
     return;
   }
   root.innerHTML = `
     <div class="cal-day-title">${label}</div>
+    ${addBar}
     ${scheds.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">予定</div>${scheds.map((s) => {
       const c = getCustomer(s.customerId); const p = getProperty(s.propertyId);
-      return `<div class="item"><div class="item-title">${s.when} ${s.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${s.status}</div></div>`;
+      return `<div class="item clickable" onclick="openScheduleEditor('${s.id}')"><div class="item-title">${s.when} ${s.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${s.status}</div></div>`;
     }).join('')}</div>` : ''}
     ${tks.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">タスク</div>${tks.map((t) => {
       const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
-      return `<div class="item"><div class="item-title">${t.due} ${t.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div></div>`;
+      return `<div class="item clickable" onclick="openTaskEditor('${t.id}')"><div class="item-title">${t.due} ${t.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div></div>`;
     }).join('')}</div>` : ''}
   `;
 }
@@ -774,58 +796,113 @@ function taskFromPost(postId) { createTaskFromPost(postId); }
 window.taskFromPost = taskFromPost;
 
 function renderTasks() {
-  document.getElementById('taskCountPill').textContent = `${state.tasks.length}件`;
-  document.getElementById('taskList').innerHTML = state.tasks.map((task) => {
+  const countEl = document.getElementById('taskCountPill');
+  if (countEl) countEl.textContent = `${state.tasks.length}件`;
+  const listEl = document.getElementById('taskList');
+  if (listEl) listEl.innerHTML = state.tasks.map((task) => {
     const customer = getCustomer(task.customerId);
     const property = getProperty(task.propertyId);
     return `
-      <div class="item" onclick="selectTask('${task.id}')" style="cursor:pointer; ${task.id === state.selectedTaskId ? 'border-color:#2563eb;background:#eff6ff;' : ''}">
+      <div class="item clickable" onclick="openTaskEditor('${task.id}')">
         <div class="item-title">${task.title}</div>
         <div class="item-sub">${task.status} / ${task.priority} / ${task.due}</div>
-        <div class="item-sub">${customer?.name || '-'} / 担当: ${task.assignedTo}</div>
+        <div class="item-sub">${customer?.name || '-'} / 担当: ${task.assignedTo || '-'}</div>
         <div class="top-meta">${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}</div>
       </div>
     `;
-  }).join('');
-  const task = state.tasks.find((t) => t.id === state.selectedTaskId) || state.tasks[0];
-  if (!task) { document.getElementById('taskDetail').innerHTML = '<div class="empty-state">タスクがありません</div>'; return; }
-  const customer = getCustomer(task.customerId);
-  const property = getProperty(task.propertyId);
-  document.getElementById('taskDetail').innerHTML = `
-    <div class="task-detail">
-      <div class="item-title">${task.title}</div>
-      <p>状態: ${task.status}</p>
-      <p>優先度: ${task.priority}</p>
-      <p>担当: ${task.assignedTo}</p>
-      <p>顧客: ${customer?.name || '-'}</p>
-      <p>物件: ${property?.title || '-'}</p>
-      ${property ? `<p>取引区分: ${dealTypeLabel(property.dealType)} / 金額: ${propertyPrimaryValue(property)}</p>` : ''}
-      <div class="actions">
-        <button class="secondary-btn" onclick="markTaskDone('${task.id}')">完了</button>
-        <button class="primary-btn" onclick="createScheduleFromTask('${task.id}')">予定化</button>
-      </div>
-    </div>
-  `;
+  }).join('') || '<div class="empty-state">タスクはありません</div>';
 }
 
 function renderSchedules() {
-  document.getElementById('scheduleCountPill').textContent = `${state.schedules.length}件`;
-  document.getElementById('scheduleList').innerHTML = state.schedules.map((s) => {
+  const countEl = document.getElementById('scheduleCountPill');
+  if (countEl) countEl.textContent = `${state.schedules.length}件`;
+  const listEl = document.getElementById('scheduleList');
+  if (listEl) listEl.innerHTML = state.schedules.map((s) => {
     const customer = getCustomer(s.customerId);
     const property = getProperty(s.propertyId);
     return `
-      <div class="item">
+      <div class="item clickable" onclick="openScheduleEditor('${s.id}')">
         <div class="item-title">${s.when} ${s.title}</div>
         <div class="item-sub">${customer?.name || '-'} / ${property?.title || '-'} / ${s.status}</div>
         <div class="top-meta">
           ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
-          <span class="chip">${s.sync}</span>
+          <span class="chip">${s.sync || ''}</span>
           ${s.resultStatus ? `<span class="tag success">結果: ${s.resultStatus}</span>` : ''}
         </div>
       </div>
     `;
-  }).join('');
+  }).join('') || '<div class="empty-state">予定はありません</div>';
 }
+
+function formatDateForInput(d) {
+  if (!d) return '';
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+function populateEditorSelects() {
+  const customerOptions = [{ id: '', name: '未選択' }, ...state.customers];
+  const propertyOptions = [{ id: '', title: '未選択', dealType: '' }, ...state.properties];
+  const custHtml = customerOptions.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  const propHtml = propertyOptions.map((p) => `<option value="${p.id}">${p.id ? `${dealTypeLabel(p.dealType)} / ${p.title}` : p.title}</option>`).join('');
+  ['taskEditCustomer','scheduleEditCustomer'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = custHtml;
+  });
+  ['taskEditProperty','scheduleEditProperty'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = propHtml;
+  });
+}
+
+function openTaskEditor(taskId, presetDateKey) {
+  populateEditorSelects();
+  const isNew = !taskId;
+  const task = isNew ? null : state.tasks.find((t) => t.id === taskId);
+  document.getElementById('taskEditTitle').textContent = isNew ? 'タスクを新規作成' : 'タスクを編集';
+  document.getElementById('taskEditId').value = task?.id || '';
+  document.getElementById('taskEditTitleInput').value = task?.title || '';
+  document.getElementById('taskEditDue').value = task?.due || (presetDateKey ? `${presetDateKey} 10:00` : '');
+  document.getElementById('taskEditStatus').value = task?.status || 'todo';
+  document.getElementById('taskEditPriority').value = task?.priority || 'medium';
+  document.getElementById('taskEditAssignee').value = task?.assignedTo || (state.session?.name || '');
+  document.getElementById('taskEditCustomer').value = task?.customerId || '';
+  document.getElementById('taskEditProperty').value = task?.propertyId || '';
+  document.getElementById('taskEditMemo').value = task?.memo || '';
+  editorReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'home';
+  go('task-edit');
+}
+window.openTaskEditor = openTaskEditor;
+
+function openScheduleEditor(scheduleId, presetDateKey) {
+  populateEditorSelects();
+  const isNew = !scheduleId;
+  const s = isNew ? null : state.schedules.find((x) => x.id === scheduleId);
+  document.getElementById('scheduleEditTitle').textContent = isNew ? '予定を新規作成' : '予定を編集';
+  document.getElementById('scheduleEditId').value = s?.id || '';
+  document.getElementById('scheduleEditTitleInput').value = s?.title || '';
+  document.getElementById('scheduleEditWhen').value = s?.when || (presetDateKey ? `${presetDateKey} 11:00` : '');
+  document.getElementById('scheduleEditStatus').value = s?.status || 'planned';
+  document.getElementById('scheduleEditLocation').value = s?.location || '';
+  document.getElementById('scheduleEditSync').value = s?.sync || 'Google / iPhone queued';
+  document.getElementById('scheduleEditCustomer').value = s?.customerId || '';
+  document.getElementById('scheduleEditProperty').value = s?.propertyId || '';
+  document.getElementById('scheduleEditResult').value = s?.resultStatus || '';
+  document.getElementById('scheduleEditMemo').value = s?.memo || '';
+  editorReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'home';
+  go('schedule-edit');
+}
+window.openScheduleEditor = openScheduleEditor;
+
+function goBackFromEditor(fallback) {
+  const back = editorReturnScreen && document.getElementById(`screen-${editorReturnScreen}`) ? editorReturnScreen : (fallback || 'home');
+  go(back);
+}
+window.goBackFromEditor = goBackFromEditor;
 
 function buildCompareRows(base, candidateA, candidateB) {
   const rows = [
@@ -1100,6 +1177,98 @@ function initEvents() {
   const calNext = document.getElementById('calNext');
   if (calPrev) calPrev.addEventListener('click', () => shiftHomeCalendar(-1));
   if (calNext) calNext.addEventListener('click', () => shiftHomeCalendar(1));
+
+  const taskEditForm = document.getElementById('taskEditForm');
+  if (taskEditForm) taskEditForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('taskEditId').value;
+    const payload = {
+      title: document.getElementById('taskEditTitleInput').value.trim(),
+      due: document.getElementById('taskEditDue').value.trim(),
+      status: document.getElementById('taskEditStatus').value,
+      priority: document.getElementById('taskEditPriority').value,
+      assignedTo: document.getElementById('taskEditAssignee').value.trim(),
+      customerId: document.getElementById('taskEditCustomer').value || null,
+      propertyId: document.getElementById('taskEditProperty').value || null,
+      memo: document.getElementById('taskEditMemo').value
+    };
+    if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
+    if (id) {
+      const t = state.tasks.find((x) => x.id === id);
+      if (t) Object.assign(t, payload);
+    } else {
+      state.tasks.unshift({ id: uid('tk', state.tasks), sourcePostId: null, ...payload });
+    }
+    saveState();
+    rerenderAll();
+    showNotice(id ? 'タスクを更新しました。' : 'タスクを作成しました。');
+    goBackFromEditor('tasks');
+  });
+  const taskDoneBtn = document.getElementById('taskEditDoneBtn');
+  if (taskDoneBtn) taskDoneBtn.addEventListener('click', () => {
+    const id = document.getElementById('taskEditId').value;
+    if (!id) { showNotice('先に保存してください。', 'error'); return; }
+    markTaskDone(id);
+    goBackFromEditor('tasks');
+  });
+  const taskToScheduleBtn = document.getElementById('taskEditToScheduleBtn');
+  if (taskToScheduleBtn) taskToScheduleBtn.addEventListener('click', () => {
+    const id = document.getElementById('taskEditId').value;
+    if (!id) { showNotice('先に保存してください。', 'error'); return; }
+    createScheduleFromTask(id);
+  });
+  const taskDeleteBtn = document.getElementById('taskEditDeleteBtn');
+  if (taskDeleteBtn) taskDeleteBtn.addEventListener('click', () => {
+    const id = document.getElementById('taskEditId').value;
+    if (!id) { goBackFromEditor('tasks'); return; }
+    if (!confirm('このタスクを削除しますか？')) return;
+    const idx = state.tasks.findIndex((x) => x.id === id);
+    if (idx >= 0) state.tasks.splice(idx, 1);
+    saveState();
+    rerenderAll();
+    showNotice('タスクを削除しました。');
+    goBackFromEditor('tasks');
+  });
+
+  const scheduleEditForm = document.getElementById('scheduleEditForm');
+  if (scheduleEditForm) scheduleEditForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('scheduleEditId').value;
+    const payload = {
+      title: document.getElementById('scheduleEditTitleInput').value.trim(),
+      when: document.getElementById('scheduleEditWhen').value.trim(),
+      status: document.getElementById('scheduleEditStatus').value,
+      location: document.getElementById('scheduleEditLocation').value.trim(),
+      sync: document.getElementById('scheduleEditSync').value.trim(),
+      customerId: document.getElementById('scheduleEditCustomer').value || null,
+      propertyId: document.getElementById('scheduleEditProperty').value || null,
+      resultStatus: document.getElementById('scheduleEditResult').value,
+      memo: document.getElementById('scheduleEditMemo').value
+    };
+    if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
+    if (id) {
+      const s = state.schedules.find((x) => x.id === id);
+      if (s) Object.assign(s, payload);
+    } else {
+      state.schedules.unshift({ id: uid('sc', state.schedules), ...payload });
+    }
+    saveState();
+    rerenderAll();
+    showNotice(id ? '予定を更新しました。' : '予定を作成しました。');
+    goBackFromEditor('calendar');
+  });
+  const scheduleDeleteBtn = document.getElementById('scheduleEditDeleteBtn');
+  if (scheduleDeleteBtn) scheduleDeleteBtn.addEventListener('click', () => {
+    const id = document.getElementById('scheduleEditId').value;
+    if (!id) { goBackFromEditor('calendar'); return; }
+    if (!confirm('この予定を削除しますか？')) return;
+    const idx = state.schedules.findIndex((x) => x.id === id);
+    if (idx >= 0) state.schedules.splice(idx, 1);
+    saveState();
+    rerenderAll();
+    showNotice('予定を削除しました。');
+    goBackFromEditor('calendar');
+  });
 
   document.querySelectorAll('.feed-tab').forEach((btn) => btn.addEventListener('click', () => {
     state.activeFeed = btn.dataset.feed;

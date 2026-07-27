@@ -177,46 +177,89 @@
         <section id="screen-tasks" class="screen">
           <div class="screen-header">
             <h2>タスク</h2>
-            <p>SNSから受けた案件を進行管理</p>
+            <p>タップで詳細・編集へ</p>
           </div>
           <article class="panel mobile-panel">
             <div class="panel-header">
               <h3>タスク一覧</h3>
-              <span class="pill" id="taskCountPill"></span>
+              <div class="panel-header-actions">
+                <span class="pill" id="taskCountPill"></span>
+                <button type="button" class="primary-btn small" onclick="openTaskEditor()">＋ 新規</button>
+              </div>
             </div>
             <div id="taskList" class="stack"></div>
           </article>
+        </section>
+
+        <section id="screen-task-edit" class="screen">
+          <div class="screen-header with-back">
+            <button type="button" class="back-btn" onclick="goBackFromEditor('tasks')">‹ 戻る</button>
+            <h2 id="taskEditTitle">タスクを新規作成</h2>
+          </div>
           <article class="panel mobile-panel">
-            <div class="panel-header">
-              <h3>タスク詳細</h3>
-            </div>
-            <div id="taskDetail"></div>
+            <form id="taskEditForm" class="form compact-form">
+              <input type="hidden" name="id" id="taskEditId" value="" />
+              <label><span>タイトル</span><input name="title" id="taskEditTitleInput" placeholder="例: 比較資料送付" /></label>
+              <div class="inline-grid two">
+                <label><span>期限</span><input name="due" id="taskEditDue" placeholder="例: 今日 10:00 / 2026-07-27 10:00" /></label>
+                <label><span>状態</span><select name="status" id="taskEditStatus"><option value="todo">未着手</option><option value="doing">進行中</option><option value="hold">保留</option><option value="done">完了</option><option value="returned">差戻し</option></select></label>
+                <label><span>優先度</span><select name="priority" id="taskEditPriority"><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
+                <label><span>担当</span><input name="assignedTo" id="taskEditAssignee" placeholder="例: 田中" /></label>
+                <label><span>顧客</span><select name="customerId" id="taskEditCustomer"></select></label>
+                <label><span>物件</span><select name="propertyId" id="taskEditProperty"></select></label>
+              </div>
+              <label><span>メモ</span><textarea name="memo" id="taskEditMemo" placeholder="備考・次のアクションなど"></textarea></label>
+              <div class="edit-actions">
+                <button type="submit" class="primary-btn full">保存</button>
+                <button type="button" class="secondary-btn" id="taskEditDoneBtn">完了にする</button>
+                <button type="button" class="secondary-btn" id="taskEditToScheduleBtn">予定化</button>
+                <button type="button" class="ghost-btn danger" id="taskEditDeleteBtn">削除</button>
+              </div>
+            </form>
           </article>
         </section>
 
         <section id="screen-calendar" class="screen">
           <div class="screen-header">
             <h2>予定</h2>
-            <p>予定化・結果入力・同期状態</p>
+            <p>タップで詳細・編集・結果登録へ</p>
           </div>
           <article class="panel mobile-panel">
             <div class="panel-header">
               <h3>予定一覧</h3>
-              <span class="pill" id="scheduleCountPill"></span>
+              <div class="panel-header-actions">
+                <span class="pill" id="scheduleCountPill"></span>
+                <button type="button" class="primary-btn small" onclick="openScheduleEditor()">＋ 新規</button>
+              </div>
             </div>
             <div id="scheduleList" class="stack"></div>
           </article>
+        </section>
+
+        <section id="screen-schedule-edit" class="screen">
+          <div class="screen-header with-back">
+            <button type="button" class="back-btn" onclick="goBackFromEditor('calendar')">‹ 戻る</button>
+            <h2 id="scheduleEditTitle">予定を新規作成</h2>
+          </div>
           <article class="panel mobile-panel">
-            <div class="panel-header">
-              <h3>結果入力</h3>
-            </div>
-            <form id="resultForm" class="form compact-form">
-              <label><span>対象予定</span><select name="scheduleId" id="resultScheduleSelect"></select></label>
-              <label><span>結果区分</span><select name="resultStatus"><option value="positive">前向き</option><option value="continue">検討継続</option><option value="review">条件見直し</option><option value="declined">見送り</option><option value="re_propose">再提案必要</option></select></label>
-              <label><span>メモ</span><textarea name="memo">収納量に懸念あり。別物件提案へ進める。</textarea></label>
-              <button type="submit" class="primary-btn">結果登録</button>
+            <form id="scheduleEditForm" class="form compact-form">
+              <input type="hidden" name="id" id="scheduleEditId" value="" />
+              <label><span>タイトル</span><input name="title" id="scheduleEditTitleInput" placeholder="例: 内見" /></label>
+              <div class="inline-grid two">
+                <label><span>日時</span><input name="when" id="scheduleEditWhen" placeholder="例: 今日 11:00 / 2026-07-27 11:00" /></label>
+                <label><span>状態</span><select name="status" id="scheduleEditStatus"><option value="planned">予定中</option><option value="done">完了</option><option value="cancelled">キャンセル</option><option value="rescheduled">再調整</option></select></label>
+                <label><span>場所</span><input name="location" id="scheduleEditLocation" placeholder="例: 現地 / 店舗" /></label>
+                <label><span>同期</span><input name="sync" id="scheduleEditSync" placeholder="例: Google / iPhone queued" /></label>
+                <label><span>顧客</span><select name="customerId" id="scheduleEditCustomer"></select></label>
+                <label><span>物件</span><select name="propertyId" id="scheduleEditProperty"></select></label>
+              </div>
+              <label><span>結果区分</span><select name="resultStatus" id="scheduleEditResult"><option value="">未登録</option><option value="positive">前向き</option><option value="continue">検討継続</option><option value="review">条件見直し</option><option value="declined">見送り</option><option value="re_propose">再提案必要</option></select></label>
+              <label><span>メモ / 結果内容</span><textarea name="memo" id="scheduleEditMemo" placeholder="商談メモ / 結果・次回対応"></textarea></label>
+              <div class="edit-actions">
+                <button type="submit" class="primary-btn full">保存</button>
+                <button type="button" class="ghost-btn danger" id="scheduleEditDeleteBtn">削除</button>
+              </div>
             </form>
-          </article>
         </section>
 
         <section id="screen-messages" class="screen">

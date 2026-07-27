@@ -143,12 +143,16 @@
               <label><span>紐づく物件</span><select name="propertyId" id="snsPropertySelect"></select></label>
               <label><span>タイトル</span><input name="title" value="港区マンション G 価格改定共有" /></label>
               <label><span>本文</span><textarea name="body">価格改定に伴い、再販開始前の共有を行います。</textarea></label>
+              <input type="hidden" name="editingPostId" id="snsEditingPostId" value="" />
               <label>
-                <span>画像添付（最大 4枚）</span>
-                <input type="file" id="snsImageInput" accept="image/*" multiple />
+                <span>画像添付（1枚）</span>
+                <input type="file" id="snsImageInput" accept="image/*" />
               </label>
               <div id="snsImagePreview" class="image-preview"></div>
-              <button type="submit" class="primary-btn">投稿を保存</button>
+              <div class="form-actions wrap-actions">
+                <button type="submit" id="snsSubmitBtn" class="primary-btn">投稿を保存</button>
+                <button type="button" id="snsCancelEditBtn" class="secondary-btn hidden">編集をキャンセル</button>
+              </div>
             </form>
           </details>
         </section>

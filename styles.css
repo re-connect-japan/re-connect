@@ -351,6 +351,14 @@ details.panel[open] > summary { margin-bottom: 8px; border-bottom: 1px dashed va
   border: none; cursor: pointer;
   background: rgba(0,0,0,0.55); color: white; font-size: 14px; line-height: 1;
 }
+.feed-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.feed-actions .ghost-btn { padding: 6px 4px; font-size: 12px; }
+.ghost-btn.danger { color: var(--danger); }
 .feed-images {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

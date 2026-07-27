@@ -180,23 +180,18 @@ function setupSnsImagePicker() {
   const input = document.getElementById('snsImageInput');
   if (!input) return;
   input.addEventListener('change', async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    for (const file of files) {
-      if (snsAttachedImages.length >= 4) {
-        showNotice('画像は最大 4枚までです。', 'error');
-        break;
-      }
-      if (!file.type.startsWith('image/')) continue;
-      if (file.size > 15 * 1024 * 1024) {
-        showNotice(`${file.name} は大きすぎます（15MB以下）。`, 'error');
-        continue;
-      }
-      try {
-        const dataUrl = await fileToCompressedDataUrl(file);
-        snsAttachedImages.push(dataUrl);
-      } catch { /* skip */ }
+    const file = (e.target.files || [])[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { e.target.value = ''; return; }
+    if (file.size > 15 * 1024 * 1024) {
+      showNotice(`${file.name} は大きすぎます（15MB以下）。`, 'error');
+      e.target.value = '';
+      return;
     }
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      snsAttachedImages = [dataUrl];
+    } catch { /* skip */ }
     renderSnsImagePreview();
     e.target.value = '';
   });
@@ -472,22 +467,23 @@ function feedThumb(post) {
 function feedItemHtml(post) {
   const customer = getCustomer(post.customerId);
   const property = getProperty(post.propertyId);
-  const extraImages = (post.images && post.images.length > 1)
-    ? `<div class="feed-images">${post.images.slice(1, 4).map((src) => `<div class="fimg"><img src="${src}" alt=""></div>`).join('')}</div>`
-    : '';
   return `
-    <div class="feed-card" onclick="openPostAsTask('${post.id}')">
+    <div class="feed-card">
       ${feedThumb(post)}
       <div class="feed-body">
         <div class="feed-title">${post.title}</div>
         <div class="feed-excerpt">${post.body}</div>
-        ${extraImages}
         <div class="feed-meta">
           <span>${post.author}</span><span class="dot">•</span>
           <span>${visibilityLabel(post.visibilityCode)}</span>
           ${customer ? `<span class="dot">•</span><span>${customer.name}</span>` : ''}
           ${property ? `<span class="dot">•</span><span>${property.title}</span>` : ''}
           ${post.unread ? `<span class="dot">•</span><span style="color:var(--danger);font-weight:800;">未読${post.unread}</span>` : ''}
+        </div>
+        <div class="feed-actions">
+          <button type="button" class="ghost-btn" onclick="startEditPost('${post.id}')">編集</button>
+          <button type="button" class="ghost-btn" onclick="taskFromPost('${post.id}')">タスク化</button>
+          <button type="button" class="ghost-btn danger" onclick="deletePost('${post.id}')">削除</button>
         </div>
       </div>
     </div>
@@ -516,6 +512,60 @@ function openPostAsTask(postId) {
   createTaskFromPost(postId);
 }
 window.openPostAsTask = openPostAsTask;
+
+function startEditPost(postId) {
+  const post = state.posts.find((p) => p.id === postId);
+  if (!post) return;
+  const form = document.getElementById('snsForm');
+  if (!form) return;
+  form.querySelector('select[name="visibility"]').value = post.visibilityCode || 'store_only';
+  const propSel = form.querySelector('select[name="propertyId"]');
+  if (propSel) propSel.value = post.propertyId || '';
+  form.querySelector('input[name="title"]').value = post.title || '';
+  form.querySelector('textarea[name="body"]').value = post.body || '';
+  document.getElementById('snsEditingPostId').value = post.id;
+  snsAttachedImages = (post.images && post.images.length) ? [post.images[0]] : [];
+  renderSnsImagePreview();
+  const fileInput = document.getElementById('snsImageInput');
+  if (fileInput) fileInput.value = '';
+  const submitBtn = document.getElementById('snsSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '変更を保存';
+  const cancelBtn = document.getElementById('snsCancelEditBtn');
+  if (cancelBtn) cancelBtn.classList.remove('hidden');
+  const composer = document.getElementById('snsComposer');
+  if (composer && composer.tagName === 'DETAILS') composer.open = true;
+  go('sns');
+  setTimeout(() => composer && composer.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+}
+window.startEditPost = startEditPost;
+
+function cancelEditPost() {
+  document.getElementById('snsEditingPostId').value = '';
+  snsAttachedImages = [];
+  renderSnsImagePreview();
+  const form = document.getElementById('snsForm');
+  if (form) form.reset();
+  const submitBtn = document.getElementById('snsSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '投稿を保存';
+  const cancelBtn = document.getElementById('snsCancelEditBtn');
+  if (cancelBtn) cancelBtn.classList.add('hidden');
+}
+window.cancelEditPost = cancelEditPost;
+
+function deletePost(postId) {
+  const idx = state.posts.findIndex((p) => p.id === postId);
+  if (idx < 0) return;
+  if (!confirm('この投稿を削除しますか？')) return;
+  state.posts.splice(idx, 1);
+  if (document.getElementById('snsEditingPostId').value === postId) cancelEditPost();
+  saveState();
+  rerenderAll();
+  showNotice('投稿を削除しました。');
+}
+window.deletePost = deletePost;
+
+function taskFromPost(postId) { createTaskFromPost(postId); }
+window.taskFromPost = taskFromPost;
 
 function renderTasks() {
   document.getElementById('taskCountPill').textContent = `${state.tasks.length}件`;
@@ -965,6 +1015,8 @@ function initEvents() {
     e.preventDefault();
     const submitBtn = e.target.querySelector('button[type="submit"]');
     if (submitBtn && submitBtn.disabled) return;
+    const editingId = document.getElementById('snsEditingPostId').value || '';
+    const originalLabel = editingId ? '変更を保存' : '投稿を保存';
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '保存中…'; }
     try {
       const form = new FormData(e.target);
@@ -972,27 +1024,46 @@ function initEvents() {
       if (visibilityCode === 'public' && !requirePermission('createPublicPost', '一般公開は管理者のみ可能です。')) return;
       const propertyId = form.get('propertyId') || null;
       const linkedProperty = propertyId ? getProperty(propertyId) : null;
-      const newPost = {
-        id: uid('sp', state.posts),
-        title: form.get('title'),
-        visibility: visibilityLabel(visibilityCode),
-        visibilityCode,
-        author: state.session?.name || '田中',
-        unread: 0,
-        body: form.get('body'),
-        emoji: '📝',
-        images: snsAttachedImages.slice(0, 4),
-        customerId: linkedProperty?.customerId || null,
-        propertyId
-      };
-      state.posts.unshift(newPost);
+      const image = snsAttachedImages[0] || null;
+
+      if (editingId) {
+        const existing = state.posts.find((p) => p.id === editingId);
+        if (existing) {
+          existing.title = form.get('title');
+          existing.body = form.get('body');
+          existing.visibility = visibilityLabel(visibilityCode);
+          existing.visibilityCode = visibilityCode;
+          existing.propertyId = propertyId;
+          existing.customerId = linkedProperty?.customerId || null;
+          existing.images = image ? [image] : [];
+        }
+      } else {
+        const newPost = {
+          id: uid('sp', state.posts),
+          title: form.get('title'),
+          visibility: visibilityLabel(visibilityCode),
+          visibilityCode,
+          author: state.session?.name || '田中',
+          unread: 0,
+          body: form.get('body'),
+          emoji: '📝',
+          images: image ? [image] : [],
+          customerId: linkedProperty?.customerId || null,
+          propertyId
+        };
+        state.posts.unshift(newPost);
+      }
+
       snsAttachedImages = [];
       renderSnsImagePreview();
       const fileInput = document.getElementById('snsImageInput');
       if (fileInput) fileInput.value = '';
+      document.getElementById('snsEditingPostId').value = '';
+      const cancelBtn = document.getElementById('snsCancelEditBtn');
+      if (cancelBtn) cancelBtn.classList.add('hidden');
       saveState();
       rerenderAll();
-      showNotice('SNS投稿を保存しました。');
+      showNotice(editingId ? '投稿を更新しました。' : 'SNS投稿を保存しました。');
       const composer = document.getElementById('snsComposer');
       if (composer && composer.tagName === 'DETAILS') composer.open = false;
     } catch (err) {
@@ -1002,6 +1073,9 @@ function initEvents() {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '投稿を保存'; }
     }
   });
+
+  const cancelEditBtn = document.getElementById('snsCancelEditBtn');
+  if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditPost);
 
   document.getElementById('resultForm').addEventListener('submit', (e) => {
     e.preventDefault();

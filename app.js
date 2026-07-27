@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'reconnect_mvp_state_v5';
+const STORAGE_KEY = 'reconnect_mvp_state_v6';
 
 const DEFAULT_USER = { id: 'u_me', name: '田中' };
 

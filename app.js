@@ -193,7 +193,6 @@ function fillSelect(selectId, items, formatter, includeBlank = false) {
 
 function populateLinkedSelects() {
   fillSelect('propertyCustomerSelect', state.customers, (c) => c.name, true);
-  fillSelect('snsCustomerSelect', state.customers, (c) => c.name);
   fillSelect('snsPropertySelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title}`);
   fillSelect('documentCustomerSelect', state.customers, (c) => c.name);
   fillSelect('documentBasePropertySelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title}`);
@@ -822,6 +821,8 @@ function initEvents() {
     const form = new FormData(e.target);
     const visibilityCode = form.get('visibility');
     if (visibilityCode === 'public' && !requirePermission('createPublicPost', '一般公開は管理者のみ可能です。')) return;
+    const propertyId = form.get('propertyId') || null;
+    const linkedProperty = propertyId ? getProperty(propertyId) : null;
     state.posts.unshift({
       id: uid('sp', state.posts),
       title: form.get('title'),
@@ -831,8 +832,8 @@ function initEvents() {
       unread: 0,
       body: form.get('body'),
       emoji: '📝',
-      customerId: form.get('customerId'),
-      propertyId: form.get('propertyId')
+      customerId: linkedProperty?.customerId || null,
+      propertyId
     });
     saveState();
     rerenderAll();

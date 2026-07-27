@@ -99,6 +99,9 @@ function createInitialState() {
 }
 
 let state = loadState();
+let homeCalendarView = 'today';
+let homeCalendarCursor = null;
+let homeCalendarSelected = null;
 let snsAttachedImages = [];
 
 function readFileAsDataUrl(file) {
@@ -335,13 +338,50 @@ function updatePropertyMode() {
 }
 
 /* ============ Renderers ============ */
+function parseWhen(when) {
+  // "今日 11:00", "明日 11:00", "2026-07-27 11:00", "2026/07/27 11:00", "11:00" などをパース
+  if (!when) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let base = new Date(today);
+  let rest = String(when).trim();
+  const isoMatch = rest.match(/^(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})/);
+  if (isoMatch) {
+    base = new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+    rest = rest.slice(isoMatch[0].length).trim();
+  } else if (rest.startsWith('今日')) {
+    rest = rest.slice(2).trim();
+  } else if (rest.startsWith('明日')) {
+    base = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    rest = rest.slice(2).trim();
+  } else if (rest.startsWith('明後日')) {
+    base = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+    rest = rest.slice(3).trim();
+  } else if (rest.startsWith('昨日')) {
+    base = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    rest = rest.slice(2).trim();
+  }
+  const timeMatch = rest.match(/(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    base.setHours(Number(timeMatch[1]), Number(timeMatch[2]), 0, 0);
+  }
+  return base;
+}
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function sameDay(a, b) {
+  return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 function renderHome() {
   const dateEl = document.getElementById('homeDateLabel');
+  const today = new Date();
   if (dateEl) {
-    const d = new Date();
-    dateEl.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+    dateEl.textContent = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
   }
-  document.getElementById('homeSchedules').innerHTML = state.schedules.map((s) => {
+  const todayList = document.getElementById('homeScheduleToday');
+  if (todayList) todayList.innerHTML = state.schedules.map((s) => {
     const c = getCustomer(s.customerId); const p = getProperty(s.propertyId);
     return `
       <div class="item">
@@ -354,6 +394,8 @@ function renderHome() {
       </div>
     `;
   }).join('') || '<div class="empty-state">予定はありません</div>';
+
+  renderHomeCalendarMonth();
 
   document.getElementById('homeTasks').innerHTML = state.tasks.map((t) => {
     const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
@@ -386,6 +428,125 @@ function renderHome() {
   `).join('');
 
   renderFeed('homeFeed', 3);
+}
+
+function setHomeCalendarView(view) {
+  homeCalendarView = view;
+  document.querySelectorAll('#homeCalendarTabs .seg-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+  const todayEl = document.getElementById('homeScheduleToday');
+  const monthEl = document.getElementById('homeScheduleMonth');
+  const titleEl = document.getElementById('homeScheduleTitle');
+  if (view === 'month') {
+    if (todayEl) todayEl.classList.add('hidden');
+    if (monthEl) monthEl.classList.remove('hidden');
+    if (titleEl) titleEl.textContent = '今月の予定';
+    renderHomeCalendarMonth();
+  } else {
+    if (todayEl) todayEl.classList.remove('hidden');
+    if (monthEl) monthEl.classList.add('hidden');
+    if (titleEl) titleEl.textContent = '今日の予定';
+  }
+}
+
+function renderHomeCalendarMonth() {
+  const grid = document.getElementById('calGrid');
+  const titleEl = document.getElementById('calTitle');
+  if (!grid || !titleEl) return;
+  if (!homeCalendarCursor) {
+    const now = new Date();
+    homeCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    homeCalendarCursor = new Date(homeCalendarCursor.getFullYear(), homeCalendarCursor.getMonth(), 1);
+  }
+  const y = homeCalendarCursor.getFullYear();
+  const m = homeCalendarCursor.getMonth();
+  titleEl.textContent = `${y}年${m + 1}月`;
+
+  // 日付ごとの予定・タスクを集計
+  const scheduleByDate = {};
+  state.schedules.forEach((s) => {
+    const d = parseWhen(s.when);
+    if (!d) return;
+    const key = dateKey(d);
+    (scheduleByDate[key] = scheduleByDate[key] || []).push(s);
+  });
+  const taskByDate = {};
+  state.tasks.forEach((t) => {
+    const d = parseWhen(t.due);
+    if (!d) return;
+    const key = dateKey(d);
+    (taskByDate[key] = taskByDate[key] || []).push(t);
+  });
+
+  const firstDay = new Date(y, m, 1);
+  const startWeekday = firstDay.getDay();
+  const startDate = new Date(y, m, 1 - startWeekday);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+    const key = dateKey(d);
+    const isCurrentMonth = d.getMonth() === m;
+    const isToday = sameDay(d, today);
+    const isSelected = homeCalendarSelected && sameDay(d, homeCalendarSelected);
+    const scheduleCount = (scheduleByDate[key] || []).length;
+    const taskCount = (taskByDate[key] || []).length;
+    const dotSchedule = scheduleCount ? '<span class="dot dot-s" title="予定"></span>' : '';
+    const dotTask = taskCount ? '<span class="dot dot-t" title="タスク"></span>' : '';
+    cells.push(`
+      <button type="button" class="cal-day ${isCurrentMonth ? '' : 'muted'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" data-key="${key}">
+        <span class="num">${d.getDate()}</span>
+        <span class="dots">${dotSchedule}${dotTask}</span>
+      </button>
+    `);
+  }
+  grid.innerHTML = cells.join('');
+  grid.querySelectorAll('.cal-day').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const [yy, mm, dd] = btn.dataset.key.split('-').map(Number);
+      homeCalendarSelected = new Date(yy, mm - 1, dd);
+      renderHomeCalendarMonth();
+    });
+  });
+  renderHomeCalendarDayDetail(scheduleByDate, taskByDate);
+}
+
+function renderHomeCalendarDayDetail(scheduleByDate, taskByDate) {
+  const root = document.getElementById('calDayDetail');
+  if (!root) return;
+  const target = homeCalendarSelected || new Date();
+  const key = dateKey(target);
+  const scheds = scheduleByDate[key] || [];
+  const tks = taskByDate[key] || [];
+  const label = `${target.getFullYear()}年${target.getMonth()+1}月${target.getDate()}日`;
+  if (!scheds.length && !tks.length) {
+    root.innerHTML = `<div class="cal-day-title">${label}</div><div class="empty-state">予定とタスクはありません</div>`;
+    return;
+  }
+  root.innerHTML = `
+    <div class="cal-day-title">${label}</div>
+    ${scheds.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">予定</div>${scheds.map((s) => {
+      const c = getCustomer(s.customerId); const p = getProperty(s.propertyId);
+      return `<div class="item"><div class="item-title">${s.when} ${s.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${s.status}</div></div>`;
+    }).join('')}</div>` : ''}
+    ${tks.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">タスク</div>${tks.map((t) => {
+      const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
+      return `<div class="item"><div class="item-title">${t.due} ${t.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div></div>`;
+    }).join('')}</div>` : ''}
+  `;
+}
+
+function shiftHomeCalendar(delta) {
+  if (!homeCalendarCursor) {
+    const now = new Date();
+    homeCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  homeCalendarCursor = new Date(homeCalendarCursor.getFullYear(), homeCalendarCursor.getMonth() + delta, 1);
+  renderHomeCalendarMonth();
 }
 
 function renderCustomers() {
@@ -931,6 +1092,14 @@ function initEvents() {
   document.getElementById('logoutBtn').addEventListener('click', logout);
   document.getElementById('markAllReadBtn').addEventListener('click', markAllRead);
   document.getElementById('printDocumentBtn').addEventListener('click', printDocument);
+
+  document.querySelectorAll('#homeCalendarTabs .seg-tab').forEach((btn) => btn.addEventListener('click', () => {
+    setHomeCalendarView(btn.dataset.view);
+  }));
+  const calPrev = document.getElementById('calPrev');
+  const calNext = document.getElementById('calNext');
+  if (calPrev) calPrev.addEventListener('click', () => shiftHomeCalendar(-1));
+  if (calNext) calNext.addEventListener('click', () => shiftHomeCalendar(1));
 
   document.querySelectorAll('.feed-tab').forEach((btn) => btn.addEventListener('click', () => {
     state.activeFeed = btn.dataset.feed;

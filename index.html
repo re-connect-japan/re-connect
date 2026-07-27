@@ -82,10 +82,25 @@
 
           <article class="panel mobile-panel">
             <div class="panel-header">
-              <h3>今日の予定</h3>
-              <button class="ghost-btn" data-screen-link="calendar">全て見る</button>
+              <h3 id="homeScheduleTitle">今日の予定</h3>
+              <div class="seg-tabs" id="homeCalendarTabs">
+                <button type="button" class="seg-tab active" data-view="today">今日</button>
+                <button type="button" class="seg-tab" data-view="month">月</button>
+              </div>
             </div>
-            <div id="homeSchedules" class="stack"></div>
+            <div id="homeScheduleToday" class="stack view-today"></div>
+            <div id="homeScheduleMonth" class="view-month hidden">
+              <div class="cal-header">
+                <button type="button" class="icon-btn" id="calPrev" aria-label="前の月">‹</button>
+                <div class="cal-title" id="calTitle">2026年7月</div>
+                <button type="button" class="icon-btn" id="calNext" aria-label="次の月">›</button>
+              </div>
+              <div class="cal-weekdays">
+                <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+              <div class="cal-day-detail" id="calDayDetail"></div>
+            </div>
           </article>
 
           <article class="panel mobile-panel">

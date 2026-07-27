@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'reconnect_mvp_state_v2';
+const STORAGE_KEY = 'reconnect_mvp_state_v3';
 
 const DEMO_USERS = {
   admin: { id: 'u_admin', name: '鈴木', role: 'admin', email: 'admin@reconnect.local' },
@@ -20,25 +20,49 @@ function createInitialState() {
     ],
     customers: [
       { id: 'cu_001', name: '山田様', owner: '田中', budget: '5,000万〜5,800万', needs: '駅近 / 2LDK / 収納重視', nextAction: '別物件提案', heat: 'high' },
-      { id: 'cu_002', name: '中村様', owner: '田中', budget: '4,000万台', needs: '価格重視 / ペット可', nextAction: '価格交渉面談', heat: 'medium' }
+      { id: 'cu_002', name: '中村様', owner: '田中', budget: '賃料18万円以内', needs: 'ペット可 / 2人入居 / 駅徒歩10分以内', nextAction: '内見候補調整', heat: 'medium' }
     ],
     properties: [
-      { id: 'pr_001', title: '港区マンション G', price: '5,480万円', layout: '2LDK', features: '収納多い / 再販案件 / 反響4件', status: '価格改定中' },
-      { id: 'pr_002', title: '港南レジデンス 402', price: '5,480万円', layout: '2LDK', features: '収納重視 / 最適候補', status: '提案候補' },
-      { id: 'pr_003', title: '白金タワー 1103', price: '5,620万円', layout: '2LDK', features: '駅近 / 比較候補', status: '提案候補' },
-      { id: 'pr_004', title: '芝浦コート 805', price: '5,390万円', layout: '2LDK', features: '価格重視 / 補欠候補', status: '提案候補' }
+      {
+        id: 'pr_001', customerId: 'cu_001', dealType: 'sale', title: '港区マンション G', propertyType: '中古マンション', area: '港区', address: '東京都港区芝浦1-2-3',
+        line: '山手線', station: '田町', walk: '7分', bus: 'なし', layout: '2LDK', builtYearMonth: '2018/03', structure: 'RC', totalFloors: '15階', floorLevel: '4階', roomNumber: '402', commonMemo: '反響4件。収納量評価高め。',
+        salePrice: '5,480万円', saleManagementFee: '12,000円', repairReserveFee: '8,500円', exclusiveArea: '68.40㎡', landArea: '-', buildingArea: '-', saleBalconyDirection: '南', totalUnits: '84戸', saleParking: '空有', saleParkingFee: '28,000円', topography: '平坦', zoning: '商業地域', coverageRatio: '80%', floorAreaRatio: '400%', saleCurrentStatus: '居住中', delivery: '相談', saleFacilities: 'オートロック / 宅配BOX / 追焚', ownerChange: 'なし',
+        rent: '', rentalManagementFee: '', guaranteeDeposit: '', rightMoney: '', gratuityFee: '', deposit: '', cancellationFee: '', availableFrom: '', buildingUsageArea: '', partialArea: '', roomCount: '', rentalBalconyDirection: '', rentalParking: '', rentalParkingFee: '', rentalCurrentStatus: '', rentalFacilitiesSummary: '', rentalNotes: '',
+        status: '価格改定中'
+      },
+      {
+        id: 'pr_002', customerId: 'cu_001', dealType: 'sale', title: '港南レジデンス 402', propertyType: '中古マンション', area: '港区', address: '東京都港区港南2-4-8',
+        line: '山手線', station: '品川', walk: '8分', bus: 'なし', layout: '2LDK', builtYearMonth: '2017/09', structure: 'RC', totalFloors: '14階', floorLevel: '4階', roomNumber: '402', commonMemo: '最適候補。収納重視。',
+        salePrice: '5,480万円', saleManagementFee: '11,500円', repairReserveFee: '7,800円', exclusiveArea: '67.90㎡', landArea: '-', buildingArea: '-', saleBalconyDirection: '南東', totalUnits: '66戸', saleParking: '空無', saleParkingFee: '-', topography: '平坦', zoning: '準工業地域', coverageRatio: '60%', floorAreaRatio: '300%', saleCurrentStatus: '空室', delivery: '即可', saleFacilities: '宅配BOX / 食洗機', ownerChange: 'なし',
+        rent: '', rentalManagementFee: '', guaranteeDeposit: '', rightMoney: '', gratuityFee: '', deposit: '', cancellationFee: '', availableFrom: '', buildingUsageArea: '', partialArea: '', roomCount: '', rentalBalconyDirection: '', rentalParking: '', rentalParkingFee: '', rentalCurrentStatus: '', rentalFacilitiesSummary: '', rentalNotes: '',
+        status: '提案候補'
+      },
+      {
+        id: 'pr_003', customerId: 'cu_001', dealType: 'sale', title: '白金タワー 1103', propertyType: '中古マンション', area: '港区', address: '東京都港区白金1-10-2',
+        line: '南北線', station: '白金高輪', walk: '3分', bus: 'なし', layout: '2LDK', builtYearMonth: '2015/12', structure: 'RC', totalFloors: '23階', floorLevel: '11階', roomNumber: '1103', commonMemo: '駅近比較用。',
+        salePrice: '5,620万円', saleManagementFee: '13,200円', repairReserveFee: '9,300円', exclusiveArea: '66.20㎡', landArea: '-', buildingArea: '-', saleBalconyDirection: '西', totalUnits: '102戸', saleParking: '空有', saleParkingFee: '32,000円', topography: '平坦', zoning: '商業地域', coverageRatio: '80%', floorAreaRatio: '500%', saleCurrentStatus: '空室', delivery: '相談', saleFacilities: '内廊下 / 床暖房', ownerChange: 'なし',
+        rent: '', rentalManagementFee: '', guaranteeDeposit: '', rightMoney: '', gratuityFee: '', deposit: '', cancellationFee: '', availableFrom: '', buildingUsageArea: '', partialArea: '', roomCount: '', rentalBalconyDirection: '', rentalParking: '', rentalParkingFee: '', rentalCurrentStatus: '', rentalFacilitiesSummary: '', rentalNotes: '',
+        status: '提案候補'
+      },
+      {
+        id: 'pr_004', customerId: 'cu_002', dealType: 'rental', title: '芝浦コート 805', propertyType: '貸マンション', area: '港区', address: '東京都港区芝浦4-5-1',
+        line: '山手線', station: '田町', walk: '9分', bus: 'なし', layout: '1LDK', builtYearMonth: '2020/05', structure: 'RC', totalFloors: '12階', floorLevel: '8階', roomNumber: '805', commonMemo: '2人入居可。ペット相談。',
+        salePrice: '', saleManagementFee: '', repairReserveFee: '', exclusiveArea: '', landArea: '', buildingArea: '', saleBalconyDirection: '', totalUnits: '', saleParking: '', saleParkingFee: '', topography: '', zoning: '', coverageRatio: '', floorAreaRatio: '', saleCurrentStatus: '', delivery: '', saleFacilities: '', ownerChange: '',
+        rent: '185,000円', rentalManagementFee: '10,000円', guaranteeDeposit: '1ヶ月', rightMoney: 'なし', gratuityFee: '1ヶ月', deposit: '1ヶ月', cancellationFee: 'なし', availableFrom: '即入居可', buildingUsageArea: '54.10㎡', partialArea: 'バルコニー 7.2㎡', roomCount: '2室', rentalBalconyDirection: '東', rentalParking: '近隣確保', rentalParkingFee: '22,000円', rentalCurrentStatus: '空室', rentalFacilitiesSummary: '都市ガス / 給湯 / 冷暖房', rentalNotes: '保証会社必須 / ペット相談',
+        status: '賃貸提案中'
+      }
     ],
     posts: [
       { id: 'sp_001', title: '価格改定共有 / 港区マンション G', visibility: 'グループ業者のみ', visibilityCode: 'broker_group_only', author: '田中', unread: 3, body: '価格改定に伴い再販開始前の共有を行います。', customerId: 'cu_001', propertyId: 'pr_001' },
-      { id: 'sp_002', title: '内見結果共有', visibility: '店舗内', visibilityCode: 'store_only', author: '田中', unread: 0, body: '収納量に懸念あり。別物件提案へ進めます。', customerId: 'cu_001', propertyId: 'pr_001' }
+      { id: 'sp_002', title: '賃貸候補共有 / 芝浦コート 805', visibility: '店舗内', visibilityCode: 'store_only', author: '田中', unread: 0, body: 'ペット相談可。内見候補を調整したいです。', customerId: 'cu_002', propertyId: 'pr_004' }
     ],
     tasks: [
       { id: 'tk_001', title: '比較資料送付', status: 'doing', priority: 'high', due: '今日 10:00', customerId: 'cu_001', propertyId: 'pr_001', sourcePostId: 'sp_001', assignedTo: '田中' },
-      { id: 'tk_002', title: '鍵手配確認', status: 'todo', priority: 'medium', due: '今日 13:00', customerId: 'cu_001', propertyId: 'pr_001', sourcePostId: null, assignedTo: '田中' }
+      { id: 'tk_002', title: '賃貸内見候補連絡', status: 'todo', priority: 'medium', due: '今日 13:00', customerId: 'cu_002', propertyId: 'pr_004', sourcePostId: 'sp_002', assignedTo: '田中' }
     ],
     schedules: [
       { id: 'sc_001', title: '再内見候補確定', status: 'planned', when: '今日 11:00', customerId: 'cu_001', propertyId: 'pr_001', sync: 'Google / iPhone queued', resultStatus: '', memo: '' },
-      { id: 'sc_002', title: '価格会議', status: 'planned', when: '今日 15:00', customerId: null, propertyId: 'pr_001', sync: '未同期', resultStatus: '', memo: '' }
+      { id: 'sc_002', title: '賃貸内見', status: 'planned', when: '今日 15:00', customerId: 'cu_002', propertyId: 'pr_004', sync: '未同期', resultStatus: '', memo: '' }
     ]
   };
 }
@@ -53,6 +77,7 @@ function loadState() {
     return createInitialState();
   }
 }
+
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function resetState() { state = createInitialState(); saveState(); }
 function uid(prefix, list) { return `${prefix}_${String(list.length + 1).padStart(3, '0')}`; }
@@ -64,6 +89,16 @@ function visibilityLabel(code) {
 }
 function roleLabel(role) {
   return ({ admin: '管理者', manager: '管理職', sales: '営業', office: '事務' })[role] || role;
+}
+function dealTypeLabel(type) {
+  return type === 'rental' ? '賃貸' : '売買';
+}
+function propertyPrimaryValue(property) {
+  return property.dealType === 'rental' ? property.rent : property.salePrice;
+}
+function propertyAreaValue(property) {
+  if (property.dealType === 'rental') return property.buildingUsageArea || property.partialArea || '-';
+  return property.exclusiveArea || property.landArea || property.buildingArea || '-';
 }
 function can(action) {
   const rules = {
@@ -93,23 +128,12 @@ function requirePermission(action, message) {
   return false;
 }
 
-const PRIMARY_TABS = ['home', 'customers', 'properties', 'sns', 'tasks'];
-
 function go(screenId) {
   document.querySelectorAll('.screen').forEach((el) => el.classList.remove('active'));
   const target = document.getElementById(`screen-${screenId}`);
   if (target) target.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.screen === screenId));
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    if (btn.dataset.screen) {
-      btn.classList.toggle('active', btn.dataset.screen === screenId);
-    } else if (btn.id === 'moreTabBtn') {
-      btn.classList.toggle('active', !PRIMARY_TABS.includes(screenId));
-    }
-  });
-  closeMoreSheet();
-  closeTopbarMenu();
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
 function updateUserSummary() {
@@ -137,29 +161,46 @@ function fillSelect(selectId, items, formatter, includeBlank = false) {
 }
 
 function populateLinkedSelects() {
+  fillSelect('propertyCustomerSelect', state.customers, (c) => c.name, true);
   fillSelect('snsCustomerSelect', state.customers, (c) => c.name);
-  fillSelect('snsPropertySelect', state.properties, (p) => `${p.title} / ${p.price}`);
+  fillSelect('snsPropertySelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title} / ${propertyPrimaryValue(p)}`);
   fillSelect('documentCustomerSelect', state.customers, (c) => c.name);
-  fillSelect('documentBasePropertySelect', state.properties, (p) => `${p.title} / ${p.price}`);
-  fillSelect('candidateASelect', state.properties, (p) => `${p.title} / ${p.price}`);
-  fillSelect('candidateBSelect', state.properties, (p) => `${p.title} / ${p.price}`);
+  fillSelect('documentBasePropertySelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title} / ${propertyPrimaryValue(p)}`);
+  fillSelect('candidateASelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title} / ${propertyPrimaryValue(p)}`);
+  fillSelect('candidateBSelect', state.properties, (p) => `${dealTypeLabel(p.dealType)} / ${p.title} / ${propertyPrimaryValue(p)}`);
   fillSelect('resultScheduleSelect', state.schedules, (s) => `${s.when} / ${s.title}`);
-  const candA = document.getElementById('candidateASelect');
-  const candB = document.getElementById('candidateBSelect');
-  const base = document.getElementById('documentBasePropertySelect');
-  if (candA) candA.value = state.properties[1]?.id || state.properties[0]?.id || '';
-  if (candB) candB.value = state.properties[2]?.id || state.properties[0]?.id || '';
-  if (base) base.value = state.properties[0]?.id || '';
+
+  const preferredBase = state.properties.find((p) => p.dealType === 'sale') || state.properties[0];
+  const preferredA = state.properties[1] || state.properties[0];
+  const preferredB = state.properties[2] || state.properties[0];
+  if (document.getElementById('documentBasePropertySelect')) document.getElementById('documentBasePropertySelect').value = preferredBase?.id || '';
+  if (document.getElementById('candidateASelect')) document.getElementById('candidateASelect').value = preferredA?.id || '';
+  if (document.getElementById('candidateBSelect')) document.getElementById('candidateBSelect').value = preferredB?.id || '';
+  if (document.getElementById('propertyCustomerSelect')) document.getElementById('propertyCustomerSelect').value = state.customers[0]?.id || '';
+}
+
+function updatePropertyMode() {
+  const select = document.getElementById('dealTypeSelect');
+  if (!select) return;
+  const dealType = select.value;
+  const saleBlock = document.querySelector('.sale-fields');
+  const rentalBlock = document.querySelector('.rental-fields');
+  const pill = document.getElementById('propertyModePill');
+  if (saleBlock) saleBlock.classList.toggle('hidden-block', dealType !== 'sale');
+  if (rentalBlock) rentalBlock.classList.toggle('hidden-block', dealType !== 'rental');
+  if (pill) pill.textContent = dealType === 'rental' ? '賃貸' : '売買';
 }
 
 function renderHome() {
   const unreadCount = state.notifications.filter((n) => n.unread).length;
   const highHeat = state.customers.filter((c) => c.heat === 'high').length;
+  const saleCount = state.properties.filter((p) => p.dealType === 'sale').length;
+  const rentalCount = state.properties.filter((p) => p.dealType === 'rental').length;
   document.getElementById('homeKpis').innerHTML = [
     { label: '本日予定', value: state.schedules.length, sub: '結果未入力を含む' },
     { label: '今日期限', value: state.tasks.length, sub: '主導線を維持' },
     { label: 'SNS未読', value: unreadCount, sub: 'コメント / メンション' },
-    { label: '優先顧客', value: highHeat, sub: '再提案含む' }
+    { label: '物件在庫', value: `${saleCount}/${rentalCount}`, sub: '売買 / 賃貸' }
   ].map((kpi) => `
     <div class="metric-card">
       <div class="metric-label">${kpi.label}</div>
@@ -175,7 +216,10 @@ function renderHome() {
       <div class="item">
         <div class="item-title">${task.due} ${task.title}</div>
         <div class="item-sub">${customer?.name || '-'} / ${property?.title || '-'} / ${task.status}</div>
-        <div class="top-meta"><span class="chip ${task.priority === 'high' ? 'active' : ''}">${task.priority}</span></div>
+        <div class="top-meta">
+          <span class="chip ${task.priority === 'high' ? 'active' : ''}">${task.priority}</span>
+          ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
+        </div>
       </div>
     `;
   }).join('');
@@ -184,8 +228,10 @@ function renderHome() {
     <div class="item">
       <div class="item-title">${customer.name}</div>
       <div class="item-sub">担当: ${customer.owner} / 予算: ${customer.budget}</div>
+      <div class="item-sub">条件: ${customer.needs}</div>
       <div class="top-meta">
         <span class="tag ${customer.heat === 'high' ? 'danger' : 'warning'}">${customer.nextAction}</span>
+        ${customer.heat === 'high' ? '<span class="chip active">優先</span>' : ''}
       </div>
     </div>
   `).join('');
@@ -193,28 +239,54 @@ function renderHome() {
 
 function renderCustomers() {
   document.getElementById('customerCountPill').textContent = `${state.customers.length}件`;
-  document.getElementById('customerList').innerHTML = state.customers.map((customer) => `
-    <div class="item">
-      <div class="item-title">${customer.name}</div>
-      <div class="item-sub">担当: ${customer.owner} / 予算: ${customer.budget}</div>
-      <div class="item-sub">条件: ${customer.needs}</div>
-      <div class="top-meta">
-        <span class="tag ${customer.heat === 'high' ? 'danger' : 'warning'}">${customer.nextAction}</span>
+  document.getElementById('customerList').innerHTML = state.customers.map((customer) => {
+    const linked = state.properties.filter((p) => p.customerId === customer.id);
+    return `
+      <div class="item">
+        <div class="item-title">${customer.name}</div>
+        <div class="item-sub">担当: ${customer.owner} / 予算: ${customer.budget}</div>
+        <div class="item-sub">条件: ${customer.needs}</div>
+        <div class="top-meta">
+          <span class="tag ${customer.heat === 'high' ? 'danger' : 'warning'}">${customer.nextAction}</span>
+          <span class="chip">紐づき物件 ${linked.length}件</span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderProperties() {
+  const saleCount = state.properties.filter((p) => p.dealType === 'sale').length;
+  const rentalCount = state.properties.filter((p) => p.dealType === 'rental').length;
   document.getElementById('propertyCountPill').textContent = `${state.properties.length}件`;
-  document.getElementById('propertyList').innerHTML = state.properties.map((property) => `
-    <div class="item">
-      <div class="item-title">${property.title}</div>
-      <div class="item-sub">${property.price} / ${property.layout}</div>
-      <div class="item-sub">${property.features}</div>
-      <div class="top-meta"><span class="chip">${property.status}</span></div>
-    </div>
-  `).join('');
+  document.getElementById('propertySummaryCards').innerHTML = `
+    <div class="info-card compact"><div class="item-title">売買</div><p>${saleCount}件</p></div>
+    <div class="info-card compact"><div class="item-title">賃貸</div><p>${rentalCount}件</p></div>
+    <div class="info-card compact"><div class="item-title">優先顧客紐づき</div><p>${state.properties.filter((p) => getCustomer(p.customerId)?.heat === 'high').length}件</p></div>
+  `;
+
+  document.getElementById('propertyList').innerHTML = state.properties.map((property) => {
+    const customer = getCustomer(property.customerId);
+    const primary = propertyPrimaryValue(property);
+    const area = propertyAreaValue(property);
+    const extra = property.dealType === 'sale'
+      ? `管理費 ${property.saleManagementFee || '-'} / 現況 ${property.saleCurrentStatus || '-'}`
+      : `管理費 ${property.rentalManagementFee || '-'} / 現況 ${property.rentalCurrentStatus || '-'}`;
+    return `
+      <div class="item">
+        <div class="item-title">${property.title}</div>
+        <div class="item-sub">${property.propertyType} / ${property.area} / ${property.address}</div>
+        <div class="item-sub">${primary || '-'} / ${property.layout} / ${area}</div>
+        <div class="item-sub">${property.line} ${property.station} 徒歩${property.walk} / 築 ${property.builtYearMonth}</div>
+        <div class="item-sub">${extra}</div>
+        <div class="top-meta">
+          <span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>
+          <span class="chip">${property.status}</span>
+          ${customer ? `<span class="chip">${customer.name}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderPosts() {
@@ -231,6 +303,7 @@ function renderPosts() {
         <div class="top-meta">
           ${post.unread ? `<span class="chip active">未読 ${post.unread}</span>` : ''}
           <span class="chip">${visibilityLabel(post.visibilityCode)}</span>
+          ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
         </div>
         <div class="actions">
           <button class="primary-btn" onclick="createTaskFromPost('${post.id}')">タスク化</button>
@@ -244,11 +317,13 @@ function renderTasks() {
   document.getElementById('taskCountPill').textContent = `${state.tasks.length}件`;
   document.getElementById('taskList').innerHTML = state.tasks.map((task) => {
     const customer = getCustomer(task.customerId);
+    const property = getProperty(task.propertyId);
     return `
       <div class="item" onclick="selectTask('${task.id}')" style="cursor:pointer; ${task.id === state.selectedTaskId ? 'border-color:#2563eb;background:#eff6ff;' : ''}">
         <div class="item-title">${task.title}</div>
         <div class="item-sub">${task.status} / ${task.priority} / ${task.due}</div>
         <div class="item-sub">${customer?.name || '-'} / 担当: ${task.assignedTo}</div>
+        <div class="top-meta">${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}</div>
       </div>
     `;
   }).join('');
@@ -268,6 +343,7 @@ function renderTasks() {
       <p>担当: ${task.assignedTo}</p>
       <p>顧客: ${customer?.name || '-'}</p>
       <p>物件: ${property?.title || '-'}</p>
+      ${property ? `<p>取引区分: ${dealTypeLabel(property.dealType)} / 金額: ${propertyPrimaryValue(property)}</p>` : ''}
       <div class="actions">
         <button class="secondary-btn" onclick="markTaskDone('${task.id}')">完了にする</button>
         <button class="primary-btn" onclick="createScheduleFromTask('${task.id}')">予定化する</button>
@@ -287,12 +363,47 @@ function renderSchedules() {
         <div class="item-title">${schedule.when} ${schedule.title}</div>
         <div class="item-sub">${customer?.name || '-'} / ${property?.title || '-'} / ${schedule.status}</div>
         <div class="top-meta">
+          ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
           <span class="chip">${schedule.sync}</span>
           ${schedule.resultStatus ? `<span class="tag success">結果: ${schedule.resultStatus}</span>` : ''}
         </div>
       </div>
     `;
   }).join('');
+}
+
+function buildCompareRows(base, candidateA, candidateB) {
+  const rows = [
+    ['取引区分', dealTypeLabel(base.dealType), dealTypeLabel(candidateA.dealType), dealTypeLabel(candidateB.dealType)],
+    ['物件名', base.title, candidateA.title, candidateB.title],
+    ['価格 / 賃料', propertyPrimaryValue(base), propertyPrimaryValue(candidateA), propertyPrimaryValue(candidateB)],
+    ['間取り', base.layout, candidateA.layout, candidateB.layout],
+    ['面積', propertyAreaValue(base), propertyAreaValue(candidateA), propertyAreaValue(candidateB)],
+    ['沿線 / 駅', `${base.line} / ${base.station}`, `${candidateA.line} / ${candidateA.station}`, `${candidateB.line} / ${candidateB.station}`],
+    ['徒歩', base.walk, candidateA.walk, candidateB.walk],
+    ['築年月', base.builtYearMonth, candidateA.builtYearMonth, candidateB.builtYearMonth],
+    ['構造', base.structure, candidateA.structure, candidateB.structure],
+    ['現況', base.dealType === 'rental' ? base.rentalCurrentStatus : base.saleCurrentStatus, candidateA.dealType === 'rental' ? candidateA.rentalCurrentStatus : candidateA.saleCurrentStatus, candidateB.dealType === 'rental' ? candidateB.rentalCurrentStatus : candidateB.saleCurrentStatus],
+    ['設備', base.dealType === 'rental' ? base.rentalFacilitiesSummary : base.saleFacilities, candidateA.dealType === 'rental' ? candidateA.rentalFacilitiesSummary : candidateA.saleFacilities, candidateB.dealType === 'rental' ? candidateB.rentalFacilitiesSummary : candidateB.saleFacilities]
+  ];
+  return rows.map((row) => `<tr><td>${row[0]}</td><td>${row[1] || '-'}</td><td>${row[2] || '-'}</td><td>${row[3] || '-'}</td></tr>`).join('');
+}
+
+function createDocumentPreview({ customer, base, candidateA, candidateB, comment, destination }) {
+  return `
+    <div>
+      <div class="item-title">比較資料プレビュー</div>
+      <p>${customer.name} 向け / 保存先: ${destination}</p>
+      <table class="doc-table">
+        <thead>
+          <tr><th>項目</th><th>基準物件</th><th>比較A</th><th>比較B</th></tr>
+        </thead>
+        <tbody>${buildCompareRows(base, candidateA, candidateB)}</tbody>
+      </table>
+      <p><strong>営業コメント:</strong> ${comment}</p>
+      <p>生成フロー: 別物件提案 → 比較資料作成 → ブラウザ印刷 / PDF保存 → クラウド保存想定</p>
+    </div>
+  `;
 }
 
 function renderDocumentPreview() {
@@ -329,11 +440,12 @@ function createTaskFromPost(postId) {
   const post = state.posts.find((p) => p.id === postId);
   if (!post) return;
   const customer = getCustomer(post.customerId);
+  const property = getProperty(post.propertyId);
   const newTask = {
     id: uid('tk', state.tasks),
     title: `${customer?.name || '顧客'}へ対応`,
     status: 'todo',
-    priority: 'high',
+    priority: property?.dealType === 'sale' ? 'high' : 'medium',
     due: '明日 10:00',
     customerId: post.customerId,
     propertyId: post.propertyId,
@@ -363,7 +475,7 @@ function createScheduleFromTask(taskId) {
   if (!task) return;
   const newSchedule = {
     id: uid('sc', state.schedules),
-    title: `${task.title} 商談`,
+    title: `${task.title} ${getProperty(task.propertyId)?.dealType === 'rental' ? '内見' : '商談'}`,
     status: 'planned',
     when: '明日 11:00',
     customerId: task.customerId,
@@ -425,7 +537,9 @@ function login(role) {
   saveState();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.remove('hidden');
-  updateUserSummary(); applyPermissionUI(); rerenderAll();
+  updateUserSummary();
+  applyPermissionUI();
+  rerenderAll();
   showNotice(`${roleLabel(role)}としてログインしました。`);
   go('home');
 }
@@ -437,57 +551,34 @@ function logout() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-function createDocumentPreview({ customer, base, candidateA, candidateB, comment, destination }) {
-  return `
-    <div>
-      <div class="item-title">比較資料プレビュー</div>
-      <p>${customer.name} 向け / 保存先: ${destination}</p>
-      <table class="doc-table">
-        <thead>
-          <tr><th>項目</th><th>基準物件</th><th>比較A</th><th>比較B</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>物件名</td><td>${base.title}</td><td>${candidateA.title}</td><td>${candidateB.title}</td></tr>
-          <tr><td>価格</td><td>${base.price}</td><td>${candidateA.price}</td><td>${candidateB.price}</td></tr>
-          <tr><td>間取り</td><td>${base.layout}</td><td>${candidateA.layout}</td><td>${candidateB.layout}</td></tr>
-          <tr><td>特徴</td><td>${base.features}</td><td>${candidateA.features}</td><td>${candidateB.features}</td></tr>
-        </tbody>
-      </table>
-      <p><strong>営業コメント:</strong> ${comment}</p>
-      <p>生成フロー: 別物件提案 → 比較資料作成 → ブラウザ印刷/PDF保存 → クラウド保存想定</p>
-    </div>
-  `;
-}
-
 function printDocument() {
   if (!requirePermission('exportDocument', 'このロールではPDF出力できません。')) return;
   if (!state.lastDocumentHtml) { showNotice('先に資料を生成してください。', 'error'); return; }
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>比較資料</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:24px;color:#111827}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #d1d5db;padding:8px;text-align:left;vertical-align:top}th{background:#eff6ff}</style></head><body>${state.lastDocumentHtml}</body></html>`);
-  win.document.close(); win.focus(); win.print();
+  win.document.close();
+  win.focus();
+  win.print();
 }
-
-function openMoreSheet() { document.getElementById('moreSheet').classList.remove('hidden'); }
-function closeMoreSheet() { document.getElementById('moreSheet').classList.add('hidden'); }
-function toggleTopbarMenu() { document.getElementById('topbarActions').classList.toggle('open'); }
-function closeTopbarMenu() { document.getElementById('topbarActions').classList.remove('open'); }
 
 function rerenderAll() {
   populateLinkedSelects();
-  renderHome(); renderCustomers(); renderProperties(); renderPosts();
-  renderTasks(); renderSchedules(); renderDocumentPreview(); renderNotifications();
+  updatePropertyMode();
+  renderHome();
+  renderCustomers();
+  renderProperties();
+  renderPosts();
+  renderTasks();
+  renderSchedules();
+  renderDocumentPreview();
+  renderNotifications();
 }
 
 function initEvents() {
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
-  document.querySelectorAll('.tab-btn[data-screen]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
   document.querySelectorAll('[data-screen-link]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screenLink)));
-  document.querySelectorAll('.more-btn[data-screen]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
 
-  document.getElementById('moreTabBtn').addEventListener('click', openMoreSheet);
-  document.getElementById('moreCloseBtn').addEventListener('click', closeMoreSheet);
-  document.getElementById('moreSheetBackdrop').addEventListener('click', closeMoreSheet);
-  document.getElementById('topbarMenuBtn').addEventListener('click', toggleTopbarMenu);
+  document.getElementById('dealTypeSelect').addEventListener('change', updatePropertyMode);
 
   document.getElementById('demoAccount').addEventListener('change', (e) => {
     const user = DEMO_USERS[e.target.value];
@@ -516,11 +607,11 @@ function initEvents() {
     const form = new FormData(e.target);
     state.customers.unshift({
       id: uid('cu', state.customers),
-      name: form.get('name'), owner: form.get('owner'),
-      budget: form.get('budget'), needs: form.get('needs'),
-      nextAction: '初回追客', heat: 'medium'
+      name: form.get('name'), owner: form.get('owner'), budget: form.get('budget'), needs: form.get('needs'), nextAction: '初回追客', heat: 'medium'
     });
-    saveState(); e.target.reset(); rerenderAll();
+    saveState();
+    e.target.reset();
+    rerenderAll();
     showNotice('顧客を追加しました。');
   });
 
@@ -528,14 +619,69 @@ function initEvents() {
     e.preventDefault();
     if (!requirePermission('addProperty', 'このロールでは物件追加できません。')) return;
     const form = new FormData(e.target);
-    state.properties.unshift({
+    const dealType = form.get('dealType');
+    const property = {
       id: uid('pr', state.properties),
-      title: form.get('title'), price: form.get('price'),
-      layout: form.get('layout'), features: form.get('features'),
-      status: '新規登録'
-    });
-    saveState(); e.target.reset(); rerenderAll();
-    showNotice('物件を追加しました。');
+      customerId: form.get('customerId') || '',
+      dealType,
+      title: form.get('title') || '',
+      propertyType: form.get('propertyType') || '',
+      area: form.get('area') || '',
+      address: form.get('address') || '',
+      line: form.get('line') || '',
+      station: form.get('station') || '',
+      walk: form.get('walk') || '',
+      bus: form.get('bus') || '',
+      layout: form.get('layout') || '',
+      builtYearMonth: form.get('builtYearMonth') || '',
+      structure: form.get('structure') || '',
+      totalFloors: form.get('totalFloors') || '',
+      floorLevel: form.get('floorLevel') || '',
+      roomNumber: form.get('roomNumber') || '',
+      commonMemo: form.get('commonMemo') || '',
+      salePrice: form.get('salePrice') || '',
+      saleManagementFee: form.get('saleManagementFee') || '',
+      repairReserveFee: form.get('repairReserveFee') || '',
+      exclusiveArea: form.get('exclusiveArea') || '',
+      landArea: form.get('landArea') || '',
+      buildingArea: form.get('buildingArea') || '',
+      saleBalconyDirection: form.get('saleBalconyDirection') || '',
+      totalUnits: form.get('totalUnits') || '',
+      saleParking: form.get('saleParking') || '',
+      saleParkingFee: form.get('saleParkingFee') || '',
+      topography: form.get('topography') || '',
+      zoning: form.get('zoning') || '',
+      coverageRatio: form.get('coverageRatio') || '',
+      floorAreaRatio: form.get('floorAreaRatio') || '',
+      saleCurrentStatus: form.get('saleCurrentStatus') || '',
+      delivery: form.get('delivery') || '',
+      saleFacilities: form.get('saleFacilities') || '',
+      ownerChange: form.get('ownerChange') || '',
+      rent: form.get('rent') || '',
+      rentalManagementFee: form.get('rentalManagementFee') || '',
+      guaranteeDeposit: form.get('guaranteeDeposit') || '',
+      rightMoney: form.get('rightMoney') || '',
+      gratuityFee: form.get('gratuityFee') || '',
+      deposit: form.get('deposit') || '',
+      cancellationFee: form.get('cancellationFee') || '',
+      availableFrom: form.get('availableFrom') || '',
+      buildingUsageArea: form.get('buildingUsageArea') || '',
+      partialArea: form.get('partialArea') || '',
+      roomCount: form.get('roomCount') || '',
+      rentalBalconyDirection: form.get('rentalBalconyDirection') || '',
+      rentalParking: form.get('rentalParking') || '',
+      rentalParkingFee: form.get('rentalParkingFee') || '',
+      rentalCurrentStatus: form.get('rentalCurrentStatus') || '',
+      rentalFacilitiesSummary: form.get('rentalFacilitiesSummary') || '',
+      rentalNotes: form.get('rentalNotes') || '',
+      status: dealType === 'rental' ? '賃貸新規登録' : '売買新規登録'
+    };
+    state.properties.unshift(property);
+    saveState();
+    e.target.reset();
+    document.getElementById('dealTypeSelect').value = 'sale';
+    rerenderAll();
+    showNotice(`${dealType === 'rental' ? '賃貸' : '売買'}物件を追加しました。`);
   });
 
   document.getElementById('snsForm').addEventListener('submit', (e) => {
@@ -549,10 +695,13 @@ function initEvents() {
       visibility: visibilityLabel(visibilityCode),
       visibilityCode,
       author: state.session?.name || '田中',
-      unread: 0, body: form.get('body'),
-      customerId: form.get('customerId'), propertyId: form.get('propertyId')
+      unread: 0,
+      body: form.get('body'),
+      customerId: form.get('customerId'),
+      propertyId: form.get('propertyId')
     });
-    saveState(); rerenderAll();
+    saveState();
+    rerenderAll();
     showNotice('SNS投稿を保存しました。');
   });
 
@@ -571,7 +720,8 @@ function initEvents() {
       customer.heat = form.get('resultStatus') === 'positive' ? 'high' : 'medium';
     }
     state.notifications.unshift({ id: uid('nt', state.notifications), type: 'result_registered', title: '結果登録完了', body: '予定結果を登録しました', unread: true, priority: 'medium' });
-    saveState(); rerenderAll();
+    saveState();
+    rerenderAll();
     showNotice('結果を登録しました。次回対応へ進めます。');
   });
 
@@ -586,12 +736,10 @@ function initEvents() {
       showNotice('資料作成に必要な顧客・物件を選択してください。', 'error');
       return;
     }
-    state.lastDocumentHtml = createDocumentPreview({
-      customer, base, candidateA, candidateB,
-      comment: form.get('comment'), destination: form.get('destination')
-    });
+    state.lastDocumentHtml = createDocumentPreview({ customer, base, candidateA, candidateB, comment: form.get('comment'), destination: form.get('destination') });
     state.notifications.unshift({ id: uid('nt', state.notifications), type: 'document_ready', title: '資料作成完了', body: '比較資料プレビューを生成しました', unread: true, priority: 'medium' });
-    saveState(); rerenderAll();
+    saveState();
+    rerenderAll();
     showNotice('比較資料を生成しました。ブラウザ印刷からPDF保存できます。');
   });
 }
@@ -601,9 +749,12 @@ function init() {
   if (state.session) {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appShell').classList.remove('hidden');
-    updateUserSummary(); applyPermissionUI(); rerenderAll();
+    updateUserSummary();
+    applyPermissionUI();
+    rerenderAll();
   } else {
     document.getElementById('loginEmail').value = DEMO_USERS.sales.email;
+    updatePropertyMode();
   }
 }
 

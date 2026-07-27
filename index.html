@@ -13,7 +13,7 @@
     <div class="login-card">
       <div>
         <h1>Re:Connect MVP</h1>
-        <p>不動産営業向けの実装試作版</p>
+        <p>売買・賃貸仲介対応の業務アプリ試作版</p>
       </div>
       <form id="loginForm" class="form compact-form">
         <label>
@@ -39,13 +39,13 @@
         </div>
       </form>
       <div class="login-note">
-        <strong>今回追加した実装:</strong>
+        <strong>今回取り込んだ内容</strong>
         <ul>
-          <li>ログイン入口とロール切替</li>
-          <li>顧客管理・物件管理画面</li>
-          <li>localStorage 永続化</li>
-          <li>SNS→タスク→予定→結果登録</li>
-          <li>比較資料のプレビューとブラウザ印刷保存</li>
+          <li>売買・賃貸仲介の物件入力項目</li>
+          <li>共通 / 売買 / 賃貸の3ブロック構成</li>
+          <li>レインズ物件概要を意識した項目群</li>
+          <li>SNS → タスク → 予定 → 結果登録の導線</li>
+          <li>比較資料プレビューへの物件詳細反映</li>
         </ul>
       </div>
     </div>
@@ -57,8 +57,7 @@
         <h1>Re:Connect MVP</h1>
         <p id="userSummary">ログイン中ユーザー</p>
       </div>
-      <button id="topbarMenuBtn" class="icon-btn" aria-label="メニュー">☰</button>
-      <div class="topbar-actions" id="topbarActions">
+      <div class="topbar-actions">
         <div class="role-switch">
           <label for="roleSelect">ロール</label>
           <select id="roleSelect">
@@ -90,7 +89,7 @@
         <section id="screen-home" class="screen active">
           <div class="screen-header">
             <h2>ホーム</h2>
-            <p>今日の入口と優先案件</p>
+            <p>売買・賃貸仲介の優先案件と今日の導線</p>
           </div>
           <div id="homeKpis" class="kpi-grid"></div>
           <div class="panel-grid two">
@@ -131,8 +130,8 @@
               <form id="customerForm" class="form compact-form">
                 <label><span>氏名</span><input name="name" placeholder="例: 鈴木様" /></label>
                 <label><span>担当者</span><input name="owner" placeholder="例: 田中" /></label>
-                <label><span>予算帯</span><input name="budget" placeholder="例: 5,000万〜5,800万" /></label>
-                <label><span>希望条件</span><textarea name="needs" placeholder="駅近 / 収納重視 / 2LDK"></textarea></label>
+                <label><span>予算帯</span><input name="budget" placeholder="例: 5,000万〜5,800万 / 賃料18万以内" /></label>
+                <label><span>希望条件</span><textarea name="needs" placeholder="駅近 / 収納重視 / 2LDK / ペット可"></textarea></label>
                 <button type="submit" class="primary-btn">顧客を追加</button>
               </form>
             </article>
@@ -142,25 +141,102 @@
         <section id="screen-properties" class="screen">
           <div class="screen-header">
             <h2>物件管理</h2>
-            <p>価格・状態・比較資料導線</p>
+            <p>売買・賃貸仲介の共通項目と専用項目を一体管理</p>
           </div>
-          <div class="panel-grid two">
+          <div class="panel-grid two sticky-right">
             <article class="panel">
               <div class="panel-header">
                 <h3>物件一覧</h3>
                 <span class="pill" id="propertyCountPill"></span>
               </div>
-              <div id="propertyList" class="stack"></div>
+              <div id="propertySummaryCards" class="card-grid three"></div>
+              <div id="propertyList" class="stack section-gap"></div>
             </article>
             <article class="panel">
               <div class="panel-header">
                 <h3>物件登録</h3>
+                <span class="pill" id="propertyModePill">共通</span>
               </div>
               <form id="propertyForm" class="form compact-form">
-                <label><span>物件名</span><input name="title" placeholder="例: 品川レジデンス 402" /></label>
-                <label><span>価格</span><input name="price" placeholder="例: 5,480万円" /></label>
-                <label><span>間取り</span><input name="layout" placeholder="例: 2LDK" /></label>
-                <label><span>特徴</span><textarea name="features" placeholder="駅近 / 収納多い / 南向き"></textarea></label>
+                <div class="form-block">
+                  <div class="form-block-title">共通情報</div>
+                  <div class="inline-grid two">
+                    <label><span>顧客名</span><select name="customerId" id="propertyCustomerSelect"></select></label>
+                    <label><span>取引区分</span><select name="dealType" id="dealTypeSelect"><option value="sale">売買</option><option value="rental">賃貸</option></select></label>
+                    <label><span>物件名</span><input name="title" placeholder="例: 港区マンション G" /></label>
+                    <label><span>物件種別</span><input name="propertyType" placeholder="例: 中古マンション / 貸マンション" /></label>
+                    <label><span>エリア</span><input name="area" placeholder="例: 港区" /></label>
+                    <label><span>物件所在地</span><input name="address" placeholder="例: 港区芝浦1-2-3" /></label>
+                    <label><span>沿線</span><input name="line" placeholder="例: 山手線" /></label>
+                    <label><span>駅</span><input name="station" placeholder="例: 田町" /></label>
+                    <label><span>徒歩</span><input name="walk" placeholder="例: 7分" /></label>
+                    <label><span>バス</span><input name="bus" placeholder="例: なし" /></label>
+                    <label><span>間取り</span><input name="layout" placeholder="例: 2LDK" /></label>
+                    <label><span>築年月</span><input name="builtYearMonth" placeholder="例: 2018/03" /></label>
+                    <label><span>建物構造</span><input name="structure" placeholder="例: RC" /></label>
+                    <label><span>総階数</span><input name="totalFloors" placeholder="例: 15階" /></label>
+                    <label><span>所在階</span><input name="floorLevel" placeholder="例: 4階" /></label>
+                    <label><span>号室</span><input name="roomNumber" placeholder="例: 402" /></label>
+                    <label class="grid-span-2"><span>共通メモ</span><textarea name="commonMemo" placeholder="レインズ概要メモ / 注意事項"></textarea></label>
+                  </div>
+                </div>
+
+                <div class="form-block sale-fields">
+                  <div class="form-block-title">売買入力</div>
+                  <div class="inline-grid two">
+                    <label><span>販売価格</span><input name="salePrice" placeholder="例: 5,480万円" /></label>
+                    <label><span>管理費</span><input name="saleManagementFee" placeholder="例: 12,000円" /></label>
+                    <label><span>修繕積立金</span><input name="repairReserveFee" placeholder="例: 8,500円" /></label>
+                    <label><span>専有面積</span><input name="exclusiveArea" placeholder="例: 68.40㎡" /></label>
+                    <label><span>土地面積</span><input name="landArea" placeholder="例: 120.50㎡" /></label>
+                    <label><span>建物面積</span><input name="buildingArea" placeholder="例: 95.10㎡" /></label>
+                    <label><span>バルコニー方向</span><input name="saleBalconyDirection" placeholder="例: 南" /></label>
+                    <label><span>棟総戸数</span><input name="totalUnits" placeholder="例: 84戸" /></label>
+                    <label><span>駐車場</span><input name="saleParking" placeholder="例: 空有" /></label>
+                    <label><span>駐車場月額</span><input name="saleParkingFee" placeholder="例: 28,000円" /></label>
+                    <label><span>地勢</span><input name="topography" placeholder="例: 平坦" /></label>
+                    <label><span>用途地域</span><input name="zoning" placeholder="例: 商業地域" /></label>
+                    <label><span>建ぺい率</span><input name="coverageRatio" placeholder="例: 80%" /></label>
+                    <label><span>容積率</span><input name="floorAreaRatio" placeholder="例: 400%" /></label>
+                    <label><span>現況</span><input name="saleCurrentStatus" placeholder="例: 居住中" /></label>
+                    <label><span>引渡</span><input name="delivery" placeholder="例: 相談" /></label>
+                    <label><span>オーナーチェンジ</span><input name="ownerChange" placeholder="例: なし" /></label>
+                    <label class="grid-span-2"><span>設備</span><textarea name="saleFacilities" placeholder="オートロック / 宅配BOX / 追焚"></textarea></label>
+                  </div>
+                </div>
+
+                <div class="form-block rental-fields hidden-block">
+                  <div class="form-block-title">賃貸入力</div>
+                  <div class="inline-grid two">
+                    <label><span>賃料</span><input name="rent" placeholder="例: 185,000円" /></label>
+                    <label><span>管理費</span><input name="rentalManagementFee" placeholder="例: 10,000円" /></label>
+                    <label><span>保証金</span><input name="guaranteeDeposit" placeholder="例: 1ヶ月" /></label>
+                    <label><span>権利金</span><input name="rightMoney" placeholder="例: なし" /></label>
+                    <label><span>礼金</span><input name="gratuityFee" placeholder="例: 1ヶ月" /></label>
+                    <label><span>敷金</span><input name="deposit" placeholder="例: 1ヶ月" /></label>
+                    <label><span>解約引</span><input name="cancellationFee" placeholder="例: なし" /></label>
+                    <label><span>入居時期</span><input name="availableFrom" placeholder="例: 即入居可" /></label>
+                    <label><span>建物使用面積</span><input name="buildingUsageArea" placeholder="例: 54.10㎡" /></label>
+                    <label><span>部分面積</span><input name="partialArea" placeholder="例: バルコニー 7.2㎡" /></label>
+                    <label><span>部屋数</span><input name="roomCount" placeholder="例: 2室" /></label>
+                    <label><span>バルコニー方向</span><input name="rentalBalconyDirection" placeholder="例: 東" /></label>
+                    <label><span>駐車場</span><input name="rentalParking" placeholder="例: 近隣確保" /></label>
+                    <label><span>駐車場月額</span><input name="rentalParkingFee" placeholder="例: 22,000円" /></label>
+                    <label><span>現況</span><input name="rentalCurrentStatus" placeholder="例: 空室" /></label>
+                    <label><span>設備</span><input name="rentalFacilitiesSummary" placeholder="例: 都市ガス / 給湯 / 冷暖房" /></label>
+                    <label class="grid-span-2"><span>賃貸備考</span><textarea name="rentalNotes" placeholder="ペット相談 / 保証会社必須"></textarea></label>
+                  </div>
+                </div>
+
+                <div class="form-block">
+                  <div class="form-block-title">添付・保存</div>
+                  <div class="inline-grid two">
+                    <div class="info-card compact"><div class="item-title">画像 / 写真</div><p>0 / 50 枚</p></div>
+                    <div class="info-card compact"><div class="item-title">PDF</div><p>0 / 30 枚</p></div>
+                    <div class="info-card compact grid-span-2"><div class="item-title">保存済み資料</div><p>保存済みの資料はまだありません。</p></div>
+                  </div>
+                </div>
+
                 <button type="submit" class="primary-btn">物件を追加</button>
               </form>
             </article>
@@ -185,39 +261,12 @@
                 <h3>新規投稿</h3>
               </div>
               <form id="snsForm" class="form compact-form">
-                <label>
-                  <span>投稿種別</span>
-                  <select name="postType">
-                    <option value="property_share">物件共有</option>
-                    <option value="report">報告</option>
-                    <option value="question">質問</option>
-                  </select>
-                </label>
-                <label>
-                  <span>公開範囲</span>
-                  <select name="visibility">
-                    <option value="store_only">店舗内</option>
-                    <option value="internal_only">社内のみ</option>
-                    <option value="broker_group_only">グループ業者のみ</option>
-                    <option value="public">一般公開</option>
-                  </select>
-                </label>
-                <label>
-                  <span>紐づく顧客</span>
-                  <select name="customerId" id="snsCustomerSelect"></select>
-                </label>
-                <label>
-                  <span>紐づく物件</span>
-                  <select name="propertyId" id="snsPropertySelect"></select>
-                </label>
-                <label>
-                  <span>タイトル</span>
-                  <input name="title" value="港区マンション G 価格改定共有" />
-                </label>
-                <label>
-                  <span>本文</span>
-                  <textarea name="body">価格改定に伴い、再販開始前の共有を行います。</textarea>
-                </label>
+                <label><span>投稿種別</span><select name="postType"><option value="property_share">物件共有</option><option value="report">報告</option><option value="question">質問</option></select></label>
+                <label><span>公開範囲</span><select name="visibility"><option value="store_only">店舗内</option><option value="internal_only">社内のみ</option><option value="broker_group_only">グループ業者のみ</option><option value="public">一般公開</option></select></label>
+                <label><span>紐づく顧客</span><select name="customerId" id="snsCustomerSelect"></select></label>
+                <label><span>紐づく物件</span><select name="propertyId" id="snsPropertySelect"></select></label>
+                <label><span>タイトル</span><input name="title" value="港区マンション G 価格改定共有" /></label>
+                <label><span>本文</span><textarea name="body">価格改定に伴い、再販開始前の共有を行います。</textarea></label>
                 <button type="submit" class="primary-btn">投稿を保存</button>
               </form>
             </article>
@@ -265,16 +314,7 @@
               </div>
               <form id="resultForm" class="form compact-form">
                 <label><span>対象予定</span><select name="scheduleId" id="resultScheduleSelect"></select></label>
-                <label>
-                  <span>結果区分</span>
-                  <select name="resultStatus">
-                    <option value="positive">前向き</option>
-                    <option value="continue">検討継続</option>
-                    <option value="review">条件見直し</option>
-                    <option value="declined">見送り</option>
-                    <option value="re_propose">再提案必要</option>
-                  </select>
-                </label>
+                <label><span>結果区分</span><select name="resultStatus"><option value="positive">前向き</option><option value="continue">検討継続</option><option value="review">条件見直し</option><option value="declined">見送り</option><option value="re_propose">再提案必要</option></select></label>
                 <label><span>メモ</span><textarea name="memo">収納量に懸念あり。別物件提案へ進める。</textarea></label>
                 <button type="submit" class="primary-btn">結果登録</button>
               </form>
@@ -285,9 +325,9 @@
         <section id="screen-documents" class="screen">
           <div class="screen-header">
             <h2>比較資料 / PDF保存</h2>
-            <p>比較表プレビューと保存導線</p>
+            <p>売買・賃貸の物件詳細を比較表へ反映</p>
           </div>
-          <div class="panel-grid two">
+          <div class="panel-grid two sticky-right">
             <article class="panel">
               <div class="panel-header">
                 <h3>資料作成</h3>
@@ -297,14 +337,8 @@
                 <label><span>基準物件</span><select name="basePropertyId" id="documentBasePropertySelect"></select></label>
                 <label><span>比較物件A</span><select name="candidateA" id="candidateASelect"></select></label>
                 <label><span>比較物件B</span><select name="candidateB" id="candidateBSelect"></select></label>
-                <label><span>営業コメント</span><textarea name="comment">収納・駅距離の差を比較し、再提案向けの資料にします。</textarea></label>
-                <label>
-                  <span>保存先</span>
-                  <select name="destination">
-                    <option value="local+gdrive">端末 + Google Drive</option>
-                    <option value="local+onedrive">端末 + OneDrive</option>
-                  </select>
-                </label>
+                <label><span>営業コメント</span><textarea name="comment">収納・駅距離・価格差を比較し、再提案向けの資料にします。</textarea></label>
+                <label><span>保存先</span><select name="destination"><option value="local+gdrive">端末 + Google Drive</option><option value="local+onedrive">端末 + OneDrive</option></select></label>
                 <div class="form-actions wrap-actions">
                   <button type="submit" class="primary-btn">資料を生成</button>
                   <button type="button" id="printDocumentBtn" class="secondary-btn">ブラウザ印刷 / PDF保存</button>
@@ -335,28 +369,6 @@
         </section>
       </section>
     </main>
-
-    <nav class="bottom-tabbar" id="bottomTabbar">
-      <button class="tab-btn active" data-screen="home"><span class="tab-ico">🏠</span><span class="tab-label">ホーム</span></button>
-      <button class="tab-btn" data-screen="customers"><span class="tab-ico">👥</span><span class="tab-label">顧客</span></button>
-      <button class="tab-btn" data-screen="properties"><span class="tab-ico">🏢</span><span class="tab-label">物件</span></button>
-      <button class="tab-btn" data-screen="sns"><span class="tab-ico">💬</span><span class="tab-label">SNS</span></button>
-      <button class="tab-btn" data-screen="tasks"><span class="tab-ico">✅</span><span class="tab-label">タスク</span></button>
-      <button class="tab-btn" id="moreTabBtn"><span class="tab-ico">⋯</span><span class="tab-label">その他</span></button>
-    </nav>
-
-    <div class="more-sheet hidden" id="moreSheet">
-      <div class="more-sheet-backdrop" id="moreSheetBackdrop"></div>
-      <div class="more-sheet-panel">
-        <div class="more-sheet-title">その他のメニュー</div>
-        <div class="more-sheet-grid">
-          <button class="more-btn" data-screen="calendar"><span class="tab-ico">📅</span><span>予定</span></button>
-          <button class="more-btn" data-screen="documents"><span class="tab-ico">📄</span><span>資料 / PDF</span></button>
-          <button class="more-btn" data-screen="notifications"><span class="tab-ico">🔔</span><span>通知</span></button>
-        </div>
-        <button class="secondary-btn more-close-btn" id="moreCloseBtn">閉じる</button>
-      </div>
-    </div>
   </div>
 
   <script src="./app.js"></script>

@@ -102,6 +102,8 @@ let state = loadState();
 let homeCalendarView = 'today';
 let homeCalendarCursor = null;
 let homeCalendarSelected = null;
+let scheduleCalendarCursor = null;
+let scheduleCalendarSelected = null;
 let editorReturnScreen = 'home';
 let snsAttachedImages = [];
 
@@ -874,6 +876,76 @@ window.deletePost = deletePost;
 function taskFromPost(postId) { createTaskFromPost(postId); }
 window.taskFromPost = taskFromPost;
 
+
+function scheduleStatusLabel(status) {
+  return ({ planned: '予定中', done: '完了', cancelled: 'キャンセル', rescheduled: '再調整' })[status] || (status || '-');
+}
+function scheduleStatusClass(status) {
+  return ({ planned: 'planned', done: 'done', cancelled: 'cancelled', rescheduled: 'rescheduled' })[status] || 'planned';
+}
+function sortSchedulesForView(schedules) {
+  return [...schedules].sort((a, b) => {
+    const ad = parseWhen(a.when);
+    const bd = parseWhen(b.when);
+    if (ad && bd) return ad - bd;
+    return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
+  });
+}
+function formatScheduleTimeLabel(when) {
+  const d = parseWhen(when);
+  if (!d) return escapeHtml(when || '-');
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+function renderScheduleAgendaCard(schedule) {
+  const customer = getCustomer(schedule.customerId);
+  const property = getProperty(schedule.propertyId);
+  const dealChip = property ? `<span class="gcal-chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : '';
+  const customerName = escapeHtml(customer?.name || '顧客未設定');
+  const propertyName = escapeHtml(property?.title || '物件未設定');
+  const location = schedule.location ? `<span>${escapeHtml(schedule.location)}</span>` : '';
+  return `
+    <button type="button" class="gcal-agenda-card ${scheduleStatusClass(schedule.status)}" onclick="openScheduleEditor('${schedule.id}')">
+      <div class="gcal-agenda-time">${formatScheduleTimeLabel(schedule.when)}</div>
+      <div class="gcal-agenda-body">
+        <div class="gcal-agenda-title">${escapeHtml(schedule.title || '予定')}</div>
+        <div class="gcal-agenda-meta">
+          <span>${customerName}</span>
+          <span class="todo-dot">/</span>
+          <span>${propertyName}</span>
+          ${location ? '<span class="todo-dot">•</span>' + location : ''}
+        </div>
+        <div class="gcal-agenda-tags">
+          <span class="gcal-chip status ${scheduleStatusClass(schedule.status)}">${escapeHtml(scheduleStatusLabel(schedule.status))}</span>
+          ${dealChip}
+          ${schedule.sync ? `<span class="gcal-chip">${escapeHtml(schedule.sync)}</span>` : ''}
+        </div>
+      </div>
+    </button>
+  `;
+}
+function shiftScheduleCalendar(delta) {
+  if (!scheduleCalendarCursor) {
+    const now = new Date();
+    scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth() + delta, 1);
+  renderSchedules();
+}
+window.shiftScheduleCalendar = shiftScheduleCalendar;
+function jumpScheduleCalendarToToday() {
+  const now = new Date();
+  scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  renderSchedules();
+}
+window.jumpScheduleCalendarToToday = jumpScheduleCalendarToToday;
+function selectScheduleCalendarDay(key) {
+  const [yy, mm, dd] = key.split('-').map(Number);
+  scheduleCalendarSelected = new Date(yy, mm - 1, dd);
+  renderSchedules();
+}
+window.selectScheduleCalendarDay = selectScheduleCalendarDay;
+
 function renderTasks() {
   const countEl = document.getElementById('taskCountPill');
   if (countEl) countEl.textContent = `${state.tasks.length}件`;
@@ -887,21 +959,98 @@ function renderSchedules() {
   const countEl = document.getElementById('scheduleCountPill');
   if (countEl) countEl.textContent = `${state.schedules.length}件`;
   const listEl = document.getElementById('scheduleList');
-  if (listEl) listEl.innerHTML = state.schedules.map((s) => {
-    const customer = getCustomer(s.customerId);
-    const property = getProperty(s.propertyId);
-    return `
-      <div class="item clickable" onclick="openScheduleEditor('${s.id}')">
-        <div class="item-title">${s.when} ${s.title}</div>
-        <div class="item-sub">${customer?.name || '-'} / ${property?.title || '-'} / ${s.status}</div>
-        <div class="top-meta">
-          ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
-          <span class="chip">${s.sync || ''}</span>
-          ${s.resultStatus ? `<span class="tag success">結果: ${s.resultStatus}</span>` : ''}
+  if (!listEl) return;
+
+  if (!scheduleCalendarCursor) {
+    const now = new Date();
+    scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else {
+    scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth(), 1);
+  }
+  if (!scheduleCalendarSelected) {
+    const now = new Date();
+    scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  const y = scheduleCalendarCursor.getFullYear();
+  const m = scheduleCalendarCursor.getMonth();
+  const monthTitle = `${y}年${m + 1}月`;
+  const scheduleByDate = {};
+  state.schedules.forEach((s) => {
+    const d = parseWhen(s.when);
+    if (!d) return;
+    const key = dateKey(d);
+    (scheduleByDate[key] = scheduleByDate[key] || []).push(s);
+  });
+  Object.keys(scheduleByDate).forEach((key) => {
+    scheduleByDate[key] = sortSchedulesForView(scheduleByDate[key]);
+  });
+
+  const firstDay = new Date(y, m, 1);
+  const startWeekday = firstDay.getDay();
+  const startDate = new Date(y, m, 1 - startWeekday);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
+    const key = dateKey(d);
+    const daySchedules = scheduleByDate[key] || [];
+    const isCurrentMonth = d.getMonth() === m;
+    const isToday = sameDay(d, today);
+    const isSelected = scheduleCalendarSelected && sameDay(d, scheduleCalendarSelected);
+    const previews = daySchedules.slice(0, 2).map((s) => `
+      <span class="gcal-event-pill ${scheduleStatusClass(s.status)}">${formatScheduleTimeLabel(s.when)} ${escapeHtml(s.title || '予定')}</span>
+    `).join('');
+    const more = daySchedules.length > 2 ? `<span class="gcal-more">+${daySchedules.length - 2}</span>` : '';
+    cells.push(`
+      <button type="button" class="gcal-day ${isCurrentMonth ? '' : 'muted'} ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectScheduleCalendarDay('${key}')">
+        <span class="gcal-day-num">${d.getDate()}</span>
+        <span class="gcal-day-events">${previews}${more}</span>
+      </button>
+    `);
+  }
+
+  const selected = scheduleCalendarSelected || today;
+  const selectedKey = dateKey(selected);
+  const selectedSchedules = scheduleByDate[selectedKey] || [];
+  const selectedLabel = `${selected.getFullYear()}年${selected.getMonth() + 1}月${selected.getDate()}日`;
+  const agenda = selectedSchedules.length
+    ? sortSchedulesForView(selectedSchedules).map((s) => renderScheduleAgendaCard(s)).join('')
+    : '<div class="empty-state compact-empty">この日の予定はありません</div>';
+
+  listEl.innerHTML = `
+    <div class="gcal-shell">
+      <div class="gcal-toolbar">
+        <div class="gcal-toolbar-main">
+          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(-1)" aria-label="前月">‹</button>
+          <div class="gcal-month-block">
+            <div class="gcal-month-label">${monthTitle}</div>
+            <div class="gcal-month-sub">Googleカレンダー風 月表示</div>
+          </div>
+          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(1)" aria-label="翌月">›</button>
+        </div>
+        <div class="gcal-toolbar-actions">
+          <button type="button" class="secondary-btn small" onclick="jumpScheduleCalendarToToday()">今日</button>
+          <button type="button" class="primary-btn small" onclick="openScheduleEditor('', '${selectedKey}')">＋ 予定</button>
         </div>
       </div>
-    `;
-  }).join('') || '<div class="empty-state">予定はありません</div>';
+      <div class="gcal-weekdays">${weekLabels.map((w, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}</div>
+      <div class="gcal-grid">${cells.join('')}</div>
+      <div class="gcal-agenda-panel">
+        <div class="gcal-agenda-header">
+          <div>
+            <div class="gcal-agenda-title-main">${selectedLabel}</div>
+            <div class="gcal-agenda-sub">${selectedSchedules.length}件の予定</div>
+          </div>
+          <button type="button" class="secondary-btn small" onclick="openScheduleEditor('', '${selectedKey}')">この日に追加</button>
+        </div>
+        <div class="gcal-agenda-list">${agenda}</div>
+      </div>
+    </div>
+  `;
 }
 
 function formatDateForInput(d) {

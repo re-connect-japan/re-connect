@@ -412,7 +412,31 @@ details.panel[open] > summary { margin-bottom: 8px; border-bottom: 1px dashed va
   font-size: 64px;
   margin-bottom: 14px;
 }
+.post-detail .pd-hero.has-photo { background: #0b1220; aspect-ratio: auto; min-height: 220px; }
 .post-detail .pd-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post-detail .pd-hero.has-photo img { object-fit: contain; max-height: 60vh; height: auto; width: 100%; background: #0b1220; }
+.post-detail .pd-photo {
+  margin: 12px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+.post-detail .pd-photo img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+  background: #0b1220;
+}
+.post-detail .pd-photo figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
 .post-detail .pd-title {
   font-size: 22px;
   font-weight: 800;

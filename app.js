@@ -518,9 +518,13 @@ function renderPostDetail() {
   }
   const customer = getCustomer(post.customerId);
   const property = getProperty(post.propertyId);
-  const hero = (post.images && post.images.length)
-    ? `<div class="pd-hero"><img src="${post.images[0]}" alt=""></div>`
+  const hasImage = !!(post.images && post.images.length);
+  const hero = hasImage
+    ? `<div class="pd-hero has-photo"><img src="${post.images[0]}" alt="${(post.title || '').replace(/"/g,'&quot;')}" loading="lazy" /></div>`
     : `<div class="pd-hero">${post.emoji || (property?.dealType === 'rental' ? '🏠' : '🏢')}</div>`;
+  const inlinePhoto = hasImage
+    ? `<figure class="pd-photo"><img src="${post.images[0]}" alt="${(post.title || '').replace(/"/g,'&quot;')}" /><figcaption>添付画像</figcaption></figure>`
+    : '';
   const linked = (customer || property) ? `
     <div class="pd-linked">
       ${customer ? `<div><strong>顧客:</strong> ${customer.name}（担当 ${customer.owner || '-'} / 予算 ${customer.budget || '-'}）</div>` : ''}
@@ -540,6 +544,7 @@ function renderPostDetail() {
       ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
       ${customer ? `<span class="chip">${customer.name}</span>` : ''}
     </div>
+    ${inlinePhoto}
     <div class="pd-body">${(post.body || '').replace(/</g,'&lt;')}</div>
     ${linked}
   `;

@@ -125,23 +125,38 @@ function loadImageFromFile(file) {
   });
 }
 
-async function fileToCompressedDataUrl(file, maxSize = 1280, quality = 0.72) {
+const MAX_IMAGE_BYTES = 220 * 1024; // 約220KB以内へ逐次圧縮
+
+async function fileToCompressedDataUrl(file, initialMax = 1024, initialQuality = 0.72) {
+  let img;
   try {
-    const img = await loadImageFromFile(file);
+    img = await loadImageFromFile(file);
+  } catch {
+    return await readFileAsDataUrl(file);
+  }
+  const attempts = [
+    { max: initialMax, q: initialQuality },
+    { max: 960, q: 0.65 },
+    { max: 800, q: 0.58 },
+    { max: 640, q: 0.5 },
+    { max: 480, q: 0.45 }
+  ];
+  let last = '';
+  for (const step of attempts) {
     let { width, height } = img;
-    if (width > maxSize || height > maxSize) {
-      const ratio = Math.min(maxSize / width, maxSize / height);
-      width = Math.round(width * ratio);
-      height = Math.round(height * ratio);
+    if (width > step.max || height > step.max) {
+      const ratio = Math.min(step.max / width, step.max / height);
+      width = Math.max(1, Math.round(width * ratio));
+      height = Math.max(1, Math.round(height * ratio));
     }
     const canvas = document.createElement('canvas');
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL('image/jpeg', quality);
-  } catch (err) {
-    return await readFileAsDataUrl(file);
+    last = canvas.toDataURL('image/jpeg', step.q);
+    if (last.length <= MAX_IMAGE_BYTES * 1.37) return last; // base64 overhead ~1.37
   }
+  return last || await readFileAsDataUrl(file);
 }
 
 function renderSnsImagePreview() {
@@ -195,24 +210,44 @@ function loadState() {
     return createInitialState();
   }
 }
-function saveState() {
+function trySetItem(payload) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, payload);
     return true;
   } catch (err) {
-    try {
-      const light = JSON.parse(JSON.stringify(state));
-      if (Array.isArray(light.posts)) {
-        light.posts = light.posts.map((p) => ({ ...p, images: [] }));
+    return false;
+  }
+}
+
+function saveState() {
+  if (trySetItem(JSON.stringify(state))) return true;
+
+  // 1) 古い投稿の画像を順に落として再試行
+  const clone = JSON.parse(JSON.stringify(state));
+  if (Array.isArray(clone.posts)) {
+    for (let i = clone.posts.length - 1; i >= 0; i--) {
+      const p = clone.posts[i];
+      if (p && p.images && p.images.length) {
+        p.images = [];
+        if (trySetItem(JSON.stringify(clone))) {
+          // 成功した形を実メモリにも反映 (同じ位置の実 state を更新)
+          const target = state.posts[i];
+          if (target) target.images = [];
+          showNotice('容量上限のため、古い投稿の画像を除外して保存しました。', 'error');
+          return true;
+        }
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(light));
-      showNotice('容量上限のため、画像は一時的に保存先から除外されました。', 'error');
+    }
+    // 2) それでもダメなら、すべての投稿の画像を落とす
+    clone.posts = clone.posts.map((p) => ({ ...p, images: [] }));
+    if (trySetItem(JSON.stringify(clone))) {
+      state.posts = state.posts.map((p) => ({ ...p, images: [] }));
+      showNotice('容量上限のため、保存先の画像をすべて除外しました（表示は今のセッション中のみ）。', 'error');
       return true;
-    } catch (err2) {
-      showNotice('ブラウザの保存領域が一杯です。デモデータ初期化や不要な投稿削除をお願いします。', 'error');
-      return false;
     }
   }
+  showNotice('ブラウザの保存領域が一杯です。デモデータ初期化をお願いします。', 'error');
+  return false;
 }
 function resetState() { state = createInitialState(); saveState(); }
 function uid(prefix, list) { return `${prefix}_${String(list.length + 1).padStart(3, '0')}`; }
@@ -928,31 +963,44 @@ function initEvents() {
 
   document.getElementById('snsForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const form = new FormData(e.target);
-    const visibilityCode = form.get('visibility');
-    if (visibilityCode === 'public' && !requirePermission('createPublicPost', '一般公開は管理者のみ可能です。')) return;
-    const propertyId = form.get('propertyId') || null;
-    const linkedProperty = propertyId ? getProperty(propertyId) : null;
-    state.posts.unshift({
-      id: uid('sp', state.posts),
-      title: form.get('title'),
-      visibility: visibilityLabel(visibilityCode),
-      visibilityCode,
-      author: state.session?.name || '田中',
-      unread: 0,
-      body: form.get('body'),
-      emoji: '📝',
-      images: snsAttachedImages.slice(0, 4),
-      customerId: linkedProperty?.customerId || null,
-      propertyId
-    });
-    snsAttachedImages = [];
-    renderSnsImagePreview();
-    const fileInput = document.getElementById('snsImageInput');
-    if (fileInput) fileInput.value = '';
-    saveState();
-    rerenderAll();
-    showNotice('SNS投稿を保存しました。');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn && submitBtn.disabled) return;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '保存中…'; }
+    try {
+      const form = new FormData(e.target);
+      const visibilityCode = form.get('visibility');
+      if (visibilityCode === 'public' && !requirePermission('createPublicPost', '一般公開は管理者のみ可能です。')) return;
+      const propertyId = form.get('propertyId') || null;
+      const linkedProperty = propertyId ? getProperty(propertyId) : null;
+      const newPost = {
+        id: uid('sp', state.posts),
+        title: form.get('title'),
+        visibility: visibilityLabel(visibilityCode),
+        visibilityCode,
+        author: state.session?.name || '田中',
+        unread: 0,
+        body: form.get('body'),
+        emoji: '📝',
+        images: snsAttachedImages.slice(0, 4),
+        customerId: linkedProperty?.customerId || null,
+        propertyId
+      };
+      state.posts.unshift(newPost);
+      snsAttachedImages = [];
+      renderSnsImagePreview();
+      const fileInput = document.getElementById('snsImageInput');
+      if (fileInput) fileInput.value = '';
+      saveState();
+      rerenderAll();
+      showNotice('SNS投稿を保存しました。');
+      const composer = document.getElementById('snsComposer');
+      if (composer && composer.tagName === 'DETAILS') composer.open = false;
+    } catch (err) {
+      console.error(err);
+      showNotice('投稿に失敗しました。もう一度お試しください。', 'error');
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '投稿を保存'; }
+    }
   });
 
   document.getElementById('resultForm').addEventListener('submit', (e) => {

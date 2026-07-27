@@ -310,6 +310,62 @@ details.panel[open] > summary { margin-bottom: 8px; border-bottom: 1px dashed va
   display: grid;
   place-items: center;
   font-size: 34px;
+  overflow: hidden;
+  position: relative;
+}
+.feed-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.feed-thumb .thumb-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  background: rgba(0,0,0,0.55);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.image-preview:empty { display: none; }
+.image-preview .thumb {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+.image-preview .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.image-preview .thumb .remove {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: rgba(0,0,0,0.55); color: white; font-size: 14px; line-height: 1;
+}
+.feed-images {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+.feed-images .fimg {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+.feed-images .fimg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 480px) {
+  .image-preview, .feed-images { grid-template-columns: repeat(3, 1fr); }
 }
 .feed-body { min-width: 0; display: grid; gap: 6px; align-content: start; }
 .feed-title {

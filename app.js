@@ -104,6 +104,59 @@ function createInitialState() {
 }
 
 let state = loadState();
+let snsAttachedImages = [];
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderSnsImagePreview() {
+  const root = document.getElementById('snsImagePreview');
+  if (!root) return;
+  root.innerHTML = snsAttachedImages.map((src, idx) => `
+    <div class="thumb">
+      <img src="${src}" alt="">
+      <button type="button" class="remove" onclick="removeSnsImage(${idx})" aria-label="削除">×</button>
+    </div>
+  `).join('');
+}
+
+function removeSnsImage(index) {
+  snsAttachedImages.splice(index, 1);
+  renderSnsImagePreview();
+}
+window.removeSnsImage = removeSnsImage;
+
+function setupSnsImagePicker() {
+  const input = document.getElementById('snsImageInput');
+  if (!input) return;
+  input.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    for (const file of files) {
+      if (snsAttachedImages.length >= 4) {
+        showNotice('画像は最大 4枚までです。', 'error');
+        break;
+      }
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 3 * 1024 * 1024) {
+        showNotice(`${file.name} は 3MB を超えています。`, 'error');
+        continue;
+      }
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        snsAttachedImages.push(dataUrl);
+      } catch { /* skip */ }
+    }
+    renderSnsImagePreview();
+    e.target.value = '';
+  });
+}
 
 function loadState() {
   try {
@@ -328,17 +381,25 @@ function renderProperties() {
 function feedThumb(post) {
   const property = getProperty(post.propertyId);
   const icon = post.emoji || (property?.dealType === 'rental' ? '🏠' : '🏢');
+  if (post.images && post.images.length) {
+    const extra = post.images.length > 1 ? `<span class="thumb-badge">+${post.images.length - 1}</span>` : '';
+    return `<div class="feed-thumb"><img src="${post.images[0]}" alt="">${extra}</div>`;
+  }
   return `<div class="feed-thumb">${icon}</div>`;
 }
 function feedItemHtml(post) {
   const customer = getCustomer(post.customerId);
   const property = getProperty(post.propertyId);
+  const extraImages = (post.images && post.images.length > 1)
+    ? `<div class="feed-images">${post.images.slice(1, 4).map((src) => `<div class="fimg"><img src="${src}" alt=""></div>`).join('')}</div>`
+    : '';
   return `
     <div class="feed-card" onclick="openPostAsTask('${post.id}')">
       ${feedThumb(post)}
       <div class="feed-body">
         <div class="feed-title">${post.title}</div>
         <div class="feed-excerpt">${post.body}</div>
+        ${extraImages}
         <div class="feed-meta">
           <span>${post.author}</span><span class="dot">•</span>
           <span>${visibilityLabel(post.visibilityCode)}</span>
@@ -724,6 +785,8 @@ function initEvents() {
     renderFeedTabs();
   }));
 
+  setupSnsImagePicker();
+
   document.getElementById('threadComposer').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('threadInput');
@@ -832,9 +895,14 @@ function initEvents() {
       unread: 0,
       body: form.get('body'),
       emoji: '📝',
+      images: snsAttachedImages.slice(0, 4),
       customerId: linkedProperty?.customerId || null,
       propertyId
     });
+    snsAttachedImages = [];
+    renderSnsImagePreview();
+    const fileInput = document.getElementById('snsImageInput');
+    if (fileInput) fileInput.value = '';
     saveState();
     rerenderAll();
     showNotice('SNS投稿を保存しました。');

@@ -1104,6 +1104,7 @@ function fillDateTimeInputs(prefix, source, presetDateKey, defaultHour) {
   const dateEl = document.getElementById(prefix + 'Date');
   const hourEl = document.getElementById(prefix + 'Hour');
   const minEl = document.getElementById(prefix + 'Minute');
+  const allDayEl = document.getElementById(prefix + 'AllDay');
   let d = source ? parseWhen(source) : null;
   if (!d && presetDateKey) {
     const [yy, mm, dd] = presetDateKey.split('-').map(Number);
@@ -1116,21 +1117,84 @@ function fillDateTimeInputs(prefix, source, presetDateKey, defaultHour) {
   if (dateEl) dateEl.value = dateKey(d);
   if (hourEl) hourEl.value = String(d.getHours());
   if (minEl) {
-    // ロールは5分刻みなので丸めて一致させる
     const m = Math.round(d.getMinutes() / 5) * 5;
     minEl.value = String(m % 60);
   }
+  if (allDayEl) allDayEl.checked = !!(source && String(source).includes('終日'));
 }
 
 function readDateTime(prefix) {
   const dateEl = document.getElementById(prefix + 'Date');
   const hourEl = document.getElementById(prefix + 'Hour');
   const minEl = document.getElementById(prefix + 'Minute');
+  const allDayEl = document.getElementById(prefix + 'AllDay');
   const date = (dateEl && dateEl.value) ? dateEl.value : '';
+  if (allDayEl && allDayEl.checked) return date ? `${date} 終日` : '終日';
   const hour = String((hourEl && hourEl.value) || '0').padStart(2, '0');
   const min = String((minEl && minEl.value) || '0').padStart(2, '0');
   return date ? `${date} ${hour}:${min}` : `${hour}:${min}`;
 }
+function setRollValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = String(value);
+}
+function syncScheduleEditorTimeUi() {
+  const allDayEl = document.getElementById('scheduleEditAllDay');
+  const wrap = document.getElementById('scheduleEditTimeWrap');
+  const hourEl = document.getElementById('scheduleEditHour');
+  const minEl = document.getElementById('scheduleEditMinute');
+  const hidden = !!(allDayEl && allDayEl.checked);
+  if (wrap) wrap.classList.toggle('hidden', hidden);
+  if (hourEl) hourEl.disabled = hidden;
+  if (minEl) minEl.disabled = hidden;
+}
+function formatScheduleEditorSummary() {
+  const dateEl = document.getElementById('scheduleEditDate');
+  const allDayEl = document.getElementById('scheduleEditAllDay');
+  const locationEl = document.getElementById('scheduleEditLocation');
+  const titleEl = document.getElementById('scheduleEditTitleInput');
+  const when = readDateTime('scheduleEdit');
+  const parsed = parseWhen(when);
+  const whenText = parsed
+    ? `${parsed.getFullYear()}年${parsed.getMonth() + 1}月${parsed.getDate()}日 ${allDayEl && allDayEl.checked ? '終日' : `${String(parsed.getHours()).padStart(2, '0')}:${String(parsed.getMinutes()).padStart(2, '0')}`}`
+    : ((dateEl && dateEl.value) || '日付未設定');
+  const parts = [whenText];
+  if (titleEl && titleEl.value.trim()) parts.push(titleEl.value.trim());
+  if (locationEl && locationEl.value.trim()) parts.push(locationEl.value.trim());
+  return parts.join(' ・ ');
+}
+function updateScheduleEditorSummary() {
+  syncScheduleEditorTimeUi();
+  const hiddenEl = document.getElementById('scheduleEditWhen');
+  if (hiddenEl) hiddenEl.value = readDateTime('scheduleEdit');
+  const summaryEl = document.getElementById('scheduleEditorSummary');
+  if (summaryEl) summaryEl.textContent = formatScheduleEditorSummary();
+}
+function presetScheduleDate(kind) {
+  const now = new Date();
+  let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (kind === 'tomorrow') d.setDate(d.getDate() + 1);
+  if (kind === 'nextweek') d.setDate(d.getDate() + 7);
+  const dateEl = document.getElementById('scheduleEditDate');
+  if (dateEl) dateEl.value = dateKey(d);
+  updateScheduleEditorSummary();
+}
+window.presetScheduleDate = presetScheduleDate;
+function presetScheduleTime(code) {
+  const allDayEl = document.getElementById('scheduleEditAllDay');
+  if (code === 'allday') {
+    if (allDayEl) allDayEl.checked = true;
+    updateScheduleEditorSummary();
+    return;
+  }
+  if (allDayEl) allDayEl.checked = false;
+  const hour = code.slice(0, 2);
+  const minute = code.slice(2, 4);
+  setRollValue('scheduleEditHour', Number(hour));
+  setRollValue('scheduleEditMinute', Number(minute));
+  updateScheduleEditorSummary();
+}
+window.presetScheduleTime = presetScheduleTime;
 
 function openTaskEditor(taskId, presetDateKey) {
   populateEditorSelects();
@@ -1168,6 +1232,7 @@ function openScheduleEditor(scheduleId, presetDateKey) {
   document.getElementById('scheduleEditProperty').value = s?.propertyId || '';
   document.getElementById('scheduleEditResult').value = s?.resultStatus || '';
   document.getElementById('scheduleEditMemo').value = s?.memo || '';
+  updateScheduleEditorSummary();
   editorReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'home';
   go('schedule-edit');
 }
@@ -1459,11 +1524,10 @@ function initEvents() {
       document.getElementById('taskEditDue').value = readDateTime('taskEdit');
     });
   });
-  ['scheduleEditDate','scheduleEditHour','scheduleEditMinute'].forEach((id) => {
+  ['scheduleEditDate','scheduleEditHour','scheduleEditMinute','scheduleEditAllDay','scheduleEditTitleInput','scheduleEditLocation'].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('change', () => {
-      document.getElementById('scheduleEditWhen').value = readDateTime('scheduleEdit');
-    });
+    if (el) el.addEventListener('change', updateScheduleEditorSummary);
+    if (el && (id === 'scheduleEditTitleInput' || id === 'scheduleEditLocation')) el.addEventListener('input', updateScheduleEditorSummary);
   });
 
   const taskEditForm = document.getElementById('taskEditForm');

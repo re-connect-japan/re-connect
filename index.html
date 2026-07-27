@@ -256,10 +256,32 @@
             <form id="scheduleEditForm" class="form compact-form">
               <input type="hidden" name="id" id="scheduleEditId" value="" />
               <label><span>タイトル</span><input name="title" id="scheduleEditTitleInput" placeholder="例: 内見" /></label>
-              <div class="datetime-row">
-                <label class="dt-date"><span>日付</span><input type="date" id="scheduleEditDate" /></label>
-                <div class="dt-time">
-                  <span class="dt-label">時間</span>
+              <div class="gcal-compose-card">
+                <div class="gcal-compose-summary" id="scheduleEditorSummary">日付と時間を選ぶとここに反映されます</div>
+                <div class="gcal-quick-section">
+                  <div class="gcal-quick-label">日付候補</div>
+                  <div class="gcal-quick-row">
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleDate('today')">今日</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleDate('tomorrow')">明日</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleDate('nextweek')">来週</button>
+                  </div>
+                </div>
+                <div class="gcal-quick-section">
+                  <div class="gcal-quick-label">時間候補</div>
+                  <div class="gcal-quick-row">
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleTime('allday')">終日</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleTime('1000')">10:00</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleTime('1300')">13:00</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleTime('1500')">15:00</button>
+                    <button type="button" class="gcal-quick-chip" onclick="presetScheduleTime('1800')">18:00</button>
+                  </div>
+                </div>
+              </div>
+              <div class="datetime-row gcal-editor-datetime">
+                <label class="dt-date"><span>開始日</span><input type="date" id="scheduleEditDate" /></label>
+                <label class="gcal-all-day-toggle"><input type="checkbox" id="scheduleEditAllDay" /> 終日</label>
+                <div class="dt-time" id="scheduleEditTimeWrap">
+                  <span class="dt-label">開始時間</span>
                   <div class="time-roller">
                     <select id="scheduleEditHour" class="roll roll-hour" aria-label="時"></select>
                     <span class="roll-sep">:</span>

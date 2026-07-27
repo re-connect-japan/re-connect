@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=16" />
+  <link rel="stylesheet" href="./styles.css?v=17" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -235,15 +235,15 @@
             <h2>予定</h2>
             <p>Googleカレンダー風の月表示と日別予定</p>
           </div>
-          <article class="panel mobile-panel">
+          <article class="panel mobile-panel calendar-panel">
             <div class="panel-header">
-              <h3>予定一覧</h3>
+              <h3>Googleカレンダー</h3>
               <div class="panel-header-actions">
                 <span class="pill" id="scheduleCountPill"></span>
                 <button type="button" class="primary-btn small" onclick="openScheduleEditor()">＋ 新規</button>
               </div>
             </div>
-            <div id="scheduleList" class="stack"></div>
+            <div id="scheduleList" class="schedule-host"></div>
           </article>
         </section>
 
@@ -493,6 +493,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=16"></script>
+  <script src="./app.js?v=17"></script>
 </body>
 </html>

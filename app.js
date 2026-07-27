@@ -104,6 +104,7 @@ let homeCalendarCursor = null;
 let homeCalendarSelected = null;
 let scheduleCalendarCursor = null;
 let scheduleCalendarSelected = null;
+let scheduleCalendarView = 'month';
 let editorReturnScreen = 'home';
 let snsAttachedImages = [];
 
@@ -284,6 +285,7 @@ function go(screenId) {
   if (target) target.classList.add('active');
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.screen === screenId));
   document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.toggle('active', btn.dataset.screen === screenId));
+  if (screenId === 'calendar') renderSchedules();
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
@@ -923,58 +925,23 @@ function renderScheduleAgendaCard(schedule) {
     </button>
   `;
 }
-function shiftScheduleCalendar(delta) {
-  if (!scheduleCalendarCursor) {
-    const now = new Date();
-    scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
-  }
-  scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth() + delta, 1);
-  renderSchedules();
+function startOfWeek(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  d.setDate(d.getDate() - d.getDay());
+  return d;
 }
-window.shiftScheduleCalendar = shiftScheduleCalendar;
-function jumpScheduleCalendarToToday() {
-  const now = new Date();
-  scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
-  scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  renderSchedules();
+function formatMonthTitle(date) {
+  return `${date.getFullYear()}年${date.getMonth() + 1}月`;
 }
-window.jumpScheduleCalendarToToday = jumpScheduleCalendarToToday;
-function selectScheduleCalendarDay(key) {
-  const [yy, mm, dd] = key.split('-').map(Number);
-  scheduleCalendarSelected = new Date(yy, mm - 1, dd);
-  renderSchedules();
+function formatWeekTitle(date) {
+  const start = startOfWeek(date);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+  return `${start.getMonth() + 1}/${start.getDate()}〜${end.getMonth() + 1}/${end.getDate()}`;
 }
-window.selectScheduleCalendarDay = selectScheduleCalendarDay;
-
-function renderTasks() {
-  const countEl = document.getElementById('taskCountPill');
-  if (countEl) countEl.textContent = `${state.tasks.length}件`;
-  const listEl = document.getElementById('taskList');
-  if (listEl) listEl.innerHTML = sortTasksForView(state.tasks)
-    .map((task) => renderTaskCard(task))
-    .join('') || '<div class="empty-state">タスクはありません</div>';
+function formatDayTitle(date) {
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
-
-function renderSchedules() {
-  const countEl = document.getElementById('scheduleCountPill');
-  if (countEl) countEl.textContent = `${state.schedules.length}件`;
-  const listEl = document.getElementById('scheduleList');
-  if (!listEl) return;
-
-  if (!scheduleCalendarCursor) {
-    const now = new Date();
-    scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else {
-    scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth(), 1);
-  }
-  if (!scheduleCalendarSelected) {
-    const now = new Date();
-    scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  const y = scheduleCalendarCursor.getFullYear();
-  const m = scheduleCalendarCursor.getMonth();
-  const monthTitle = `${y}年${m + 1}月`;
+function buildScheduleMap() {
   const scheduleByDate = {};
   state.schedules.forEach((s) => {
     const d = parseWhen(s.when);
@@ -985,14 +952,52 @@ function renderSchedules() {
   Object.keys(scheduleByDate).forEach((key) => {
     scheduleByDate[key] = sortSchedulesForView(scheduleByDate[key]);
   });
-
+  return scheduleByDate;
+}
+function setScheduleCalendarView(view) {
+  scheduleCalendarView = view;
+  renderSchedules();
+}
+window.setScheduleCalendarView = setScheduleCalendarView;
+function shiftScheduleCalendar(delta) {
+  if (!scheduleCalendarCursor) {
+    const now = new Date();
+    scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  if (scheduleCalendarView === 'week') {
+    scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth(), scheduleCalendarCursor.getDate() + (7 * delta));
+    if (scheduleCalendarSelected) scheduleCalendarSelected = new Date(scheduleCalendarSelected.getFullYear(), scheduleCalendarSelected.getMonth(), scheduleCalendarSelected.getDate() + (7 * delta));
+  } else if (scheduleCalendarView === 'day') {
+    scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth(), scheduleCalendarCursor.getDate() + delta);
+    if (scheduleCalendarSelected) scheduleCalendarSelected = new Date(scheduleCalendarSelected.getFullYear(), scheduleCalendarSelected.getMonth(), scheduleCalendarSelected.getDate() + delta);
+  } else {
+    scheduleCalendarCursor = new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth() + delta, 1);
+  }
+  renderSchedules();
+}
+window.shiftScheduleCalendar = shiftScheduleCalendar;
+function jumpScheduleCalendarToToday() {
+  const now = new Date();
+  scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  renderSchedules();
+}
+window.jumpScheduleCalendarToToday = jumpScheduleCalendarToToday;
+function selectScheduleCalendarDay(key) {
+  const [yy, mm, dd] = key.split('-').map(Number);
+  scheduleCalendarSelected = new Date(yy, mm - 1, dd);
+  scheduleCalendarCursor = new Date(yy, mm - 1, dd);
+  renderSchedules();
+}
+window.selectScheduleCalendarDay = selectScheduleCalendarDay;
+function renderScheduleMonthGrid(baseDate, selected, scheduleByDate) {
+  const y = baseDate.getFullYear();
+  const m = baseDate.getMonth();
   const firstDay = new Date(y, m, 1);
   const startWeekday = firstDay.getDay();
   const startDate = new Date(y, m, 1 - startWeekday);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
   const cells = [];
   for (let i = 0; i < 42; i++) {
     const d = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + i);
@@ -1000,7 +1005,7 @@ function renderSchedules() {
     const daySchedules = scheduleByDate[key] || [];
     const isCurrentMonth = d.getMonth() === m;
     const isToday = sameDay(d, today);
-    const isSelected = scheduleCalendarSelected && sameDay(d, scheduleCalendarSelected);
+    const isSelected = selected && sameDay(d, selected);
     const previews = daySchedules.slice(0, 2).map((s) => `
       <span class="gcal-event-pill ${scheduleStatusClass(s.status)}">${formatScheduleTimeLabel(s.when)} ${escapeHtml(s.title || '予定')}</span>
     `).join('');
@@ -1012,8 +1017,69 @@ function renderSchedules() {
       </button>
     `);
   }
+  return `<div class="gcal-weekdays">${['日','月','火','水','木','金','土'].map((w, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}</div><div class="gcal-grid">${cells.join('')}</div>`;
+}
+function renderScheduleWeekGrid(baseDate, selected, scheduleByDate) {
+  const start = startOfWeek(baseDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const cells = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const key = dateKey(d);
+    const daySchedules = scheduleByDate[key] || [];
+    const isToday = sameDay(d, today);
+    const isSelected = selected && sameDay(d, selected);
+    cells.push(`
+      <button type="button" class="gcal-week-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectScheduleCalendarDay('${key}')">
+        <div class="gcal-week-head">
+          <span class="gcal-week-dow ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${['日','月','火','水','木','金','土'][i]}</span>
+          <span class="gcal-week-date">${d.getDate()}</span>
+        </div>
+        <div class="gcal-week-events">
+          ${daySchedules.length ? daySchedules.slice(0, 5).map((s) => `<span class="gcal-event-pill ${scheduleStatusClass(s.status)}">${formatScheduleTimeLabel(s.when)} ${escapeHtml(s.title || '予定')}</span>`).join('') : '<span class="gcal-week-empty">予定なし</span>'}
+        </div>
+      </button>
+    `);
+  }
+  return `<div class="gcal-week-grid">${cells.join('')}</div>`;
+}
+function renderScheduleDayTimeline(selected, scheduleByDate) {
+  const key = dateKey(selected);
+  const daySchedules = scheduleByDate[key] || [];
+  const itemsByHour = {};
+  daySchedules.forEach((s) => {
+    const d = parseWhen(s.when);
+    const hourKey = String(d ? d.getHours() : 0).padStart(2, '0');
+    (itemsByHour[hourKey] = itemsByHour[hourKey] || []).push(s);
+  });
+  const rows = [];
+  for (let h = 8; h <= 20; h++) {
+    const hourKey = String(h).padStart(2, '0');
+    const items = itemsByHour[hourKey] || [];
+    rows.push(`
+      <div class="gcal-day-row">
+        <div class="gcal-day-hour">${hourKey}:00</div>
+        <div class="gcal-day-slot">
+          ${items.length ? items.map((s) => `<button type="button" class="gcal-day-event ${scheduleStatusClass(s.status)}" onclick="openScheduleEditor('${s.id}')"><span class="gcal-day-event-time">${formatScheduleTimeLabel(s.when)}</span><span class="gcal-day-event-title">${escapeHtml(s.title || '予定')}</span></button>`).join('') : '<div class="gcal-day-empty-line"></div>'}
+        </div>
+      </div>
+    `);
+  }
+  return `<div class="gcal-day-timeline">${rows.join('')}</div>`;
+}
+function renderSchedules() {
+  const countEl = document.getElementById('scheduleCountPill');
+  if (countEl) countEl.textContent = `${state.schedules.length}件`;
+  const listEl = document.getElementById('scheduleList');
+  if (!listEl) return;
 
-  const selected = scheduleCalendarSelected || today;
+  const now = new Date();
+  if (!scheduleCalendarCursor) scheduleCalendarCursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!scheduleCalendarSelected) scheduleCalendarSelected = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const scheduleByDate = buildScheduleMap();
+  const selected = scheduleCalendarSelected || now;
   const selectedKey = dateKey(selected);
   const selectedSchedules = scheduleByDate[selectedKey] || [];
   const selectedLabel = `${selected.getFullYear()}年${selected.getMonth() + 1}月${selected.getDate()}日`;
@@ -1021,24 +1087,41 @@ function renderSchedules() {
     ? sortSchedulesForView(selectedSchedules).map((s) => renderScheduleAgendaCard(s)).join('')
     : '<div class="empty-state compact-empty">この日の予定はありません</div>';
 
+  let title = formatMonthTitle(scheduleCalendarCursor);
+  let subtitle = 'Googleカレンダー風 月表示';
+  let body = renderScheduleMonthGrid(new Date(scheduleCalendarCursor.getFullYear(), scheduleCalendarCursor.getMonth(), 1), selected, scheduleByDate);
+  if (scheduleCalendarView === 'week') {
+    title = formatWeekTitle(scheduleCalendarCursor);
+    subtitle = 'Googleカレンダー風 週表示';
+    body = renderScheduleWeekGrid(scheduleCalendarCursor, selected, scheduleByDate);
+  } else if (scheduleCalendarView === 'day') {
+    title = formatDayTitle(scheduleCalendarCursor);
+    subtitle = 'Googleカレンダー風 日表示';
+    body = renderScheduleDayTimeline(selected, scheduleByDate);
+  }
+
   listEl.innerHTML = `
     <div class="gcal-shell">
       <div class="gcal-toolbar">
         <div class="gcal-toolbar-main">
-          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(-1)" aria-label="前月">‹</button>
+          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(-1)" aria-label="前へ">‹</button>
           <div class="gcal-month-block">
-            <div class="gcal-month-label">${monthTitle}</div>
-            <div class="gcal-month-sub">Googleカレンダー風 月表示</div>
+            <div class="gcal-month-label">${title}</div>
+            <div class="gcal-month-sub">${subtitle}</div>
           </div>
-          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(1)" aria-label="翌月">›</button>
+          <button type="button" class="gcal-nav-btn" onclick="shiftScheduleCalendar(1)" aria-label="次へ">›</button>
         </div>
         <div class="gcal-toolbar-actions">
+          <div class="gcal-view-tabs">
+            <button type="button" class="gcal-view-tab ${scheduleCalendarView === 'month' ? 'active' : ''}" onclick="setScheduleCalendarView('month')">月</button>
+            <button type="button" class="gcal-view-tab ${scheduleCalendarView === 'week' ? 'active' : ''}" onclick="setScheduleCalendarView('week')">週</button>
+            <button type="button" class="gcal-view-tab ${scheduleCalendarView === 'day' ? 'active' : ''}" onclick="setScheduleCalendarView('day')">日</button>
+          </div>
           <button type="button" class="secondary-btn small" onclick="jumpScheduleCalendarToToday()">今日</button>
-          <button type="button" class="primary-btn small" onclick="openScheduleEditor('', '${selectedKey}')">＋ 予定</button>
+          <button type="button" class="primary-btn small desktop-add-btn" onclick="openScheduleEditor('', '${selectedKey}')">＋ 予定</button>
         </div>
       </div>
-      <div class="gcal-weekdays">${weekLabels.map((w, i) => `<span class="${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</span>`).join('')}</div>
-      <div class="gcal-grid">${cells.join('')}</div>
+      ${body}
       <div class="gcal-agenda-panel">
         <div class="gcal-agenda-header">
           <div>
@@ -1049,6 +1132,7 @@ function renderSchedules() {
         </div>
         <div class="gcal-agenda-list">${agenda}</div>
       </div>
+      <button type="button" class="gcal-fab" onclick="openScheduleEditor('', '${selectedKey}')" aria-label="予定を追加">＋</button>
     </div>
   `;
 }

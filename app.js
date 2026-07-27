@@ -375,6 +375,97 @@ function sameDay(a, b) {
   return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function taskStatusLabel(status) {
+  return ({ todo: '未着手', doing: '進行中', hold: '保留', done: '完了', returned: '差戻し' })[status] || (status || '-');
+}
+function taskPriorityLabel(priority) {
+  return ({ high: '優先度高', medium: '優先度中', low: '優先度低' })[priority] || '優先度未設定';
+}
+function taskPriorityShort(priority) {
+  return ({ high: 'P1', medium: 'P2', low: 'P3' })[priority] || 'P2';
+}
+function sortTasksForView(tasks) {
+  const priorityScore = { high: 0, medium: 1, low: 2 };
+  const statusScore = { doing: 0, todo: 1, hold: 2, returned: 3, done: 4 };
+  return [...tasks].sort((a, b) => {
+    const doneGap = (a.status === 'done') - (b.status === 'done');
+    if (doneGap) return doneGap;
+    const statusGap = (statusScore[a.status] ?? 9) - (statusScore[b.status] ?? 9);
+    if (statusGap) return statusGap;
+    const priorityGap = (priorityScore[a.priority] ?? 9) - (priorityScore[b.priority] ?? 9);
+    if (priorityGap) return priorityGap;
+    const ad = parseWhen(a.due);
+    const bd = parseWhen(b.due);
+    if (ad && bd) return ad - bd;
+    return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
+  });
+}
+function renderTaskCard(task, options = {}) {
+  const { compact = false } = options;
+  const customer = getCustomer(task.customerId);
+  const property = getProperty(task.propertyId);
+  const due = escapeHtml(task.due || '-');
+  const title = escapeHtml(task.title || 'タスク');
+  const customerName = escapeHtml(customer?.name || '顧客未設定');
+  const propertyName = escapeHtml(property?.title || '物件未設定');
+  const statusText = escapeHtml(taskStatusLabel(task.status));
+  const priorityText = escapeHtml(taskPriorityLabel(task.priority));
+  const assignee = escapeHtml(task.assignedTo || state.session?.name || '担当未設定');
+  const dealChip = property ? `<span class="todo-chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : '';
+  return `
+    <article class="todo-task ${compact ? 'compact' : ''} priority-${task.priority || 'medium'} status-${task.status || 'todo'} ${task.status === 'done' ? 'is-done' : ''}" onclick="openTaskEditor('${task.id}')">
+      <button type="button" class="todo-check ${task.status === 'done' ? 'checked' : ''}" aria-label="${task.status === 'done' ? '未完了へ戻す' : '完了にする'}" onclick="toggleTaskDone(event, '${task.id}')">
+        <span>${task.status === 'done' ? '✓' : ''}</span>
+      </button>
+      <div class="todo-main">
+        <div class="todo-title-row">
+          <div class="todo-title">${title}</div>
+          <div class="todo-priority-badge priority-${task.priority || 'medium'}">${taskPriorityShort(task.priority)}</div>
+        </div>
+        <div class="todo-meta-row">
+          <span class="todo-date">${due}</span>
+          <span class="todo-dot">•</span>
+          <span>${statusText}</span>
+          <span class="todo-dot">•</span>
+          <span>${priorityText}</span>
+        </div>
+        <div class="todo-context-row">
+          <span>${customerName}</span>
+          <span class="todo-dot">/</span>
+          <span>${propertyName}</span>
+        </div>
+        <div class="todo-tags-row">
+          <span class="todo-chip">担当 ${assignee}</span>
+          ${dealChip}
+        </div>
+      </div>
+      <div class="todo-arrow">›</div>
+    </article>
+  `;
+}
+function toggleTaskDone(event, taskId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const task = state.tasks.find((t) => t.id === taskId);
+  if (!task) return;
+  task.status = task.status === 'done' ? 'todo' : 'done';
+  saveState();
+  rerenderAll();
+  showNotice(task.status === 'done' ? 'タスクを完了にしました。' : 'タスクを未完了に戻しました。');
+}
+window.toggleTaskDone = toggleTaskDone;
+
 function renderHome() {
   const dateEl = document.getElementById('homeDateLabel');
   const today = new Date();
@@ -413,19 +504,10 @@ function renderHome() {
 
   renderHomeCalendarMonth();
 
-  document.getElementById('homeTasks').innerHTML = state.tasks.map((t) => {
-    const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
-    return `
-      <div class="item clickable" onclick="openTaskEditor('${t.id}')">
-        <div class="item-title">${t.due} ${t.title}</div>
-        <div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div>
-        <div class="top-meta">
-          <span class="chip ${t.priority === 'high' ? 'active' : ''}">${t.priority}</span>
-          ${p ? `<span class="chip ${p.dealType}">${dealTypeLabel(p.dealType)}</span>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('') || '<div class="empty-state">タスクはありません</div>';
+  document.getElementById('homeTasks').innerHTML = sortTasksForView(state.tasks)
+    .slice(0, 6)
+    .map((t) => renderTaskCard(t, { compact: true }))
+    .join('') || '<div class="empty-state">タスクはありません</div>';
 
   const unreadCount = state.notifications.filter((n) => n.unread).length;
   const saleCount = state.properties.filter((p) => p.dealType === 'sale').length;
@@ -555,10 +637,7 @@ function renderHomeCalendarDayDetail(scheduleByDate, taskByDate) {
       const c = getCustomer(s.customerId); const p = getProperty(s.propertyId);
       return `<div class="item clickable" onclick="openScheduleEditor('${s.id}')"><div class="item-title">${s.when} ${s.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${s.status}</div></div>`;
     }).join('')}</div>` : ''}
-    ${tks.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">タスク</div>${tks.map((t) => {
-      const c = getCustomer(t.customerId); const p = getProperty(t.propertyId);
-      return `<div class="item clickable" onclick="openTaskEditor('${t.id}')"><div class="item-title">${t.due} ${t.title}</div><div class="item-sub">${c?.name || '-'} / ${p?.title || '-'} / ${t.status}</div></div>`;
-    }).join('')}</div>` : ''}
+    ${tks.length ? `<div class="cal-day-section"><div class="cal-day-subtitle">タスク</div>${sortTasksForView(tks).map((t) => renderTaskCard(t, { compact: true })).join('')}</div>` : ''}
   `;
 }
 
@@ -799,18 +878,9 @@ function renderTasks() {
   const countEl = document.getElementById('taskCountPill');
   if (countEl) countEl.textContent = `${state.tasks.length}件`;
   const listEl = document.getElementById('taskList');
-  if (listEl) listEl.innerHTML = state.tasks.map((task) => {
-    const customer = getCustomer(task.customerId);
-    const property = getProperty(task.propertyId);
-    return `
-      <div class="item clickable" onclick="openTaskEditor('${task.id}')">
-        <div class="item-title">${task.title}</div>
-        <div class="item-sub">${task.status} / ${task.priority} / ${task.due}</div>
-        <div class="item-sub">${customer?.name || '-'} / 担当: ${task.assignedTo || '-'}</div>
-        <div class="top-meta">${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}</div>
-      </div>
-    `;
-  }).join('') || '<div class="empty-state">タスクはありません</div>';
+  if (listEl) listEl.innerHTML = sortTasksForView(state.tasks)
+    .map((task) => renderTaskCard(task))
+    .join('') || '<div class="empty-state">タスクはありません</div>';
 }
 
 function renderSchedules() {

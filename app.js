@@ -452,7 +452,7 @@ function feedItemHtml(post) {
   const customer = getCustomer(post.customerId);
   const property = getProperty(post.propertyId);
   return `
-    <div class="feed-card">
+    <div class="feed-card" onclick="openPostDetail('${post.id}')">
       ${feedThumb(post)}
       <div class="feed-body">
         <div class="feed-title">${post.title}</div>
@@ -464,7 +464,7 @@ function feedItemHtml(post) {
           ${property ? `<span class="dot">•</span><span>${property.title}</span>` : ''}
           ${post.unread ? `<span class="dot">•</span><span style="color:var(--danger);font-weight:800;">未読${post.unread}</span>` : ''}
         </div>
-        <div class="feed-actions">
+        <div class="feed-actions" onclick="event.stopPropagation()">
           <button type="button" class="ghost-btn" onclick="startEditPost('${post.id}')">編集</button>
           <button type="button" class="ghost-btn" onclick="taskFromPost('${post.id}')">タスク化</button>
           <button type="button" class="ghost-btn danger" onclick="deletePost('${post.id}')">削除</button>
@@ -496,6 +496,61 @@ function openPostAsTask(postId) {
   createTaskFromPost(postId);
 }
 window.openPostAsTask = openPostAsTask;
+
+function openPostDetail(postId) {
+  const post = state.posts.find((p) => p.id === postId);
+  if (!post) return;
+  if (post.unread) { post.unread = 0; saveState(); rerenderAll(); }
+  state.activePostId = postId;
+  saveState();
+  renderPostDetail();
+  go('post');
+}
+window.openPostDetail = openPostDetail;
+
+function renderPostDetail() {
+  const root = document.getElementById('postDetail');
+  if (!root) return;
+  const post = state.posts.find((p) => p.id === state.activePostId);
+  if (!post) {
+    root.innerHTML = '<div class="empty-state">投稿が見つかりません。</div>';
+    return;
+  }
+  const customer = getCustomer(post.customerId);
+  const property = getProperty(post.propertyId);
+  const hero = (post.images && post.images.length)
+    ? `<div class="pd-hero"><img src="${post.images[0]}" alt=""></div>`
+    : `<div class="pd-hero">${post.emoji || (property?.dealType === 'rental' ? '🏠' : '🏢')}</div>`;
+  const linked = (customer || property) ? `
+    <div class="pd-linked">
+      ${customer ? `<div><strong>顧客:</strong> ${customer.name}（担当 ${customer.owner || '-'} / 予算 ${customer.budget || '-'}）</div>` : ''}
+      ${property ? `<div><strong>物件:</strong> ${property.title} / ${dealTypeLabel(property.dealType)} / ${propertyPrimaryValue(property) || '-'}</div>` : ''}
+      ${property ? `<div><strong>所在地:</strong> ${property.address || '-'} （${property.line || '-'} ${property.station || ''} 徒歩${property.walk || '-'}）</div>` : ''}
+    </div>` : '';
+  root.innerHTML = `
+    ${hero}
+    <div class="pd-title">${post.title}</div>
+    <div class="pd-meta">
+      <span>${post.author}</span><span class="dot">•</span>
+      <span>${visibilityLabel(post.visibilityCode)}</span>
+      ${property ? `<span class="dot">•</span><span>${dealTypeLabel(property.dealType)}</span>` : ''}
+    </div>
+    <div class="pd-chips">
+      <span class="chip">${visibilityLabel(post.visibilityCode)}</span>
+      ${property ? `<span class="chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : ''}
+      ${customer ? `<span class="chip">${customer.name}</span>` : ''}
+    </div>
+    <div class="pd-body">${(post.body || '').replace(/</g,'&lt;')}</div>
+    ${linked}
+  `;
+
+  const editBtn = document.getElementById('postDetailEditBtn');
+  const taskBtn = document.getElementById('postDetailTaskBtn');
+  const delBtn = document.getElementById('postDetailDeleteBtn');
+  if (editBtn) editBtn.onclick = () => startEditPost(post.id);
+  if (taskBtn) taskBtn.onclick = () => taskFromPost(post.id);
+  if (delBtn) delBtn.onclick = () => deletePost(post.id);
+}
 
 function startEditPost(postId) {
   const post = state.posts.find((p) => p.id === postId);
@@ -542,6 +597,7 @@ function deletePost(postId) {
   if (!confirm('この投稿を削除しますか？')) return;
   state.posts.splice(idx, 1);
   if (document.getElementById('snsEditingPostId').value === postId) cancelEditPost();
+  if (state.activePostId === postId) { state.activePostId = null; go('sns'); }
   saveState();
   rerenderAll();
   showNotice('投稿を削除しました。');
@@ -846,6 +902,7 @@ function rerenderAll() {
   renderDocumentPreview();
   renderNotifications();
   renderThreads();
+  renderPostDetail();
 }
 
 function initEvents() {

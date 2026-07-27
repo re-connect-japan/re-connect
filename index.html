@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=14" />
+  <link rel="stylesheet" href="./styles.css?v=15" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -200,8 +200,19 @@
             <form id="taskEditForm" class="form compact-form">
               <input type="hidden" name="id" id="taskEditId" value="" />
               <label><span>タイトル</span><input name="title" id="taskEditTitleInput" placeholder="例: 比較資料送付" /></label>
+              <div class="datetime-row">
+                <label class="dt-date"><span>期限日</span><input type="date" id="taskEditDate" /></label>
+                <div class="dt-time">
+                  <span class="dt-label">時間</span>
+                  <div class="time-roller">
+                    <select id="taskEditHour" class="roll roll-hour" aria-label="時"></select>
+                    <span class="roll-sep">:</span>
+                    <select id="taskEditMinute" class="roll roll-min" aria-label="分"></select>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" name="due" id="taskEditDue" value="" />
               <div class="inline-grid two">
-                <label><span>期限</span><input name="due" id="taskEditDue" placeholder="例: 今日 10:00 / 2026-07-27 10:00" /></label>
                 <label><span>状態</span><select name="status" id="taskEditStatus"><option value="todo">未着手</option><option value="doing">進行中</option><option value="hold">保留</option><option value="done">完了</option><option value="returned">差戻し</option></select></label>
                 <label><span>優先度</span><select name="priority" id="taskEditPriority"><option value="high">高</option><option value="medium">中</option><option value="low">低</option></select></label>
                 <label><span>担当</span><input name="assignedTo" id="taskEditAssignee" placeholder="例: 田中" /></label>
@@ -245,8 +256,19 @@
             <form id="scheduleEditForm" class="form compact-form">
               <input type="hidden" name="id" id="scheduleEditId" value="" />
               <label><span>タイトル</span><input name="title" id="scheduleEditTitleInput" placeholder="例: 内見" /></label>
+              <div class="datetime-row">
+                <label class="dt-date"><span>日付</span><input type="date" id="scheduleEditDate" /></label>
+                <div class="dt-time">
+                  <span class="dt-label">時間</span>
+                  <div class="time-roller">
+                    <select id="scheduleEditHour" class="roll roll-hour" aria-label="時"></select>
+                    <span class="roll-sep">:</span>
+                    <select id="scheduleEditMinute" class="roll roll-min" aria-label="分"></select>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" name="when" id="scheduleEditWhen" value="" />
               <div class="inline-grid two">
-                <label><span>日時</span><input name="when" id="scheduleEditWhen" placeholder="例: 今日 11:00 / 2026-07-27 11:00" /></label>
                 <label><span>状態</span><select name="status" id="scheduleEditStatus"><option value="planned">予定中</option><option value="done">完了</option><option value="cancelled">キャンセル</option><option value="rescheduled">再調整</option></select></label>
                 <label><span>場所</span><input name="location" id="scheduleEditLocation" placeholder="例: 現地 / 店舗" /></label>
                 <label><span>同期</span><input name="sync" id="scheduleEditSync" placeholder="例: Google / iPhone queued" /></label>
@@ -449,6 +471,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=14"></script>
+  <script src="./app.js?v=15"></script>
 </body>
 </html>

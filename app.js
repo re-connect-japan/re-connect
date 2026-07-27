@@ -859,6 +859,60 @@ function populateEditorSelects() {
   });
 }
 
+function ensureTimeRollerOptions(prefix) {
+  const hourSel = document.getElementById(prefix + 'Hour');
+  const minSel = document.getElementById(prefix + 'Minute');
+  if (hourSel && !hourSel.options.length) {
+    for (let h = 0; h < 24; h++) {
+      const o = document.createElement('option');
+      o.value = String(h);
+      o.textContent = String(h).padStart(2, '0');
+      hourSel.appendChild(o);
+    }
+  }
+  if (minSel && !minSel.options.length) {
+    for (let m = 0; m < 60; m += 5) {
+      const o = document.createElement('option');
+      o.value = String(m);
+      o.textContent = String(m).padStart(2, '0');
+      minSel.appendChild(o);
+    }
+  }
+}
+
+function fillDateTimeInputs(prefix, source, presetDateKey, defaultHour) {
+  ensureTimeRollerOptions(prefix);
+  const dateEl = document.getElementById(prefix + 'Date');
+  const hourEl = document.getElementById(prefix + 'Hour');
+  const minEl = document.getElementById(prefix + 'Minute');
+  let d = source ? parseWhen(source) : null;
+  if (!d && presetDateKey) {
+    const [yy, mm, dd] = presetDateKey.split('-').map(Number);
+    d = new Date(yy, mm - 1, dd, defaultHour, 0, 0, 0);
+  }
+  if (!d) {
+    const now = new Date();
+    d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), defaultHour, 0, 0, 0);
+  }
+  if (dateEl) dateEl.value = dateKey(d);
+  if (hourEl) hourEl.value = String(d.getHours());
+  if (minEl) {
+    // ロールは5分刻みなので丸めて一致させる
+    const m = Math.round(d.getMinutes() / 5) * 5;
+    minEl.value = String(m % 60);
+  }
+}
+
+function readDateTime(prefix) {
+  const dateEl = document.getElementById(prefix + 'Date');
+  const hourEl = document.getElementById(prefix + 'Hour');
+  const minEl = document.getElementById(prefix + 'Minute');
+  const date = (dateEl && dateEl.value) ? dateEl.value : '';
+  const hour = String((hourEl && hourEl.value) || '0').padStart(2, '0');
+  const min = String((minEl && minEl.value) || '0').padStart(2, '0');
+  return date ? `${date} ${hour}:${min}` : `${hour}:${min}`;
+}
+
 function openTaskEditor(taskId, presetDateKey) {
   populateEditorSelects();
   const isNew = !taskId;
@@ -866,7 +920,8 @@ function openTaskEditor(taskId, presetDateKey) {
   document.getElementById('taskEditTitle').textContent = isNew ? 'タスクを新規作成' : 'タスクを編集';
   document.getElementById('taskEditId').value = task?.id || '';
   document.getElementById('taskEditTitleInput').value = task?.title || '';
-  document.getElementById('taskEditDue').value = task?.due || (presetDateKey ? `${presetDateKey} 10:00` : '');
+  fillDateTimeInputs('taskEdit', task?.due, presetDateKey, 10);
+  document.getElementById('taskEditDue').value = readDateTime('taskEdit');
   document.getElementById('taskEditStatus').value = task?.status || 'todo';
   document.getElementById('taskEditPriority').value = task?.priority || 'medium';
   document.getElementById('taskEditAssignee').value = task?.assignedTo || (state.session?.name || '');
@@ -885,7 +940,8 @@ function openScheduleEditor(scheduleId, presetDateKey) {
   document.getElementById('scheduleEditTitle').textContent = isNew ? '予定を新規作成' : '予定を編集';
   document.getElementById('scheduleEditId').value = s?.id || '';
   document.getElementById('scheduleEditTitleInput').value = s?.title || '';
-  document.getElementById('scheduleEditWhen').value = s?.when || (presetDateKey ? `${presetDateKey} 11:00` : '');
+  fillDateTimeInputs('scheduleEdit', s?.when, presetDateKey, 11);
+  document.getElementById('scheduleEditWhen').value = readDateTime('scheduleEdit');
   document.getElementById('scheduleEditStatus').value = s?.status || 'planned';
   document.getElementById('scheduleEditLocation').value = s?.location || '';
   document.getElementById('scheduleEditSync').value = s?.sync || 'Google / iPhone queued';
@@ -1178,10 +1234,24 @@ function initEvents() {
   if (calPrev) calPrev.addEventListener('click', () => shiftHomeCalendar(-1));
   if (calNext) calNext.addEventListener('click', () => shiftHomeCalendar(1));
 
+  ['taskEditDate','taskEditHour','taskEditMinute'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      document.getElementById('taskEditDue').value = readDateTime('taskEdit');
+    });
+  });
+  ['scheduleEditDate','scheduleEditHour','scheduleEditMinute'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      document.getElementById('scheduleEditWhen').value = readDateTime('scheduleEdit');
+    });
+  });
+
   const taskEditForm = document.getElementById('taskEditForm');
   if (taskEditForm) taskEditForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('taskEditId').value;
+    document.getElementById('taskEditDue').value = readDateTime('taskEdit');
     const payload = {
       title: document.getElementById('taskEditTitleInput').value.trim(),
       due: document.getElementById('taskEditDue').value.trim(),
@@ -1234,6 +1304,7 @@ function initEvents() {
   if (scheduleEditForm) scheduleEditForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('scheduleEditId').value;
+    document.getElementById('scheduleEditWhen').value = readDateTime('scheduleEdit');
     const payload = {
       title: document.getElementById('scheduleEditTitleInput').value.trim(),
       when: document.getElementById('scheduleEditWhen').value.trim(),

@@ -149,12 +149,13 @@
                 <input type="file" id="snsImageInput" accept="image/*" />
               </label>
               <div id="snsImagePreview" class="image-preview"></div>
-              <div class="form-actions wrap-actions">
-                <button type="submit" id="snsSubmitBtn" class="primary-btn">投稿を保存</button>
-                <button type="button" id="snsCancelEditBtn" class="secondary-btn hidden">編集をキャンセル</button>
-              </div>
+              <div class="sns-submit-spacer"></div>
             </form>
           </details>
+          <div class="sns-submit-bar" id="snsSubmitBar">
+            <button type="button" id="snsCancelEditBtn" class="secondary-btn hidden">キャンセル</button>
+            <button type="submit" form="snsForm" id="snsSubmitBtn" class="primary-btn full">投稿を保存</button>
+          </div>
         </section>
 
         <section id="screen-tasks" class="screen">

@@ -115,6 +115,35 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+async function fileToCompressedDataUrl(file, maxSize = 1280, quality = 0.72) {
+  try {
+    const img = await loadImageFromFile(file);
+    let { width, height } = img;
+    if (width > maxSize || height > maxSize) {
+      const ratio = Math.min(maxSize / width, maxSize / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', quality);
+  } catch (err) {
+    return await readFileAsDataUrl(file);
+  }
+}
+
 function renderSnsImagePreview() {
   const root = document.getElementById('snsImagePreview');
   if (!root) return;
@@ -144,12 +173,12 @@ function setupSnsImagePicker() {
         break;
       }
       if (!file.type.startsWith('image/')) continue;
-      if (file.size > 3 * 1024 * 1024) {
-        showNotice(`${file.name} は 3MB を超えています。`, 'error');
+      if (file.size > 15 * 1024 * 1024) {
+        showNotice(`${file.name} は大きすぎます（15MB以下）。`, 'error');
         continue;
       }
       try {
-        const dataUrl = await readFileAsDataUrl(file);
+        const dataUrl = await fileToCompressedDataUrl(file);
         snsAttachedImages.push(dataUrl);
       } catch { /* skip */ }
     }
@@ -166,7 +195,25 @@ function loadState() {
     return createInitialState();
   }
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (err) {
+    try {
+      const light = JSON.parse(JSON.stringify(state));
+      if (Array.isArray(light.posts)) {
+        light.posts = light.posts.map((p) => ({ ...p, images: [] }));
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(light));
+      showNotice('容量上限のため、画像は一時的に保存先から除外されました。', 'error');
+      return true;
+    } catch (err2) {
+      showNotice('ブラウザの保存領域が一杯です。デモデータ初期化や不要な投稿削除をお願いします。', 'error');
+      return false;
+    }
+  }
+}
 function resetState() { state = createInitialState(); saveState(); }
 function uid(prefix, list) { return `${prefix}_${String(list.length + 1).padStart(3, '0')}`; }
 function getCustomer(id) { return state.customers.find((x) => x.id === id) || null; }

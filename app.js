@@ -285,7 +285,16 @@ function saveState() {
   return false;
 }
 function resetState() { state = createInitialState(); saveState(); }
-function uid(prefix, list) { return `${prefix}_${String(list.length + 1).padStart(3, '0')}`; }
+function uid(prefix, list) {
+  const existing = new Set((list || []).map((x) => x && x.id).filter(Boolean));
+  let n = (list || []).length + 1;
+  let candidate = `${prefix}_${String(n).padStart(3, '0')}`;
+  while (existing.has(candidate)) {
+    n += 1;
+    candidate = `${prefix}_${String(n).padStart(3, '0')}`;
+  }
+  return candidate;
+}
 function getCustomer(id) { return state.customers.find((x) => x.id === id) || null; }
 function getProperty(id) { return state.properties.find((x) => x.id === id) || null; }
 function visibilityLabel(code) {
@@ -1497,7 +1506,7 @@ function openTaskEditor(taskId, presetDateKey) {
   populateEditorSelects();
   const isNew = !taskId;
   const task = isNew ? null : state.tasks.find((t) => t.id === taskId);
-  document.getElementById('taskEditTitle').textContent = isNew ? 'タスクを新規作成' : 'タスクを編集';
+  document.getElementById('taskEditTitle').textContent = (isNew || !task) ? 'タスクを新規作成' : 'タスクを編集';
   document.getElementById('taskEditId').value = task?.id || '';
   document.getElementById('taskEditTitleInput').value = task?.title || '';
   fillDateTimeInputs('taskEdit', task?.due, presetDateKey, 10);
@@ -2214,18 +2223,30 @@ function initEvents() {
     const _cachePdfs = taskEditPdfs.map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
     if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
     let _savedId = id;
+    let _wasCreate = false;
     if (id) {
       const t = state.tasks.find((x) => x.id === id);
-      if (t) Object.assign(t, payload);
+      if (t) {
+        Object.assign(t, payload);
+      } else {
+        // id が指定されていたが該当タスクが無い場合は新規作成扱い
+        const newId = uid('tk', state.tasks);
+        const created = { id: newId, sourcePostId: null, ...payload };
+        state.tasks.unshift(created);
+        _savedId = newId;
+        _wasCreate = true;
+      }
     } else {
-      const created = { id: uid('tk', state.tasks), sourcePostId: null, ...payload };
+      const newId = uid('tk', state.tasks);
+      const created = { id: newId, sourcePostId: null, ...payload };
       state.tasks.unshift(created);
-      _savedId = created.id;
+      _savedId = newId;
+      _wasCreate = true;
     }
     if (_savedId) attachmentSessionCache[_savedId] = { photos: _cachePhotos, pdfs: _cachePdfs };
     saveState();
     rerenderAll();
-    showNotice(id ? 'タスクを更新しました。' : 'タスクを作成しました。');
+    showNotice(_wasCreate ? 'タスクを作成しました。' : 'タスクを更新しました。');
     goBackFromEditor('tasks');
   });
   const taskDoneBtn = document.getElementById('taskEditDoneBtn');

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=20" />
+  <link rel="stylesheet" href="./styles.css?v=21" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -238,6 +238,30 @@
                 <label><span>物件</span><select name="propertyId" id="taskEditProperty"></select></label>
               </div>
               <label class="task-memo-label"><span>メモ</span><textarea name="memo" id="taskEditMemo" class="task-memo-area" rows="10" placeholder="メモとして自由に書けます。改行そのまま保存されます。&#10;・箇条書き&#10;・電話メモ&#10;・関連URLなど"></textarea></label>
+              <div class="task-attach-section">
+                <div class="task-attach-block">
+                  <div class="task-attach-head">
+                    <span class="task-attach-title">写真</span>
+                    <span class="task-attach-count" id="taskPhotoCount">0 / 5</span>
+                    <label class="secondary-btn small task-attach-btn">
+                      <span>写真を追加</span>
+                      <input type="file" id="taskPhotoInput" accept="image/*" multiple hidden />
+                    </label>
+                  </div>
+                  <div class="task-attach-grid" id="taskPhotoGrid"></div>
+                </div>
+                <div class="task-attach-block">
+                  <div class="task-attach-head">
+                    <span class="task-attach-title">PDF</span>
+                    <span class="task-attach-count" id="taskPdfCount">0 / 5</span>
+                    <label class="secondary-btn small task-attach-btn">
+                      <span>PDFを追加</span>
+                      <input type="file" id="taskPdfInput" accept="application/pdf" multiple hidden />
+                    </label>
+                  </div>
+                  <div class="task-attach-list" id="taskPdfList"></div>
+                </div>
+              </div>
               <div class="edit-actions">
                 <button type="submit" class="primary-btn full">保存</button>
                 <button type="button" class="secondary-btn" id="taskEditDoneBtn">完了にする</button>
@@ -511,6 +535,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=20"></script>
+  <script src="./app.js?v=21"></script>
 </body>
 </html>

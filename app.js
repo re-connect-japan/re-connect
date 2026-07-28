@@ -442,6 +442,7 @@ function renderTaskCard(task, options = {}) {
           ${priorityBadge}
         </div>
         ${memoPreview ? `<div class="todo-memo-preview">${memoPreview}</div>` : ''}
+        ${(task.photos?.length || task.pdfs?.length) ? `<div class="todo-attach-preview">${task.photos?.length ? `📷×${task.photos.length}` : ''}${task.photos?.length && task.pdfs?.length ? '  ' : ''}${task.pdfs?.length ? `📄×${task.pdfs.length}` : ''}</div>` : ''}
         <div class="todo-badge-row">
           ${dueBadge}
           ${customerChip}
@@ -1336,6 +1337,112 @@ function presetScheduleTime(code) {
 }
 window.presetScheduleTime = presetScheduleTime;
 
+
+// Task editor attachment buffers (per-open editing session)
+let taskEditPhotos = [];
+let taskEditPdfs = [];
+const TASK_ATTACH_MAX = 5;
+const TASK_PDF_MAX_BYTES = 5 * 1024 * 1024;
+
+function renderTaskAttachments() {
+  const photoGrid = document.getElementById('taskPhotoGrid');
+  const pdfList = document.getElementById('taskPdfList');
+  const photoCount = document.getElementById('taskPhotoCount');
+  const pdfCount = document.getElementById('taskPdfCount');
+  if (photoCount) photoCount.textContent = `${taskEditPhotos.length} / ${TASK_ATTACH_MAX}`;
+  if (pdfCount) pdfCount.textContent = `${taskEditPdfs.length} / ${TASK_ATTACH_MAX}`;
+  if (photoGrid) {
+    photoGrid.innerHTML = taskEditPhotos.map((p, i) => `
+      <div class="task-attach-photo">
+        <img src="${p.dataUrl}" alt="${escapeHtml(p.name || 'photo')}" />
+        <button type="button" class="task-attach-remove" onclick="removeTaskPhoto(${i})" aria-label="削除">×</button>
+      </div>
+    `).join('');
+  }
+  if (pdfList) {
+    pdfList.innerHTML = taskEditPdfs.map((p, i) => `
+      <div class="task-attach-pdf">
+        <span class="task-attach-pdf-ico">📄</span>
+        <a class="task-attach-pdf-name" href="${p.dataUrl}" target="_blank" rel="noopener">${escapeHtml(p.name || 'document.pdf')}</a>
+        <span class="task-attach-pdf-size">${formatFileSize(p.size || 0)}</span>
+        <button type="button" class="task-attach-remove" onclick="removeTaskPdf(${i})" aria-label="削除">×</button>
+      </div>
+    `).join('');
+  }
+}
+window.renderTaskAttachments = renderTaskAttachments;
+
+function removeTaskPhoto(index) {
+  taskEditPhotos.splice(index, 1);
+  renderTaskAttachments();
+}
+window.removeTaskPhoto = removeTaskPhoto;
+
+function removeTaskPdf(index) {
+  taskEditPdfs.splice(index, 1);
+  renderTaskAttachments();
+}
+window.removeTaskPdf = removeTaskPdf;
+
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes/1024).toFixed(1)} KB`;
+  return `${(bytes/1024/1024).toFixed(2)} MB`;
+}
+
+function setupTaskAttachmentPickers() {
+  const photoInput = document.getElementById('taskPhotoInput');
+  if (photoInput && !photoInput.dataset.bound) {
+    photoInput.dataset.bound = '1';
+    photoInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        if (taskEditPhotos.length >= TASK_ATTACH_MAX) {
+          showNotice(`写真は最大${TASK_ATTACH_MAX}枚までです。`, 'error');
+          break;
+        }
+        try {
+          const dataUrl = await fileToCompressedDataUrl(file);
+          taskEditPhotos.push({ name: file.name, size: dataUrl.length, dataUrl });
+        } catch (err) {
+          console.error(err);
+          showNotice('写真の読み込みに失敗しました。', 'error');
+        }
+      }
+      photoInput.value = '';
+      renderTaskAttachments();
+    });
+  }
+  const pdfInput = document.getElementById('taskPdfInput');
+  if (pdfInput && !pdfInput.dataset.bound) {
+    pdfInput.dataset.bound = '1';
+    pdfInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        if (taskEditPdfs.length >= TASK_ATTACH_MAX) {
+          showNotice(`PDFは最大${TASK_ATTACH_MAX}件までです。`, 'error');
+          break;
+        }
+        if (file.size > TASK_PDF_MAX_BYTES) {
+          showNotice(`${file.name} は5MBを超えています。`, 'error');
+          continue;
+        }
+        try {
+          const dataUrl = await readFileAsDataUrl(file);
+          taskEditPdfs.push({ name: file.name, size: file.size, dataUrl });
+        } catch (err) {
+          console.error(err);
+          showNotice('PDFの読み込みに失敗しました。', 'error');
+        }
+      }
+      pdfInput.value = '';
+      renderTaskAttachments();
+    });
+  }
+}
+window.setupTaskAttachmentPickers = setupTaskAttachmentPickers;
+
 function openTaskEditor(taskId, presetDateKey) {
   populateEditorSelects();
   const isNew = !taskId;
@@ -1351,6 +1458,10 @@ function openTaskEditor(taskId, presetDateKey) {
   document.getElementById('taskEditCustomer').value = task?.customerId || '';
   document.getElementById('taskEditProperty').value = task?.propertyId || '';
   document.getElementById('taskEditMemo').value = task?.memo || '';
+  taskEditPhotos = Array.isArray(task?.photos) ? task.photos.map((p) => ({ ...p })) : [];
+  taskEditPdfs = Array.isArray(task?.pdfs) ? task.pdfs.map((p) => ({ ...p })) : [];
+  renderTaskAttachments();
+  setupTaskAttachmentPickers();
   editorReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'home';
   go('task-edit');
 }
@@ -1850,7 +1961,9 @@ function initEvents() {
       assignedTo: document.getElementById('taskEditAssignee').value.trim(),
       customerId: document.getElementById('taskEditCustomer').value || null,
       propertyId: document.getElementById('taskEditProperty').value || null,
-      memo: document.getElementById('taskEditMemo').value
+      memo: document.getElementById('taskEditMemo').value,
+      photos: taskEditPhotos.map((p) => ({ ...p })),
+      pdfs: taskEditPdfs.map((p) => ({ ...p }))
     };
     if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
     if (id) {

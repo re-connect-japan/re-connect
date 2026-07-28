@@ -1850,3 +1850,6 @@ body:has(#screen-sns.active) #screen-sns { padding-bottom: 96px; }
   font-size: 12px;
   color: #64748b;
 }
+
+.task-attach-pdf-name.muted { color: #64748b; font-weight: 700; }
+.tag-muted { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: 800; }

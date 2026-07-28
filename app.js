@@ -247,7 +247,41 @@ function saveState() {
       return true;
     }
   }
-  showNotice('ブラウザの保存領域が一杯です。デモデータ初期化をお願いします。', 'error');
+
+  // 3) 大きいPDF本文を落として名前だけ残す (自動スリム化)
+  if (Array.isArray(clone.tasks)) {
+    const trimClone = JSON.parse(JSON.stringify(state));
+    let stripped = 0;
+    trimClone.tasks = (trimClone.tasks || []).map((t) => {
+      if (Array.isArray(t.pdfs)) {
+        t.pdfs = t.pdfs.map((p) => {
+          if (p && p.dataUrl && ((p.size || 0) >= TASK_PDF_HARD_INLINE || p.heavy)) {
+            stripped++;
+            return { name: p.name, size: p.size, dataUrl: '', heavy: true, stored: 'name_only' };
+          }
+          return p;
+        });
+      }
+      return t;
+    });
+    if (stripped && trySetItem(JSON.stringify(trimClone))) {
+      state.tasks = trimClone.tasks;
+      showNotice(`容量上限のため、大きいPDF ${stripped} 件は名称のみ保存しました。`, 'error');
+      return true;
+    }
+    // 4) 最終手段: すべてのPDF本文を除外
+    trimClone.tasks = (trimClone.tasks || []).map((t) => ({
+      ...t,
+      pdfs: Array.isArray(t.pdfs) ? t.pdfs.map((p) => ({ name: p?.name, size: p?.size, dataUrl: '', stored: 'name_only' })) : t.pdfs
+    }));
+    if (trySetItem(JSON.stringify(trimClone))) {
+      state.tasks = trimClone.tasks;
+      showNotice('容量上限のため、すべてのPDF本文を除外して名称のみ保存しました。', 'error');
+      return true;
+    }
+  }
+
+  showNotice('ブラウザの保存領域が一杯です。不要なタスク・投稿を削除してください。', 'error');
   return false;
 }
 function resetState() { state = createInitialState(); saveState(); }
@@ -1345,7 +1379,9 @@ window.presetScheduleTime = presetScheduleTime;
 let taskEditPhotos = [];
 let taskEditPdfs = [];
 const TASK_ATTACH_MAX = 5;
-const TASK_PDF_MAX_BYTES = 5 * 1024 * 1024;
+const TASK_PDF_MAX_BYTES = 20 * 1024 * 1024;
+const TASK_PDF_SLIM_ABOVE = 4 * 1024 * 1024; // over this size, store link-only in localStorage
+const TASK_PDF_HARD_INLINE = 2 * 1024 * 1024; // safe inline limit for localStorage
 
 function renderTaskAttachments() {
   const photoGrid = document.getElementById('taskPhotoGrid');
@@ -1363,14 +1399,20 @@ function renderTaskAttachments() {
     `).join('');
   }
   if (pdfList) {
-    pdfList.innerHTML = taskEditPdfs.map((p, i) => `
-      <div class="task-attach-pdf">
-        <span class="task-attach-pdf-ico">📄</span>
-        <a class="task-attach-pdf-name" href="${p.dataUrl}" target="_blank" rel="noopener">${escapeHtml(p.name || 'document.pdf')}</a>
-        <span class="task-attach-pdf-size">${formatFileSize(p.size || 0)}</span>
-        <button type="button" class="task-attach-remove" onclick="removeTaskPdf(${i})" aria-label="削除">×</button>
-      </div>
-    `).join('');
+    pdfList.innerHTML = taskEditPdfs.map((p, i) => {
+      const hasBody = !!p.dataUrl;
+      const nameHtml = hasBody
+        ? `<a class="task-attach-pdf-name" href="${p.dataUrl}" target="_blank" rel="noopener">${escapeHtml(p.name || 'document.pdf')}</a>`
+        : `<span class="task-attach-pdf-name muted" title="本文は端末保存されていません。再添付で復元できます。">${escapeHtml(p.name || 'document.pdf')} <span class="tag-muted">名称のみ</span></span>`;
+      return `
+        <div class="task-attach-pdf">
+          <span class="task-attach-pdf-ico">📄</span>
+          ${nameHtml}
+          <span class="task-attach-pdf-size">${formatFileSize(p.size || 0)}</span>
+          <button type="button" class="task-attach-remove" onclick="removeTaskPdf(${i})" aria-label="削除">×</button>
+        </div>
+      `;
+    }).join('');
   }
 }
 window.renderTaskAttachments = renderTaskAttachments;
@@ -1428,12 +1470,16 @@ function setupTaskAttachmentPickers() {
           break;
         }
         if (file.size > TASK_PDF_MAX_BYTES) {
-          showNotice(`${file.name} は5MBを超えています。`, 'error');
+          showNotice(`${file.name} は${Math.floor(TASK_PDF_MAX_BYTES/1024/1024)}MBを超えています。`, 'error');
           continue;
         }
         try {
           const dataUrl = await readFileAsDataUrl(file);
-          taskEditPdfs.push({ name: file.name, size: file.size, dataUrl });
+          const heavy = file.size >= TASK_PDF_HARD_INLINE;
+          taskEditPdfs.push({ name: file.name, size: file.size, dataUrl, heavy });
+          if (heavy) {
+            showNotice(`${file.name} は大きいため、この端末では今のセッションのみ表示されます。`, 'info');
+          }
         } catch (err) {
           console.error(err);
           showNotice('PDFの読み込みに失敗しました。', 'error');

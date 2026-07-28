@@ -1444,3 +1444,193 @@ body:has(#screen-sns.active) #screen-sns { padding-bottom: 96px; }
   .metric-card { padding: 10px; }
   .metric-value { font-size: 20px; }
 }
+
+/* ---------- Todoist-style task list & quick add ---------- */
+.tasks-panel { padding: 12px; }
+.quick-task-bar {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #eff6ff);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.08);
+}
+.quick-task-bar.hidden { display: none; }
+.quick-task-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.quick-task-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px dashed #93c5fd;
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 900;
+  font-size: 14px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: default;
+}
+.quick-task-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  padding: 8px 4px;
+  min-width: 0;
+}
+.quick-task-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 11px;
+  color: #475569;
+  padding: 0 4px;
+}
+.quick-task-hint span {
+  background: #ffffffaa;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.todoist-task-list { gap: 6px; }
+.todo-task {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-left-color: #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background .12s ease, transform .05s ease;
+}
+.todo-task:active { transform: scale(0.998); background: #f8fafc; }
+.todo-task.priority-high { border-left-color: #ef4444; }
+.todo-task.priority-medium { border-left-color: #f59e0b; }
+.todo-task.priority-low { border-left-color: #94a3b8; }
+.todo-task.is-done { opacity: 0.55; }
+.todo-task.is-done .todo-title { text-decoration: line-through; color: #64748b; }
+
+.todo-check {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  color: transparent;
+  font-size: 14px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+.todo-check.checked {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+.todo-task.priority-high .todo-check { border-color: #fca5a5; }
+.todo-task.priority-medium .todo-check { border-color: #fbbf24; }
+
+.todo-main { min-width: 0; display: grid; gap: 4px; }
+.todo-title-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+.todo-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.todo-priority-badge {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #ffffff;
+  letter-spacing: .5px;
+  flex-shrink: 0;
+}
+.todo-priority-badge.priority-high { background: #ef4444; }
+.todo-priority-badge.priority-medium { background: #f59e0b; }
+.todo-priority-badge.priority-low { background: #94a3b8; }
+
+.todo-memo-preview {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.todo-due-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #475569;
+}
+.todo-due-badge.today { background: #ecfdf5; color: #047857; border-color: #86efac; }
+.todo-due-badge.tomorrow { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.todo-due-badge.soon { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.todo-due-badge.overdue { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.todo-due-badge.later { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+.todo-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+}
+.todo-chip.cust { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+.todo-chip.sale { background: #eff6ff; color: #174ea6; border-color: #bfdbfe; }
+.todo-chip.rental { background: #ecfeff; color: #0f766e; border-color: #99f6e4; }
+
+.task-edit-form .task-title-label input { font-size: 17px; font-weight: 700; }
+.task-memo-label { align-items: stretch; }
+.task-memo-area {
+  min-height: 220px;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  resize: vertical;
+  background: #fffdf7;
+}

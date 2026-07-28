@@ -399,17 +399,17 @@ function taskPriorityShort(priority) {
 }
 function sortTasksForView(tasks) {
   const priorityScore = { high: 0, medium: 1, low: 2 };
-  const statusScore = { doing: 0, todo: 1, hold: 2, returned: 3, done: 4 };
+  const FAR = 8640000000000000;
   return [...tasks].sort((a, b) => {
     const doneGap = (a.status === 'done') - (b.status === 'done');
     if (doneGap) return doneGap;
-    const statusGap = (statusScore[a.status] ?? 9) - (statusScore[b.status] ?? 9);
-    if (statusGap) return statusGap;
-    const priorityGap = (priorityScore[a.priority] ?? 9) - (priorityScore[b.priority] ?? 9);
-    if (priorityGap) return priorityGap;
     const ad = parseWhen(a.due);
     const bd = parseWhen(b.due);
-    if (ad && bd) return ad - bd;
+    const at = ad ? ad.getTime() : FAR;
+    const bt = bd ? bd.getTime() : FAR;
+    if (at !== bt) return at - bt;
+    const priorityGap = (priorityScore[a.priority] ?? 9) - (priorityScore[b.priority] ?? 9);
+    if (priorityGap) return priorityGap;
     return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
   });
 }
@@ -417,44 +417,72 @@ function renderTaskCard(task, options = {}) {
   const { compact = false } = options;
   const customer = getCustomer(task.customerId);
   const property = getProperty(task.propertyId);
-  const due = escapeHtml(task.due || '-');
-  const title = escapeHtml(task.title || 'タスク');
-  const customerName = escapeHtml(customer?.name || '顧客未設定');
-  const propertyName = escapeHtml(property?.title || '物件未設定');
-  const statusText = escapeHtml(taskStatusLabel(task.status));
-  const priorityText = escapeHtml(taskPriorityLabel(task.priority));
-  const assignee = escapeHtml(task.assignedTo || state.session?.name || '担当未設定');
-  const dealChip = property ? `<span class="todo-chip ${property.dealType}">${dealTypeLabel(property.dealType)}</span>` : '';
+  const dueRaw = task.due || '';
+  const dueClass = dueBadgeClass(dueRaw);
+  const dueLabel = dueRaw ? escapeHtml(formatDueShort(dueRaw)) : '';
+  const title = escapeHtml(task.title || '(無題)');
+  const memoRaw = String(task.memo || '').trim();
+  const memoPreview = memoRaw ? escapeHtml(memoRaw.split(/\r?\n/)[0].slice(0, 80)) : '';
+  const priorityKey = task.priority || 'medium';
+  const priorityBadge = `<span class="todo-priority-badge priority-${priorityKey}">${taskPriorityShort(priorityKey)}</span>`;
+  const dueBadge = dueLabel ? `<span class="todo-due-badge ${dueClass}">${dueLabel}</span>` : '';
+  const customerChip = customer ? `<span class="todo-chip cust">#${escapeHtml(customer.name)}</span>` : '';
+  const propertyChip = property ? `<span class="todo-chip ${property.dealType}">@${escapeHtml(property.title)}</span>` : '';
+  const isDone = task.status === 'done';
   return `
-    <article class="todo-task ${compact ? 'compact' : ''} priority-${task.priority || 'medium'} status-${task.status || 'todo'} ${task.status === 'done' ? 'is-done' : ''}" onclick="openTaskEditor('${task.id}')">
-      <button type="button" class="todo-check ${task.status === 'done' ? 'checked' : ''}" aria-label="${task.status === 'done' ? '未完了へ戻す' : '完了にする'}" onclick="toggleTaskDone(event, '${task.id}')">
-        <span>${task.status === 'done' ? '✓' : ''}</span>
+    <article class="todo-task ${compact ? 'compact' : ''} priority-${priorityKey} status-${task.status || 'todo'} ${isDone ? 'is-done' : ''}" onclick="openTaskEditor('${task.id}')">
+      <button type="button" class="todo-check ${isDone ? 'checked' : ''}" aria-label="${isDone ? '未完了へ戻す' : '完了にする'}" onclick="toggleTaskDone(event, '${task.id}')">
+        <span>${isDone ? '✓' : ''}</span>
       </button>
       <div class="todo-main">
         <div class="todo-title-row">
           <div class="todo-title">${title}</div>
-          <div class="todo-priority-badge priority-${task.priority || 'medium'}">${taskPriorityShort(task.priority)}</div>
+          ${priorityBadge}
         </div>
-        <div class="todo-meta-row">
-          <span class="todo-date">${due}</span>
-          <span class="todo-dot">•</span>
-          <span>${statusText}</span>
-          <span class="todo-dot">•</span>
-          <span>${priorityText}</span>
-        </div>
-        <div class="todo-context-row">
-          <span>${customerName}</span>
-          <span class="todo-dot">/</span>
-          <span>${propertyName}</span>
-        </div>
-        <div class="todo-tags-row">
-          <span class="todo-chip">担当 ${assignee}</span>
-          ${dealChip}
+        ${memoPreview ? `<div class="todo-memo-preview">${memoPreview}</div>` : ''}
+        <div class="todo-badge-row">
+          ${dueBadge}
+          ${customerChip}
+          ${propertyChip}
         </div>
       </div>
-      <div class="todo-arrow">›</div>
     </article>
   `;
+}
+
+function formatDueShort(due) {
+  const d = parseWhen(due);
+  if (!d) return due;
+  const now = new Date();
+  const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((target0 - today0) / 86400000);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const hasTime = /\d{1,2}:\d{2}/.test(String(due));
+  const timePart = hasTime ? ` ${hh}:${mm}` : '';
+  if (diffDays === 0) return `今日${timePart}`;
+  if (diffDays === 1) return `明日${timePart}`;
+  if (diffDays === -1) return `昨日${timePart}`;
+  if (diffDays > 1 && diffDays < 7) {
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    return `${dow}${timePart}`;
+  }
+  return `${d.getMonth()+1}/${d.getDate()}${timePart}`;
+}
+
+function dueBadgeClass(due) {
+  const d = parseWhen(due);
+  if (!d) return '';
+  const now = new Date();
+  const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((target0 - today0) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'tomorrow';
+  if (diffDays < 7) return 'soon';
+  return 'later';
 }
 function toggleTaskDone(event, taskId) {
   if (event) {
@@ -1556,6 +1584,171 @@ function printDocument() {
   win.print();
 }
 
+
+function renderTasks() {
+  const pill = document.getElementById('taskCountPill');
+  if (pill) {
+    const openCount = state.tasks.filter((t) => t.status !== 'done').length;
+    pill.textContent = `${openCount}件未完了 / 全${state.tasks.length}件`;
+  }
+  const list = document.getElementById('taskList');
+  if (!list) return;
+  const sorted = sortTasksForView(state.tasks);
+  list.innerHTML = sorted.length
+    ? sorted.map((t) => renderTaskCard(t)).join('')
+    : '<div class="empty-state">タスクはありません。＋ 新規から追加できます。</div>';
+}
+window.renderTasks = renderTasks;
+
+function toggleQuickTaskBar(forceOpen) {
+  const bar = document.getElementById('quickTaskBar');
+  if (!bar) return;
+  const willOpen = typeof forceOpen === 'boolean' ? forceOpen : bar.classList.contains('hidden');
+  bar.classList.toggle('hidden', !willOpen);
+  if (willOpen) {
+    const input = document.getElementById('quickTaskInput');
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 30);
+    }
+  }
+}
+window.toggleQuickTaskBar = toggleQuickTaskBar;
+
+function parseQuickTaskInput(raw) {
+  let text = String(raw || '').trim();
+  if (!text) return null;
+  let priority = 'medium';
+  const priMatch = text.match(/(^|\s)!([123])(?=\s|$)/);
+  if (priMatch) {
+    priority = priMatch[2] === '1' ? 'high' : priMatch[2] === '2' ? 'medium' : 'low';
+    text = (text.slice(0, priMatch.index) + text.slice(priMatch.index + priMatch[0].length)).trim();
+  }
+  let customerId = '';
+  const custMatch = text.match(/(^|\s)#([^\s@#]+)/);
+  if (custMatch) {
+    const name = custMatch[2];
+    const hit = state.customers.find((c) => c.name === name || c.name.startsWith(name));
+    if (hit) customerId = hit.id;
+    text = (text.slice(0, custMatch.index) + text.slice(custMatch.index + custMatch[0].length)).trim();
+  }
+  let propertyId = '';
+  const propMatch = text.match(/(^|\s)@([^\s#]+)/);
+  if (propMatch) {
+    const name = propMatch[2];
+    const hit = state.properties.find((p) => p.title === name || p.title.startsWith(name));
+    if (hit) propertyId = hit.id;
+    text = (text.slice(0, propMatch.index) + text.slice(propMatch.index + propMatch[0].length)).trim();
+  }
+  const dueRes = extractDueFromText(text);
+  text = dueRes.remaining;
+  const title = text.trim();
+  if (!title) return null;
+  return {
+    title,
+    priority,
+    customerId,
+    propertyId,
+    due: dueRes.due || '',
+    status: 'todo',
+    assignedTo: state.session?.name || DEFAULT_USER.name,
+    memo: ''
+  };
+}
+
+function extractDueFromText(text) {
+  const trimmed = text.trim();
+  const patterns = [
+    { re: /(^|\s)(今日|today)(?:\s+(\d{1,2}):(\d{2}))?(?=\s|$)/i, resolve: (m) => datePlusDays(0, m[3], m[4]) },
+    { re: /(^|\s)(明日|tomorrow)(?:\s+(\d{1,2}):(\d{2}))?(?=\s|$)/i, resolve: (m) => datePlusDays(1, m[3], m[4]) },
+    { re: /(^|\s)(明後日)(?:\s+(\d{1,2}):(\d{2}))?(?=\s|$)/, resolve: (m) => datePlusDays(2, m[3], m[4]) },
+    { re: /(^|\s)(月曜|火曜|水曜|木曜|金曜|土曜|日曜)(?:\s+(\d{1,2}):(\d{2}))?(?=\s|$)/, resolve: (m) => nextWeekday(m[2], m[3], m[4]) },
+    { re: /(^|\s)(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?(?=\s|$)/, resolve: (m) => monthDay(m[2], m[3], m[4], m[5]) }
+  ];
+  for (const p of patterns) {
+    const m = trimmed.match(p.re);
+    if (m) {
+      const due = p.resolve(m);
+      const start = m.index + (m[1] ? m[1].length : 0);
+      const end = m.index + m[0].length;
+      const remaining = (trimmed.slice(0, start) + trimmed.slice(end)).replace(/\s+/g, ' ').trim();
+      return { due, remaining };
+    }
+  }
+  return { due: '', remaining: trimmed };
+}
+
+function datePlusDays(delta, hh, mm) {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + delta);
+  return dueString(d, hh, mm);
+}
+
+function nextWeekday(label, hh, mm) {
+  const map = { '日曜': 0, '月曜': 1, '火曜': 2, '水曜': 3, '木曜': 4, '金曜': 5, '土曜': 6 };
+  const target = map[label];
+  const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let delta = (target - base.getDay() + 7) % 7;
+  if (delta === 0) delta = 7;
+  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + delta);
+  return dueString(d, hh, mm);
+}
+
+function monthDay(mo, day, hh, mm) {
+  const now = new Date();
+  let year = now.getFullYear();
+  const candidate = new Date(year, Number(mo) - 1, Number(day));
+  if (candidate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) year += 1;
+  const d = new Date(year, Number(mo) - 1, Number(day));
+  return dueString(d, hh, mm);
+}
+
+function dueString(d, hh, mm) {
+  const yy = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  if (hh != null && mm != null) {
+    const h = String(hh).padStart(2, '0');
+    const m = String(mm).padStart(2, '0');
+    return `${yy}-${mo}-${dd} ${h}:${m}`;
+  }
+  return `${yy}-${mo}-${dd}`;
+}
+
+function submitQuickTask() {
+  const input = document.getElementById('quickTaskInput');
+  if (!input) return;
+  const payload = parseQuickTaskInput(input.value);
+  if (!payload) {
+    input.focus();
+    return;
+  }
+  const newTask = { id: uid('tk', state.tasks), sourcePostId: null, ...payload };
+  state.tasks.unshift(newTask);
+  saveState();
+  rerenderAll();
+  input.value = '';
+  input.focus();
+  showNotice('タスクを追加しました。続けて入力できます。');
+}
+window.submitQuickTask = submitQuickTask;
+
+function initQuickTaskBar() {
+  const input = document.getElementById('quickTaskInput');
+  if (!input || input.dataset.bound) return;
+  input.dataset.bound = '1';
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitQuickTask();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      toggleQuickTaskBar(false);
+    }
+  });
+}
+
 function rerenderAll() {
   populateLinkedSelects();
   updatePropertyMode();
@@ -1565,6 +1758,7 @@ function rerenderAll() {
   renderFeed('snsFeed');
   renderFeedTabs();
   renderTasks();
+  initQuickTaskBar();
   renderSchedules();
   renderDocumentPreview();
   renderNotifications();
@@ -1573,6 +1767,7 @@ function rerenderAll() {
 }
 
 function initEvents() {
+  initQuickTaskBar();
   document.querySelectorAll('.nav-btn').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
   document.querySelectorAll('.tab-btn').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screen)));
   document.querySelectorAll('[data-screen-link]').forEach((btn) => btn.addEventListener('click', () => go(btn.dataset.screenLink)));

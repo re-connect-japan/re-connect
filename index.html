@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=17" />
+  <link rel="stylesheet" href="./styles.css?v=18" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -177,14 +177,27 @@
         <section id="screen-tasks" class="screen">
           <div class="screen-header">
             <h2>タスク</h2>
-            <p>Todoist風の一覧で素早く確認・完了</p>
+            <p>Todoist風の一覧＋メモとして使える詳細</p>
           </div>
-          <article class="panel mobile-panel">
+          <article class="panel mobile-panel tasks-panel">
             <div class="panel-header">
               <h3>タスク一覧</h3>
               <div class="panel-header-actions">
                 <span class="pill" id="taskCountPill"></span>
-                <button type="button" class="primary-btn small" onclick="openTaskEditor()">＋ 新規</button>
+                <button type="button" class="primary-btn small" id="quickTaskToggleBtn" onclick="toggleQuickTaskBar()">＋ 新規</button>
+              </div>
+            </div>
+            <div id="quickTaskBar" class="quick-task-bar hidden">
+              <div class="quick-task-input-wrap">
+                <button type="button" class="quick-task-check" aria-hidden="true">＋</button>
+                <input type="text" id="quickTaskInput" class="quick-task-input" placeholder="タスクを入力 (例: 山田様へ資料送付 明日 15:00 !1 #山田様 @港区マンション G)" autocomplete="off" />
+              </div>
+              <div class="quick-task-hint">
+                <span>Enter追加 / Esc閉じる</span>
+                <span>期限: today / 明日 / 月曜 / 7/30 / 7/30 15:00</span>
+                <span>優先度: !1 !2 !3</span>
+                <span>顧客: #名前</span>
+                <span>物件: @名称</span>
               </div>
             </div>
             <div id="taskList" class="stack todoist-task-list"></div>
@@ -197,9 +210,9 @@
             <h2 id="taskEditTitle">タスクを新規作成</h2>
           </div>
           <article class="panel mobile-panel">
-            <form id="taskEditForm" class="form compact-form">
+            <form id="taskEditForm" class="form compact-form task-edit-form">
               <input type="hidden" name="id" id="taskEditId" value="" />
-              <label><span>タイトル</span><input name="title" id="taskEditTitleInput" placeholder="例: 比較資料送付" /></label>
+              <label class="task-title-label"><span>タイトル</span><input name="title" id="taskEditTitleInput" placeholder="例: 比較資料送付" /></label>
               <div class="datetime-row">
                 <label class="dt-date"><span>期限日</span><input type="date" id="taskEditDate" /></label>
                 <div class="dt-time">
@@ -219,7 +232,7 @@
                 <label><span>顧客</span><select name="customerId" id="taskEditCustomer"></select></label>
                 <label><span>物件</span><select name="propertyId" id="taskEditProperty"></select></label>
               </div>
-              <label><span>メモ</span><textarea name="memo" id="taskEditMemo" placeholder="備考・次のアクションなど"></textarea></label>
+              <label class="task-memo-label"><span>メモ</span><textarea name="memo" id="taskEditMemo" class="task-memo-area" rows="10" placeholder="メモとして自由に書けます。改行そのまま保存されます。&#10;・箇条書き&#10;・電話メモ&#10;・関連URLなど"></textarea></label>
               <div class="edit-actions">
                 <button type="submit" class="primary-btn full">保存</button>
                 <button type="button" class="secondary-btn" id="taskEditDoneBtn">完了にする</button>
@@ -493,6 +506,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=17"></script>
+  <script src="./app.js?v=18"></script>
 </body>
 </html>

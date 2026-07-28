@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=18" />
+  <link rel="stylesheet" href="./styles.css?v=19" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -137,6 +137,11 @@
             <button class="feed-tab" data-feed="broker_group_only">業者</button>
             <button class="feed-tab" data-feed="store_only">店舗</button>
             <button class="feed-tab" data-feed="internal_only">社内</button>
+          </div>
+          <div class="feed-deal-tabs" id="feedDealTabs">
+            <button type="button" class="feed-deal-tab active" data-deal="all">両方</button>
+            <button type="button" class="feed-deal-tab" data-deal="sale">売買</button>
+            <button type="button" class="feed-deal-tab" data-deal="rental">賃貸</button>
           </div>
           <div id="snsFeed" class="feed-stack"></div>
           <section class="panel mobile-panel composer-panel" id="snsComposer">
@@ -506,6 +511,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=18"></script>
+  <script src="./app.js?v=19"></script>
 </body>
 </html>

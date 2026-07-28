@@ -9,6 +9,7 @@ function createInitialState() {
     selectedTaskId: 'tk_001',
     lastDocumentHtml: '',
     activeFeed: 'all',
+    activeFeedDeal: 'all',
     activeThreadId: 'th_001',
     notifications: [
       { id: 'nt_001', type: 'task_due_soon', title: '期限前通知', body: '比較資料送付の期限が近づいています', unread: true, priority: 'high' },
@@ -216,6 +217,7 @@ function trySetItem(payload) {
   }
 }
 
+if (state && typeof state.activeFeedDeal === 'undefined') state.activeFeedDeal = 'all';
 function saveState() {
   if (trySetItem(JSON.stringify(state))) return true;
 
@@ -771,8 +773,17 @@ function renderFeed(targetId, limit) {
   const container = document.getElementById(targetId);
   if (!container) return;
   let items = state.posts;
-  if (targetId === 'snsFeed' && state.activeFeed !== 'all') {
-    items = items.filter((p) => p.visibilityCode === state.activeFeed);
+  if (targetId === 'snsFeed') {
+    if (state.activeFeed !== 'all') {
+      items = items.filter((p) => p.visibilityCode === state.activeFeed);
+    }
+    const deal = state.activeFeedDeal || 'all';
+    if (deal === 'sale' || deal === 'rental') {
+      items = items.filter((p) => {
+        const prop = getProperty(p.propertyId);
+        return prop && prop.dealType === deal;
+      });
+    }
   }
   const list = limit ? items.slice(0, limit) : items;
   container.innerHTML = list.map(feedItemHtml).join('') || '<div class="empty-state">投稿はありません</div>';
@@ -780,6 +791,10 @@ function renderFeed(targetId, limit) {
 function renderFeedTabs() {
   document.querySelectorAll('.feed-tab').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.feed === state.activeFeed);
+  });
+  const deal = state.activeFeedDeal || 'all';
+  document.querySelectorAll('.feed-deal-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.deal === deal);
   });
 }
 
@@ -1905,6 +1920,13 @@ function initEvents() {
 
   document.querySelectorAll('.feed-tab').forEach((btn) => btn.addEventListener('click', () => {
     state.activeFeed = btn.dataset.feed;
+    saveState();
+    renderFeed('snsFeed');
+    renderFeedTabs();
+  }));
+
+  document.querySelectorAll('.feed-deal-tab').forEach((btn) => btn.addEventListener('click', () => {
+    state.activeFeedDeal = btn.dataset.deal;
     saveState();
     renderFeed('snsFeed');
     renderFeedTabs();

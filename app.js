@@ -2200,55 +2200,70 @@ function initEvents() {
     if (el && (id === 'scheduleEditTitleInput' || id === 'scheduleEditLocation')) el.addEventListener('input', updateScheduleEditorSummary);
   });
 
-  const taskEditForm = document.getElementById('taskEditForm');
-  if (taskEditForm) taskEditForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('taskEditId').value;
-    document.getElementById('taskEditDue').value = readDateTime('taskEdit');
-    const payload = {
-      title: document.getElementById('taskEditTitleInput').value.trim(),
-      due: document.getElementById('taskEditDue').value.trim(),
-      status: document.getElementById('taskEditStatus').value,
-      priority: document.getElementById('taskEditPriority').value,
-      assignedTo: document.getElementById('taskEditAssignee').value.trim(),
-      customerId: document.getElementById('taskEditCustomer').value || null,
-      propertyId: document.getElementById('taskEditProperty').value || null,
-      memo: document.getElementById('taskEditMemo').value,
-      photos: taskEditPhotos.map((p) => ({ ...p })),
-      pdfs: taskEditPdfs.map((p) => ({ ...p }))
-    };
-    // stash full bodies in session cache for viewer usage after save
-    const _cacheId = id || null;
-    const _cachePhotos = taskEditPhotos.map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
-    const _cachePdfs = taskEditPdfs.map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
-    if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
-    let _savedId = id;
-    let _wasCreate = false;
-    if (id) {
-      const t = state.tasks.find((x) => x.id === id);
-      if (t) {
-        Object.assign(t, payload);
+  function submitTaskEditor(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    try {
+      const idEl = document.getElementById('taskEditId');
+      const id = idEl ? String(idEl.value || '').trim() : '';
+      const dueEl = document.getElementById('taskEditDue');
+      if (dueEl) dueEl.value = readDateTime('taskEdit');
+      const titleEl = document.getElementById('taskEditTitleInput');
+      const title = titleEl ? String(titleEl.value || '').trim() : '';
+      if (!title) { showNotice('タイトルを入力してください。', 'error'); if (titleEl) titleEl.focus(); return false; }
+      const payload = {
+        title: title,
+        due: (dueEl?.value || '').trim(),
+        status: document.getElementById('taskEditStatus')?.value || 'todo',
+        priority: document.getElementById('taskEditPriority')?.value || 'medium',
+        assignedTo: (document.getElementById('taskEditAssignee')?.value || '').trim(),
+        customerId: document.getElementById('taskEditCustomer')?.value || null,
+        propertyId: document.getElementById('taskEditProperty')?.value || null,
+        memo: document.getElementById('taskEditMemo')?.value || '',
+        photos: (Array.isArray(taskEditPhotos) ? taskEditPhotos : []).map((p) => ({ ...p })),
+        pdfs: (Array.isArray(taskEditPdfs) ? taskEditPdfs : []).map((p) => ({ ...p }))
+      };
+      const _cachePhotos = (Array.isArray(taskEditPhotos) ? taskEditPhotos : []).map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
+      const _cachePdfs = (Array.isArray(taskEditPdfs) ? taskEditPdfs : []).map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
+      let _savedId = id;
+      let _wasCreate = false;
+      if (id) {
+        const t = state.tasks.find((x) => x && x.id === id);
+        if (t) {
+          Object.assign(t, payload);
+        } else {
+          const newId = uid('tk', state.tasks);
+          state.tasks.unshift({ id: newId, sourcePostId: null, ...payload });
+          _savedId = newId;
+          _wasCreate = true;
+        }
       } else {
-        // id が指定されていたが該当タスクが無い場合は新規作成扱い
         const newId = uid('tk', state.tasks);
-        const created = { id: newId, sourcePostId: null, ...payload };
-        state.tasks.unshift(created);
+        state.tasks.unshift({ id: newId, sourcePostId: null, ...payload });
         _savedId = newId;
         _wasCreate = true;
       }
-    } else {
-      const newId = uid('tk', state.tasks);
-      const created = { id: newId, sourcePostId: null, ...payload };
-      state.tasks.unshift(created);
-      _savedId = newId;
-      _wasCreate = true;
+      if (_savedId) attachmentSessionCache[_savedId] = { photos: _cachePhotos, pdfs: _cachePdfs };
+      saveState();
+      rerenderAll();
+      showNotice(_wasCreate ? 'タスクを作成しました。' : 'タスクを更新しました。');
+      goBackFromEditor('tasks');
+      return true;
+    } catch (err) {
+      console.error('submitTaskEditor error', err);
+      showNotice('保存に失敗しました: ' + (err && err.message ? err.message : String(err)), 'error');
+      return false;
     }
-    if (_savedId) attachmentSessionCache[_savedId] = { photos: _cachePhotos, pdfs: _cachePdfs };
-    saveState();
-    rerenderAll();
-    showNotice(_wasCreate ? 'タスクを作成しました。' : 'タスクを更新しました。');
-    goBackFromEditor('tasks');
-  });
+  }
+  window.submitTaskEditor = submitTaskEditor;
+
+  const taskEditForm = document.getElementById('taskEditForm');
+  if (taskEditForm && !taskEditForm.dataset.bound) {
+    taskEditForm.dataset.bound = '1';
+    taskEditForm.addEventListener('submit', submitTaskEditor);
+    // Backup: bind explicit click on the save button too (in case submit is blocked)
+    const saveBtn = taskEditForm.querySelector('button[type="submit"]');
+    if (saveBtn) saveBtn.addEventListener('click', (ev) => { ev.preventDefault(); submitTaskEditor(ev); });
+  }
   const taskDoneBtn = document.getElementById('taskEditDoneBtn');
   if (taskDoneBtn) taskDoneBtn.addEventListener('click', () => {
     const id = document.getElementById('taskEditId').value;

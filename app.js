@@ -248,15 +248,16 @@ function saveState() {
     }
   }
 
-  // 3) 大きいPDF本文を落として名前だけ残す (自動スリム化)
+  // 3) 大きいPDF/写真本文は永続保存だけ軽量化 (メモリは保持したまま)
   if (Array.isArray(clone.tasks)) {
     const trimClone = JSON.parse(JSON.stringify(state));
-    let stripped = 0;
+    let strippedPdf = 0;
+    let strippedPhoto = 0;
     trimClone.tasks = (trimClone.tasks || []).map((t) => {
       if (Array.isArray(t.pdfs)) {
         t.pdfs = t.pdfs.map((p) => {
           if (p && p.dataUrl && ((p.size || 0) >= TASK_PDF_HARD_INLINE || p.heavy)) {
-            stripped++;
+            strippedPdf++;
             return { name: p.name, size: p.size, dataUrl: '', heavy: true, stored: 'name_only' };
           }
           return p;
@@ -264,19 +265,18 @@ function saveState() {
       }
       return t;
     });
-    if (stripped && trySetItem(JSON.stringify(trimClone))) {
-      state.tasks = trimClone.tasks;
-      showNotice(`容量上限のため、大きいPDF ${stripped} 件は名称のみ保存しました。`, 'error');
+    if ((strippedPdf || strippedPhoto) && trySetItem(JSON.stringify(trimClone))) {
+      showNotice(`容量上限のため、大きいPDF ${strippedPdf} 件は端末には名称のみ保存しました (今のセッション中は開けます)。`, 'error');
       return true;
     }
-    // 4) 最終手段: すべてのPDF本文を除外
+    // 4) 最終手段: 永続保存からPDF/写真本文をすべて除外 (メモリは保持)
     trimClone.tasks = (trimClone.tasks || []).map((t) => ({
       ...t,
-      pdfs: Array.isArray(t.pdfs) ? t.pdfs.map((p) => ({ name: p?.name, size: p?.size, dataUrl: '', stored: 'name_only' })) : t.pdfs
+      pdfs: Array.isArray(t.pdfs) ? t.pdfs.map((p) => ({ name: p?.name, size: p?.size, dataUrl: '', stored: 'name_only' })) : t.pdfs,
+      photos: Array.isArray(t.photos) ? t.photos.map((p) => ({ name: p?.name, size: p?.size, dataUrl: '', stored: 'name_only' })) : t.photos
     }));
     if (trySetItem(JSON.stringify(trimClone))) {
-      state.tasks = trimClone.tasks;
-      showNotice('容量上限のため、すべてのPDF本文を除外して名称のみ保存しました。', 'error');
+      showNotice('容量上限のため、添付本文は端末保存から除外しました (今のセッション中は開けます)。', 'error');
       return true;
     }
   }
@@ -1376,6 +1376,7 @@ window.presetScheduleTime = presetScheduleTime;
 
 
 // Task editor attachment buffers (per-open editing session)
+const attachmentSessionCache = {};
 let taskEditPhotos = [];
 let taskEditPdfs = [];
 const TASK_ATTACH_MAX = 5;
@@ -1509,6 +1510,12 @@ function openTaskEditor(taskId, presetDateKey) {
   document.getElementById('taskEditMemo').value = task?.memo || '';
   taskEditPhotos = Array.isArray(task?.photos) ? task.photos.map((p) => ({ ...p })) : [];
   taskEditPdfs = Array.isArray(task?.pdfs) ? task.pdfs.map((p) => ({ ...p })) : [];
+  // Fill missing dataUrl from session-only cache when available
+  if (task?.id && attachmentSessionCache[task.id]) {
+    const cache = attachmentSessionCache[task.id];
+    taskEditPhotos = taskEditPhotos.map((p, i) => (!p.dataUrl && cache.photos?.[i]?.dataUrl && cache.photos[i].name === p.name) ? { ...p, dataUrl: cache.photos[i].dataUrl } : p);
+    taskEditPdfs = taskEditPdfs.map((p, i) => (!p.dataUrl && cache.pdfs?.[i]?.dataUrl && cache.pdfs[i].name === p.name) ? { ...p, dataUrl: cache.pdfs[i].dataUrl } : p);
+  }
   renderTaskAttachments();
   setupTaskAttachmentPickers();
   editorReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'home';
@@ -2201,13 +2208,21 @@ function initEvents() {
       photos: taskEditPhotos.map((p) => ({ ...p })),
       pdfs: taskEditPdfs.map((p) => ({ ...p }))
     };
+    // stash full bodies in session cache for viewer usage after save
+    const _cacheId = id || null;
+    const _cachePhotos = taskEditPhotos.map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
+    const _cachePdfs = taskEditPdfs.map((p) => ({ name: p.name, dataUrl: p.dataUrl }));
     if (!payload.title) { showNotice('タイトルを入力してください。', 'error'); return; }
+    let _savedId = id;
     if (id) {
       const t = state.tasks.find((x) => x.id === id);
       if (t) Object.assign(t, payload);
     } else {
-      state.tasks.unshift({ id: uid('tk', state.tasks), sourcePostId: null, ...payload });
+      const created = { id: uid('tk', state.tasks), sourcePostId: null, ...payload };
+      state.tasks.unshift(created);
+      _savedId = created.id;
     }
+    if (_savedId) attachmentSessionCache[_savedId] = { photos: _cachePhotos, pdfs: _cachePdfs };
     saveState();
     rerenderAll();
     showNotice(id ? 'タスクを更新しました。' : 'タスクを作成しました。');

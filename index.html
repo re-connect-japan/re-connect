@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=23" />
+  <link rel="stylesheet" href="./styles.css?v=24" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -367,6 +367,16 @@
             </form>
         </section>
 
+
+        <section id="screen-viewer" class="screen viewer-screen">
+          <div class="viewer-topbar">
+            <button type="button" class="viewer-back" onclick="closeViewer()" aria-label="閉じる">‹ 戻る</button>
+            <div class="viewer-title" id="viewerTitle">表示</div>
+            <a class="viewer-open" id="viewerOpenBtn" href="#" target="_blank" rel="noopener">別タブで開く</a>
+          </div>
+          <div class="viewer-body" id="viewerBody"></div>
+        </section>
+
         <section id="screen-messages" class="screen">
           <div class="screen-header">
             <h2>メッセージ</h2>
@@ -554,6 +564,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=23"></script>
+  <script src="./app.js?v=24"></script>
 </body>
 </html>

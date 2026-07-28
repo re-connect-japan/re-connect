@@ -1853,3 +1853,114 @@ body:has(#screen-sns.active) #screen-sns { padding-bottom: 96px; }
 
 .task-attach-pdf-name.muted { color: #64748b; font-weight: 700; }
 .tag-muted { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: 800; }
+
+
+/* ---------- Attachment viewer ---------- */
+.viewer-screen {
+  display: none;
+  padding: 0;
+}
+.viewer-screen.active {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: calc(100vh - var(--safe-bottom) - 64px);
+  min-height: 60vh;
+}
+.viewer-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.viewer-back {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.viewer-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.viewer-open {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand);
+  text-decoration: none;
+  padding: 6px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+}
+.viewer-body {
+  flex: 1;
+  overflow: auto;
+  background: #0b1220;
+  display: flex;
+  flex-direction: column;
+}
+.viewer-image-wrap {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #0b1220;
+  min-height: 60vh;
+}
+.viewer-image {
+  max-width: 100%;
+  max-height: 82vh;
+  object-fit: contain;
+  display: block;
+  background: #0b1220;
+  touch-action: pinch-zoom;
+}
+.viewer-pdf {
+  flex: 1;
+  width: 100%;
+  min-height: 70vh;
+  border: none;
+  background: #ffffff;
+}
+.viewer-pdf-fallback {
+  background: #ffffff;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #475569;
+}
+.task-attach-pdf-name.link {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-attach-photo img {
+  cursor: zoom-in;
+}

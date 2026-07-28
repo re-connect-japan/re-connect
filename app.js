@@ -1393,8 +1393,8 @@ function renderTaskAttachments() {
   if (photoGrid) {
     photoGrid.innerHTML = taskEditPhotos.map((p, i) => `
       <div class="task-attach-photo">
-        <img src="${p.dataUrl}" alt="${escapeHtml(p.name || 'photo')}" />
-        <button type="button" class="task-attach-remove" onclick="removeTaskPhoto(${i})" aria-label="削除">×</button>
+        <img src="${p.dataUrl}" alt="${escapeHtml(p.name || 'photo')}" onclick="openPhotoViewer('task', ${i})" />
+        <button type="button" class="task-attach-remove" onclick="event.stopPropagation(); removeTaskPhoto(${i})" aria-label="削除">×</button>
       </div>
     `).join('');
   }
@@ -1402,14 +1402,14 @@ function renderTaskAttachments() {
     pdfList.innerHTML = taskEditPdfs.map((p, i) => {
       const hasBody = !!p.dataUrl;
       const nameHtml = hasBody
-        ? `<a class="task-attach-pdf-name" href="${p.dataUrl}" target="_blank" rel="noopener">${escapeHtml(p.name || 'document.pdf')}</a>`
+        ? `<button type="button" class="task-attach-pdf-name link" onclick="openPdfViewer('task', ${i})">${escapeHtml(p.name || 'document.pdf')}</button>`
         : `<span class="task-attach-pdf-name muted" title="本文は端末保存されていません。再添付で復元できます。">${escapeHtml(p.name || 'document.pdf')} <span class="tag-muted">名称のみ</span></span>`;
       return `
         <div class="task-attach-pdf">
           <span class="task-attach-pdf-ico">📄</span>
           ${nameHtml}
           <span class="task-attach-pdf-size">${formatFileSize(p.size || 0)}</span>
-          <button type="button" class="task-attach-remove" onclick="removeTaskPdf(${i})" aria-label="削除">×</button>
+          <button type="button" class="task-attach-remove" onclick="event.stopPropagation(); removeTaskPdf(${i})" aria-label="削除">×</button>
         </div>
       `;
     }).join('');
@@ -2025,6 +2025,103 @@ function renderDayPage() {
   if (addTk) addTk.onclick = () => openTaskEditor('', key);
 }
 window.renderDayPage = renderDayPage;
+
+
+let viewerReturnScreen = 'home';
+
+function dataUrlToBlobUrl(dataUrl) {
+  try {
+    if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
+    const [meta, b64] = dataUrl.split(',');
+    const mimeMatch = /data:([^;]+);base64/.exec(meta);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const bin = atob(b64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    const blob = new Blob([bytes], { type: mime });
+    return URL.createObjectURL(blob);
+  } catch (err) {
+    console.error('dataUrl->blob failed', err);
+    return dataUrl;
+  }
+}
+
+let _currentBlobUrl = '';
+function _revokeCurrentBlob() {
+  if (_currentBlobUrl) {
+    try { URL.revokeObjectURL(_currentBlobUrl); } catch(e) {}
+    _currentBlobUrl = '';
+  }
+}
+
+function _getAttach(kind, source, index) {
+  if (source === 'task') {
+    if (kind === 'photo') return taskEditPhotos[index];
+    if (kind === 'pdf') return taskEditPdfs[index];
+  }
+  return null;
+}
+
+function openPhotoViewer(source, index) {
+  const item = _getAttach('photo', source, index);
+  if (!item || !item.dataUrl) {
+    showNotice('画像が見つかりません。', 'error');
+    return;
+  }
+  _revokeCurrentBlob();
+  viewerReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'tasks';
+  const titleEl = document.getElementById('viewerTitle');
+  const body = document.getElementById('viewerBody');
+  const openBtn = document.getElementById('viewerOpenBtn');
+  if (titleEl) titleEl.textContent = item.name || '写真';
+  if (openBtn) { openBtn.href = item.dataUrl; openBtn.style.display = ''; }
+  if (body) {
+    body.innerHTML = `
+      <div class="viewer-image-wrap">
+        <img class="viewer-image" src="${item.dataUrl}" alt="${escapeHtml(item.name || 'photo')}" />
+      </div>
+    `;
+  }
+  go('viewer');
+}
+window.openPhotoViewer = openPhotoViewer;
+
+function openPdfViewer(source, index) {
+  const item = _getAttach('pdf', source, index);
+  if (!item || !item.dataUrl) {
+    showNotice('PDF本文が保存されていません。再添付してください。', 'error');
+    return;
+  }
+  _revokeCurrentBlob();
+  viewerReturnScreen = document.querySelector('.screen.active')?.id?.replace('screen-','') || 'tasks';
+  const blobUrl = dataUrlToBlobUrl(item.dataUrl);
+  _currentBlobUrl = blobUrl && blobUrl !== item.dataUrl ? blobUrl : '';
+  const titleEl = document.getElementById('viewerTitle');
+  const body = document.getElementById('viewerBody');
+  const openBtn = document.getElementById('viewerOpenBtn');
+  if (titleEl) titleEl.textContent = item.name || 'PDF';
+  if (openBtn) { openBtn.href = blobUrl; openBtn.style.display = ''; }
+  if (body) {
+    body.innerHTML = `
+      <iframe class="viewer-pdf" src="${blobUrl}#view=FitH" title="${escapeHtml(item.name || 'PDF')}"></iframe>
+      <div class="viewer-pdf-fallback">
+        <p>PDFがうまく表示されない場合は、右上の「別タブで開く」を押してください。</p>
+        <a class="secondary-btn" href="${blobUrl}" download="${escapeHtml(item.name || 'document.pdf')}">ダウンロード</a>
+      </div>
+    `;
+  }
+  go('viewer');
+}
+window.openPdfViewer = openPdfViewer;
+
+function closeViewer() {
+  _revokeCurrentBlob();
+  const body = document.getElementById('viewerBody');
+  if (body) body.innerHTML = '';
+  go(viewerReturnScreen || 'home');
+}
+window.closeViewer = closeViewer;
 
 function rerenderAll() {
   populateLinkedSelects();

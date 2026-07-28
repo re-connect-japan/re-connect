@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=27" />
+  <link rel="stylesheet" href="./styles.css?v=28" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -261,14 +261,19 @@
                   <div class="task-attach-list" id="taskPdfList"></div>
                 </div>
               </div>
-              <div class="edit-actions">
-                <button type="submit" class="primary-btn full">保存</button>
+              <div class="edit-actions task-edit-actions-inline">
+                <button type="submit" class="primary-btn full" id="taskEditSaveInline">保存</button>
                 <button type="button" class="secondary-btn" id="taskEditDoneBtn">完了にする</button>
                 <button type="button" class="secondary-btn" id="taskEditToScheduleBtn">予定化</button>
                 <button type="button" class="ghost-btn danger" id="taskEditDeleteBtn">削除</button>
               </div>
+              <div class="task-edit-spacer"></div>
             </form>
           </article>
+          <div class="task-edit-fixed-bar" id="taskEditFixedBar">
+            <button type="button" class="secondary-btn" onclick="goBackFromEditor('tasks')">‹ 戻る</button>
+            <button type="button" class="primary-btn full" id="taskEditFixedSave">保存</button>
+          </div>
         </section>
 
         <section id="screen-calendar" class="screen">
@@ -564,6 +569,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=27"></script>
+  <script src="./app.js?v=28"></script>
 </body>
 </html>

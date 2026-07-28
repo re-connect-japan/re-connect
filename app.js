@@ -2260,9 +2260,14 @@ function initEvents() {
   if (taskEditForm && !taskEditForm.dataset.bound) {
     taskEditForm.dataset.bound = '1';
     taskEditForm.addEventListener('submit', submitTaskEditor);
-    // Backup: bind explicit click on the save button too (in case submit is blocked)
+    // Backup: bind explicit click on the inline save button too (in case submit is blocked)
     const saveBtn = taskEditForm.querySelector('button[type="submit"]');
     if (saveBtn) saveBtn.addEventListener('click', (ev) => { ev.preventDefault(); submitTaskEditor(ev); });
+  }
+  const fixedSaveBtn = document.getElementById('taskEditFixedSave');
+  if (fixedSaveBtn && !fixedSaveBtn.dataset.bound) {
+    fixedSaveBtn.dataset.bound = '1';
+    fixedSaveBtn.addEventListener('click', (ev) => { ev.preventDefault(); submitTaskEditor(ev); });
   }
   const taskDoneBtn = document.getElementById('taskEditDoneBtn');
   if (taskDoneBtn) taskDoneBtn.addEventListener('click', () => {

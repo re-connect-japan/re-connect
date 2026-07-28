@@ -106,6 +106,8 @@ let homeCalendarSelected = null;
 let scheduleCalendarCursor = null;
 let scheduleCalendarSelected = null;
 let scheduleCalendarView = 'month';
+let dayPageDate = null;
+
 let editorReturnScreen = 'home';
 let snsAttachedImages = [];
 
@@ -653,12 +655,9 @@ function renderHomeCalendarMonth() {
   grid.innerHTML = cells.join('');
   grid.querySelectorAll('.cal-day').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const [yy, mm, dd] = btn.dataset.key.split('-').map(Number);
-      homeCalendarSelected = new Date(yy, mm - 1, dd);
-      renderHomeCalendarMonth();
+      openDayPage(btn.dataset.key);
     });
   });
-  renderHomeCalendarDayDetail(scheduleByDate, taskByDate);
 }
 
 function renderHomeCalendarDayDetail(scheduleByDate, taskByDate) {
@@ -1042,6 +1041,10 @@ function jumpScheduleCalendarToToday() {
 window.jumpScheduleCalendarToToday = jumpScheduleCalendarToToday;
 function selectScheduleCalendarDay(key) {
   const [yy, mm, dd] = key.split('-').map(Number);
+  if (scheduleCalendarView === 'month') {
+    openDayPage(key);
+    return;
+  }
   scheduleCalendarSelected = new Date(yy, mm - 1, dd);
   scheduleCalendarCursor = new Date(yy, mm - 1, dd);
   renderSchedules();
@@ -1888,6 +1891,95 @@ function initQuickTaskBar() {
   });
 }
 
+
+function openDayPage(key) {
+  if (!key) {
+    const now = new Date();
+    key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  }
+  const [yy, mm, dd] = key.split('-').map(Number);
+  dayPageDate = new Date(yy, mm - 1, dd);
+  renderDayPage();
+  go('day');
+}
+window.openDayPage = openDayPage;
+
+function closeDayPage() {
+  go('home');
+}
+window.closeDayPage = closeDayPage;
+
+function shiftDayPage(delta) {
+  if (!dayPageDate) dayPageDate = new Date();
+  dayPageDate = new Date(dayPageDate.getFullYear(), dayPageDate.getMonth(), dayPageDate.getDate() + delta);
+  renderDayPage();
+}
+window.shiftDayPage = shiftDayPage;
+
+function jumpDayPageToToday() {
+  const now = new Date();
+  dayPageDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  renderDayPage();
+}
+window.jumpDayPageToToday = jumpDayPageToToday;
+
+function renderDayPage() {
+  const target = dayPageDate || new Date();
+  const key = dateKey(target);
+  const label = `${target.getFullYear()}年${target.getMonth()+1}月${target.getDate()}日 (${['日','月','火','水','木','金','土'][target.getDay()]})`;
+  const titleEl = document.getElementById('dayPageTitle');
+  if (titleEl) titleEl.textContent = label;
+
+  const scheds = state.schedules.filter((s) => {
+    const d = parseWhen(s.when);
+    return d && dateKey(d) === key;
+  });
+  const tks = state.tasks.filter((t) => {
+    const src = t.status === 'done' ? (t.completedAt || t.due) : t.due;
+    const d = parseWhen(src);
+    return d && dateKey(d) === key;
+  });
+
+  const body = document.getElementById('dayPageBody');
+  if (!body) return;
+  const scheduleHtml = scheds.length
+    ? sortSchedulesForView(scheds).map((s) => {
+        const c = getCustomer(s.customerId);
+        const p = getProperty(s.propertyId);
+        return `
+          <button type="button" class="day-page-item schedule ${scheduleStatusClass(s.status)}" onclick="openScheduleEditor('${s.id}')">
+            <div class="day-page-item-time">${escapeHtml(formatScheduleTimeLabel(s.when))}</div>
+            <div class="day-page-item-main">
+              <div class="day-page-item-title">${escapeHtml(s.title || '予定')}</div>
+              <div class="day-page-item-sub">${escapeHtml(c?.name || '-')} / ${escapeHtml(p?.title || '-')} / ${escapeHtml(scheduleStatusLabel ? scheduleStatusLabel(s.status) : s.status)}</div>
+            </div>
+          </button>
+        `;
+      }).join('')
+    : '<div class="empty-state compact-empty">予定はありません</div>';
+
+  const taskHtml = tks.length
+    ? sortTasksForView(tks).map((t) => renderTaskCard(t, { compact: true })).join('')
+    : '<div class="empty-state compact-empty">タスクはありません</div>';
+
+  body.innerHTML = `
+    <div class="day-page-section">
+      <div class="day-page-section-title">予定 (${scheds.length})</div>
+      <div class="day-page-section-body">${scheduleHtml}</div>
+    </div>
+    <div class="day-page-section">
+      <div class="day-page-section-title">タスク (${tks.length})</div>
+      <div class="day-page-section-body">${taskHtml}</div>
+    </div>
+  `;
+
+  const addSch = document.getElementById('dayAddSchedule');
+  const addTk = document.getElementById('dayAddTask');
+  if (addSch) addSch.onclick = () => openScheduleEditor('', key);
+  if (addTk) addTk.onclick = () => openTaskEditor('', key);
+}
+window.renderDayPage = renderDayPage;
+
 function rerenderAll() {
   populateLinkedSelects();
   updatePropertyMode();
@@ -1899,6 +1991,7 @@ function rerenderAll() {
   renderTasks();
   initQuickTaskBar();
   renderSchedules();
+  if (document.getElementById('screen-day')?.classList.contains('active')) renderDayPage();
   renderDocumentPreview();
   renderNotifications();
   renderThreads();

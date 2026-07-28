@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Re:Connect MVP</title>
-  <link rel="stylesheet" href="./styles.css?v=21" />
+  <link rel="stylesheet" href="./styles.css?v=22" />
 </head>
 <body>
   <div id="loginScreen" class="login-screen">
@@ -99,7 +99,6 @@
                 <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
               </div>
               <div class="cal-grid" id="calGrid"></div>
-              <div class="cal-day-detail" id="calDayDetail"></div>
             </div>
           </article>
 
@@ -286,6 +285,26 @@
               </div>
             </div>
             <div id="scheduleList" class="schedule-host"></div>
+          </article>
+        </section>
+
+
+        <section id="screen-day" class="screen">
+          <div class="screen-header with-back">
+            <button type="button" class="back-btn" onclick="closeDayPage()">‹ 戻る</button>
+            <h2 id="dayPageTitle">日別ページ</h2>
+          </div>
+          <article class="panel mobile-panel day-page-panel">
+            <div class="day-page-toolbar">
+              <button type="button" class="secondary-btn small" onclick="shiftDayPage(-1)">‹ 前日</button>
+              <button type="button" class="secondary-btn small" onclick="jumpDayPageToToday()">今日</button>
+              <button type="button" class="secondary-btn small" onclick="shiftDayPage(1)">翌日 ›</button>
+            </div>
+            <div class="day-page-add">
+              <button type="button" class="primary-btn small" id="dayAddSchedule">＋ 予定を追加</button>
+              <button type="button" class="primary-btn small" id="dayAddTask">＋ タスクを追加</button>
+            </div>
+            <div id="dayPageBody" class="day-page-body"></div>
           </article>
         </section>
 
@@ -535,6 +554,6 @@
     </nav>
   </div>
 
-  <script src="./app.js?v=21"></script>
+  <script src="./app.js?v=22"></script>
 </body>
 </html>

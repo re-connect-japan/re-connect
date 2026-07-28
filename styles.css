@@ -1782,3 +1782,71 @@ body:has(#screen-sns.active) #screen-sns { padding-bottom: 96px; }
   font-weight: 700;
   margin-top: 2px;
 }
+
+
+/* ---------- Single-day page ---------- */
+.day-page-panel {
+  display: grid;
+  gap: 12px;
+}
+.day-page-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.day-page-add {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.day-page-body {
+  display: grid;
+  gap: 14px;
+}
+.day-page-section {
+  display: grid;
+  gap: 8px;
+}
+.day-page-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  padding: 4px 2px;
+  border-bottom: 1px solid var(--line);
+}
+.day-page-section-body {
+  display: grid;
+  gap: 6px;
+}
+.day-page-item {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-left-color: #93c5fd;
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+}
+.day-page-item.done { border-left-color: #86efac; }
+.day-page-item.cancelled { border-left-color: #fca5a5; }
+.day-page-item.rescheduled { border-left-color: #fdba74; }
+.day-page-item-time {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+.day-page-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+.day-page-item-sub {
+  font-size: 12px;
+  color: #64748b;
+}

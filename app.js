@@ -493,7 +493,19 @@ function toggleTaskDone(event, taskId) {
   }
   const task = state.tasks.find((t) => t.id === taskId);
   if (!task) return;
-  task.status = task.status === 'done' ? 'todo' : 'done';
+  if (task.status === 'done') {
+    task.status = 'todo';
+    task.completedAt = '';
+  } else {
+    task.status = 'done';
+    const now = new Date();
+    const yy = now.getFullYear();
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mi = String(now.getMinutes()).padStart(2, '0');
+    task.completedAt = `${yy}-${mo}-${dd} ${hh}:${mi}`;
+  }
   saveState();
   rerenderAll();
   showNotice(task.status === 'done' ? 'タスクを完了にしました。' : 'タスクを未完了に戻しました。');
@@ -538,10 +550,10 @@ function renderHome() {
 
   renderHomeCalendarMonth();
 
-  document.getElementById('homeTasks').innerHTML = sortTasksForView(state.tasks)
+  document.getElementById('homeTasks').innerHTML = sortTasksForView(state.tasks.filter((t) => t.status !== 'done'))
     .slice(0, 6)
     .map((t) => renderTaskCard(t, { compact: true }))
-    .join('') || '<div class="empty-state">タスクはありません</div>';
+    .join('') || '<div class="empty-state">未完了のタスクはありません</div>';
 
   const unreadCount = state.notifications.filter((n) => n.unread).length;
   const saleCount = state.properties.filter((p) => p.dealType === 'sale').length;
@@ -606,7 +618,8 @@ function renderHomeCalendarMonth() {
   });
   const taskByDate = {};
   state.tasks.forEach((t) => {
-    const d = parseWhen(t.due);
+    const src = t.status === 'done' ? (t.completedAt || t.due) : t.due;
+    const d = parseWhen(src);
     if (!d) return;
     const key = dateKey(d);
     (taskByDate[key] = taskByDate[key] || []).push(t);
@@ -1601,17 +1614,17 @@ function printDocument() {
 
 
 function renderTasks() {
+  const openTasks = state.tasks.filter((t) => t.status !== 'done');
   const pill = document.getElementById('taskCountPill');
   if (pill) {
-    const openCount = state.tasks.filter((t) => t.status !== 'done').length;
-    pill.textContent = `${openCount}件未完了 / 全${state.tasks.length}件`;
+    pill.textContent = `${openTasks.length}件未完了`;
   }
   const list = document.getElementById('taskList');
   if (!list) return;
-  const sorted = sortTasksForView(state.tasks);
+  const sorted = sortTasksForView(openTasks);
   list.innerHTML = sorted.length
     ? sorted.map((t) => renderTaskCard(t)).join('')
-    : '<div class="empty-state">タスクはありません。＋ 新規から追加できます。</div>';
+    : '<div class="empty-state">未完了のタスクはありません。＋ 新規から追加できます。</div>';
 }
 window.renderTasks = renderTasks;
 
